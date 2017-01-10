@@ -37,11 +37,11 @@ end
 
 Implements the 7 RESTful actions: `index`, `new`, `create`, `show`, `edit`, `update`, `destroy`.
 
-# Loads an appropriate `@post` type instance
-# Sets a `@page_title` (effective_pages).
-# Calls authorize as per the configured `EffectiveResources.authorization_method` (flow through to CanCan or Pundit)
-# Does the create/update save
-# Sets a `flash[:success]` and redirects on success, or sets a `flash.now[:danger]` and renders on error.
+- Loads an appropriate `@post` type instance
+- Sets a `@page_title` (effective_pages).
+- Calls authorize as per the configured `EffectiveResources.authorization_method` (flow through to CanCan or Pundit)
+- Does the create/update save
+- Sets a `flash[:success]` and redirects on success, or sets a `flash.now[:danger]` and renders on error.
 
 ## Helpers
 
