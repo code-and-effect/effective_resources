@@ -9,11 +9,14 @@ module Effective
     end
 
     def index
-      @page_title ||= resource_name.pluralize.titleize
+      @page_title ||= resource_plural_name.titleize
       EffectiveResources.authorized?(self, :index, resource_class)
 
       self.resources ||= resource_class.all
-      @datatable ||= (resource_datatable_class.new(params[:scopes]) if resource_datatable_class)
+
+      if resource_datatable_class
+        @datatable ||= resource_datatable_class.new(params[:scopes])
+      end
     end
 
     def new
@@ -79,7 +82,7 @@ module Effective
         flash[:danger] = "Unable to delete #{resource_name}: #{resource.errors.full_messages.to_sentence}"
       end
 
-      request.referer.present? ? redirect_to(request.referer) : redirect_to(resources_path)
+      request.referer.present? ? redirect_to(request.referer) : redirect_to(send(resource_index_path))
     end
 
     protected
@@ -93,55 +96,43 @@ module Effective
     end
 
     def resources # @things
-      send(:instance_variable_get, "@#{resource_name.pluralize}")
+      send(:instance_variable_get, "@#{resource_plural_name}")
     end
 
     def resources=(instance)
-      send(:instance_variable_set, "@#{resource_name.pluralize}", instance)
+      send(:instance_variable_set, "@#{resource_plural_name}", instance)
     end
 
     def resource_class # Thing
       effective_resource.klass
     end
 
-    def resource_name # 'thing'    @resource.name
+    def resource_name # 'thing'
       effective_resource.name
     end
 
-    def resource_namespace # 'admin'
-      effective_resource.namespace
+    def resource_plural_name # 'things'
+      effective_resource.plural_name
     end
 
-    def resource_datatable_class
+    def resource_datatable_class # ThingsDatatable
       effective_resource.datatable_klass
     end
 
     def resource_params_method_name
-      ["#{resource_name}_params", "#{resource_name.pluralize}_params", 'permitted_params'].find { |name| respond_to?(name, true) } || 'params'
+      ["#{resource_name}_params", "#{resource_plural_name}_params", 'permitted_params'].find { |name| respond_to?(name, true) } || 'params'
     end
 
-    def resources_path # /admin/things
-      send(effective_resource.index_path)
-    end
-
-    def new_resource_path # /admin/things/new
-      send(effective_resource.new_path)
-    end
-
-    def edit_resource_path # /admin/things/1/edit
-      send(effective_resource.edit_path, resource)
-    end
-
-    def resource_path # /admin/things/1
-      send(effective_resource.show_path, resource)
+    def resource_index_path
+      effective_resource.index_path
     end
 
     def resource_redirect_path
       case params[:commit].to_s
-      when 'Save'               ; edit_resource_path
-      when 'Save and Continue'  ; resources_path
-      when 'Save and Add New'   ; new_resource_path
-      else resource_path
+      when 'Save'               ; send(effective_resource.edit_path, resource)
+      when 'Save and Continue'  ; send(effective_resource.index_path)
+      when 'Save and Add New'   ; send(effective_resource.new_path)
+      else send(effective_resource.show_path, resource)
       end
     end
 

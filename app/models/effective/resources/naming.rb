@@ -8,7 +8,7 @@ module Effective
       end
 
       def plural_name # 'posts'
-        @input_name.split(SPLIT).last.pluralize
+        @_plural_name ||= @input_name.split(SPLIT).last.pluralize
       end
 
       def class_name # 'Effective::Post'
