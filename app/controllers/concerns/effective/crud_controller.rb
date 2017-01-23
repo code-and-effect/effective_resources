@@ -13,7 +13,7 @@ module Effective
       EffectiveResources.authorized?(self, :index, resource_class)
 
       self.resources ||= resource_class.all
-      @datatable ||= resource_datatable_class.new(params[:scopes])
+      @datatable ||= (resource_datatable_class.new(params[:scopes]) if resource_datatable_class)
     end
 
     def new
@@ -101,28 +101,19 @@ module Effective
     end
 
     def resource_class # Thing
-      resource_namespaced_name.classify.safe_constantize || resource_name.classify.constantize
+      effective_resource.klass
     end
 
-    def resource_name # 'thing'
-      controller_path.split('/').last.singularize
+    def resource_name # 'thing'    @resource.name
+      effective_resource.name
     end
 
-    def resource_namespace # ['admin']
-      controller_path.split('/')[0..-2].presence
-    end
-
-    def resource_namespaced_name # 'Admin::Thing'
-      ([resource_namespace, resource_name].compact * '/').singularize.camelize
+    def resource_namespace # 'admin'
+      effective_resource.namespace
     end
 
     def resource_datatable_class
-      if defined?(EffectiveDatatables)
-        "#{resource_namespaced_name.pluralize}Datatable".safe_constantize ||
-        "#{resource_name.pluralize.camelize}Datatable".safe_constantize ||
-        "Effective::Datatables::#{resource_namespaced_name.pluralize}".safe_constantize ||
-        "Effective::Datatables::#{resource_name.pluralize.camelize}".safe_constantize
-      end
+      effective_resource.datatable_klass
     end
 
     def resource_params_method_name
@@ -130,19 +121,19 @@ module Effective
     end
 
     def resources_path # /admin/things
-      send([resource_namespace, resource_name.pluralize, 'path'].compact.join('_'))
+      send(effective_resource.index_path)
     end
 
     def new_resource_path # /admin/things/new
-      send(['new', resource_namespace, resource_name, 'path'].compact.join('_'))
+      send(effective_resource.new_path)
     end
 
     def edit_resource_path # /admin/things/1/edit
-      send(['edit', resource_namespace, resource_name, 'path'].compact.join('_'), resource)
+      send(effective_resource.edit_path, resource)
     end
 
     def resource_path # /admin/things/1
-      send([resource_namespace, resource_name, 'path'].compact.join('_'), resource)
+      send(effective_resource.show_path, resource)
     end
 
     def resource_redirect_path
@@ -152,6 +143,12 @@ module Effective
       when 'Save and Add New'   ; new_resource_path
       else resource_path
       end
+    end
+
+    private
+
+    def effective_resource
+      @_effective_resource ||= Effective::Resource.new(controller_path)
     end
 
   end

@@ -3,12 +3,8 @@ module Effective
     module Naming
       SPLIT = /\/|::/  # / or ::
 
-      def klass # Effective::Post
-        namespaced_class_name.safe_constantize || class_name.safe_constantize || name.constantize
-      end
-
       def name # 'post'
-        @input_name.split(SPLIT).last.singularize
+        @_name ||= @input_name.split(SPLIT).last.singularize
       end
 
       def plural_name # 'posts'
@@ -24,11 +20,11 @@ module Effective
       end
 
       def namespace # 'admin/things'
-        namespaces.join('/') if namespaces.present?
+        @_namespace ||= (namespaces.join('/') if namespaces.present?)
       end
 
       def namespaces # ['admin', 'things']
-        @input_name.split('/')[0...-1]
+        @_namespaces ||= @input_name.split('/')[0...-1]
       end
 
     end
