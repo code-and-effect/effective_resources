@@ -7,7 +7,7 @@ module Effective
       end
 
       def datatable_klass
-        @_datatable_klass ||= if defined?(EffectiveDatatables)
+        @datatable_klass ||= if defined?(EffectiveDatatables)
           "#{namespaced_class_name.pluralize}Datatable".safe_constantize ||
           "#{class_name.pluralize.camelize}Datatable".safe_constantize ||
           "#{name.pluralize.camelize}Datatable".safe_constantize ||
