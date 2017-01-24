@@ -20,7 +20,7 @@ module Effective
       # Lazy initialized
       def _initialize_written
         @written_attributes = []
-        @written_belongs_tos = []
+        @written_belong_tos = []
         @written_scopes = []
 
         Effective::CodeReader.new(model_file) do |reader|
@@ -33,7 +33,7 @@ module Effective
             end.compact
           end
 
-          @written_belongs_tos = reader.select { |line| line.start_with?('belongs_to ') }.map do |line|
+          @written_belong_tos = reader.select { |line| line.start_with?('belongs_to ') }.map do |line|
             line.scan(/belongs_to\s+:(\w+)/).flatten.first
           end
 

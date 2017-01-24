@@ -22,6 +22,10 @@ module Effective
       @options = options
     end
 
+    def to_s
+      name
+    end
+
     def field_type
       @field_type ||= case type
         when :integer              then :number_field

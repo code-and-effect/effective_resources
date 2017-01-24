@@ -23,8 +23,8 @@ module Effective
         sort(attributes)
       end
 
-      def belongs_to_attributes
-        belongs_tos.map { |reference| Effective::Attribute.new(reference.foreign_key, :integer) }.sort
+      def belong_tos_attributes
+        belong_tos.map { |reference| Effective::Attribute.new(reference.foreign_key, :integer) }.sort
       end
 
       def written_attributes
