@@ -12,5 +12,9 @@ module Effective
       _initialize(input)
     end
 
+    def to_s
+      name
+    end
+
   end
 end

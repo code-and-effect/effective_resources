@@ -11,10 +11,12 @@ module Effective
       def _initialize_input_name(input)
         case input
         when String ; input
+        when Symbol ; input
         when Class  ; input.name
+        when ActiveRecord::Reflection::MacroReflection ; input.name
         when nil    ; raise 'expected a string or class'
         else        ; input.class.name
-        end.downcase
+        end.to_s.downcase
       end
 
       # Lazy initialized
