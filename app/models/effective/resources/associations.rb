@@ -3,9 +3,7 @@ module Effective
     module Associations
 
       def belongs_tos
-        # @belongs_tos ||= (
-        #   (class_name.constantize.reflect_on_all_associations(:belongs_to) rescue []).map { |a| a.foreign_key }
-        # )
+        @belongs_tos ||= klass.reflect_on_all_associations(:belongs_to)
       end
 
       def has_manys

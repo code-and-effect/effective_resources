@@ -9,24 +9,8 @@ module Effective
       # All attributes from the klass, sorted as per attributes block.
       # Does not include :id, :created_at, :updated_at
       def klass_attributes
-        return [] unless (klass rescue false)  # This class doesn't exist
-
-        begin
-          attributes = klass.new().attributes
-        rescue ActiveRecord::StatementInvalid => e
-          pending = ActiveRecord::Migrator.new(:up, ActiveRecord::Migrator.migrations(ActiveRecord::Migrator.migrations_paths)).pending_migrations.present?
-
-          if e.message.include?('PG::UndefinedTable') && pending
-            migrate = ask("Unable to read the attributes of #{class_name}. There are pending migrations. Run db:migrate now? [y/n]")
-            system('bundle exec rake db:migrate') if migrate.to_s.include?('y')
-          end
-        end
-
-        begin
-          attributes = klass.new().attributes
-        rescue => e
-          return []
-        end
+        attributes = (klass.new().attributes rescue nil)
+        return [] unless attributes
 
         attributes = (attributes.keys - [klass.primary_key, 'created_at', 'updated_at']).map do |att|
           if klass.respond_to?(:column_for_attribute) # Rails 4+
@@ -37,6 +21,10 @@ module Effective
         end
 
         sort(attributes)
+      end
+
+      def belongs_to_attributes
+        belongs_tos.map { |reference| Effective::Attribute.new(reference.foreign_key, :integer) }.sort
       end
 
       def written_attributes
