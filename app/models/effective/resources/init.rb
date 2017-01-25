@@ -25,6 +25,8 @@ module Effective
         @written_belong_tos = []
         @written_scopes = []
 
+        return unless File.exists?(model_file)
+
         Effective::CodeReader.new(model_file) do |reader|
           first = reader.index { |line| line == '# Attributes' }
           last = reader.index(from: first) { |line| line.start_with?('#') == false && line.length > 0 } if first

@@ -87,6 +87,15 @@ module Effective
 
     protected
 
+    def resource_redirect_path
+      case params[:commit].to_s
+      when 'Save'               ; send(effective_resource.edit_path, resource)
+      when 'Save and Continue'  ; send(effective_resource.index_path)
+      when 'Save and Add New'   ; send(effective_resource.new_path)
+      else send(effective_resource.show_path, resource)
+      end
+    end
+
     def resource # @thing
       instance_variable_get("@#{resource_name}")
     end
@@ -102,6 +111,8 @@ module Effective
     def resources=(instance)
       send(:instance_variable_set, "@#{resource_plural_name}", instance)
     end
+
+    private
 
     def resource_class # Thing
       effective_resource.klass
@@ -125,15 +136,6 @@ module Effective
 
     def resource_index_path
       effective_resource.index_path
-    end
-
-    def resource_redirect_path
-      case params[:commit].to_s
-      when 'Save'               ; send(effective_resource.edit_path, resource)
-      when 'Save and Continue'  ; send(effective_resource.index_path)
-      when 'Save and Add New'   ; send(effective_resource.new_path)
-      else send(effective_resource.show_path, resource)
-      end
     end
 
     private

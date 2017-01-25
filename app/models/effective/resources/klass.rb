@@ -3,7 +3,7 @@ module Effective
     module Klass
 
       def klass
-        namespaced_class_name.safe_constantize || class_name.safe_constantize || name.constantize
+        namespaced_class_name.safe_constantize || class_name.safe_constantize || name.safe_constantize
       end
 
       def datatable_klass
