@@ -10,12 +10,12 @@ module Effective
 
     def index
       @page_title ||= resource_plural_name.titleize
-      EffectiveResources.authorized?(self, :index, resource_class)
+      EffectiveResources.authorized?(self, :index, resource_class.new)
 
       self.resources ||= resource_class.all
 
       if resource_datatable_class
-        @datatable ||= resource_datatable_class.new(params[:scopes])
+        @datatable ||= resource_datatable_class.new(resource_datatable_attributes, params[:scopes])
       end
     end
 
@@ -114,10 +114,6 @@ module Effective
 
     private
 
-    def resource_class # Thing
-      effective_resource.klass
-    end
-
     def resource_name # 'thing'
       effective_resource.name
     end
@@ -126,12 +122,45 @@ module Effective
       effective_resource.plural_name
     end
 
+    # Scoped to resource_scope_method_name
+    def resource_class # Thing
+      @resource_class ||= (
+        if resource_scope_method_name.blank?
+          effective_resource.klass
+        else
+          case (resource_scope = send(resource_scope_method_name))
+          when Hash   ; effective_resource.klass.where(resource_scope)
+          when Symbol ; effective_resource.klass.send(resource_scope)
+          when nil    ; effective_resource.klass
+          else
+            raise "expected #{resource_scope_method_name} to return a Hash or Symbol"
+          end
+        end
+      )
+    end
+
+    def resource_datatable_attributes
+      return {} unless resource_scope_method_name.present?
+
+      case (resource_scope = send(resource_scope_method_name))
+      when Hash   ; resource_scope
+      when Symbol ; {resource_scope: true}
+      when nil    ; {}
+      else
+        raise "expected #{resource_scope_method_name} to return a Hash or Symbol"
+      end
+    end
+
     def resource_datatable_class # ThingsDatatable
       effective_resource.datatable_klass
     end
 
     def resource_params_method_name
       ["#{resource_name}_params", "#{resource_plural_name}_params", 'permitted_params'].find { |name| respond_to?(name, true) } || 'params'
+    end
+
+    def resource_scope_method_name
+      ["#{resource_name}_scope", "#{resource_plural_name}_scope", 'resource_scope', 'default_scope'].find { |name| respond_to?(name, true) }
     end
 
     def resource_index_path

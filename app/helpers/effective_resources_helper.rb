@@ -10,4 +10,10 @@ module EffectiveResourcesHelper
     end
   end
 
+  def simple_form_save(form)
+    content_tag(:p, class: 'text-right') do
+      form.button(:submit, 'Save', data: { disable_with: 'Saving...' })
+    end
+  end
+
 end

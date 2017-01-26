@@ -26,6 +26,12 @@ Add to your contoller:
 class PostsController < ApplicationController
   include Effective::CrudController
 
+  protected
+
+  def post_scope
+    {client_id: current_user.client_id} # Or a symbol
+  end
+
   def post_params
     params.require(:post).permit(:id, :title, :body)
   end
