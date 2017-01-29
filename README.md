@@ -6,8 +6,6 @@ Implements the 7 RESTful actions as a one-liner on any controller.
 
 ## Getting Started
 
-Add to your Gemfile:
-
 ```ruby
 gem 'effective_resources'
 ```
@@ -18,6 +16,14 @@ Run the bundle command to install it:
 bundle install
 ```
 
+Install the configuration file:
+
+```console
+rails generate effective_resources:install
+```
+
+The generator will install an initializer which describes all configuration options.
+
 ## Usage
 
 Add to your contoller:
@@ -25,6 +31,8 @@ Add to your contoller:
 ```ruby
 class PostsController < ApplicationController
   include Effective::CrudController
+
+  member_action :something
 
   protected
 
@@ -64,6 +72,18 @@ Call `simple_form_submit(f)` like follows:
 ```
 
 to render 3 submit buttons: `Save`, `Save and Continue`, and `Save and Add New`.
+
+### simple_form_save
+
+Call `simple_form_save(f)` like follows:
+
+```haml
+= simple_form_for(post) do |f|
+  ...
+  = simple_form_save(f)
+```
+
+to render just the `Save` button, with appropriate data-disable, title, etc.
 
 ## License
 

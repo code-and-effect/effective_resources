@@ -6,6 +6,16 @@ module Effective
     end
 
     module ClassMethods
+      # Add the following to your controller for a simple member action
+      # member_action :print
+      def member_action(action)
+        define_method(action) do
+          self.resource ||= resource_class.find(params[:id])
+
+          @page_title ||= resource.to_s
+          EffectiveResources.authorized?(self, action, resource)
+        end
+      end
     end
 
     def index
@@ -114,6 +124,10 @@ module Effective
 
     private
 
+    def effective_resource
+      @_effective_resource ||= Effective::Resource.new(controller_path)
+    end
+
     def resource_name # 'thing'
       effective_resource.name
     end
@@ -165,12 +179,6 @@ module Effective
 
     def resource_index_path
       effective_resource.index_path
-    end
-
-    private
-
-    def effective_resource
-      @_effective_resource ||= Effective::Resource.new(controller_path)
     end
 
   end
