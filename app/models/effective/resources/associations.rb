@@ -9,11 +9,9 @@ module Effective
       end
 
       def nested_resources
-        return {} unless klass.respond_to?(:reflect_on_all_autosave_associations)
+        return [] unless klass.respond_to?(:reflect_on_all_autosave_associations)
 
-        @nested ||= klass.reflect_on_all_autosave_associations.inject({}) do |hash, reference|
-          hash[reference] = Effective::Resource.new(reference); hash
-        end
+        @nested_resources ||= klass.reflect_on_all_autosave_associations.select { |reference| reference.macro == :has_many }
       end
 
       def has_manys
