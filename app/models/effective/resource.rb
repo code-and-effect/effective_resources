@@ -3,6 +3,7 @@ module Effective
     include Effective::Resources::Associations
     include Effective::Resources::Attributes
     include Effective::Resources::Init
+    include Effective::Resources::Instance
     include Effective::Resources::Klass
     include Effective::Resources::Naming
     include Effective::Resources::Paths

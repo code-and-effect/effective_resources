@@ -4,8 +4,9 @@ module Effective
 
       private
 
-      def _initialize(input)
-        @input_name = _initialize_input_name(input)
+      def _initialize(obj)
+        @input_name = _initialize_input_name(obj)
+        @instance = obj if (klass && obj.instance_of?(klass))
       end
 
       def _initialize_input_name(input)
@@ -13,10 +14,10 @@ module Effective
         when String ; input
         when Symbol ; input
         when Class  ; input.name
-        when ActiveRecord::Reflection::MacroReflection ; input.name
+        when (ActiveRecord::Reflection::MacroReflection rescue false); input.name
         when nil    ; raise 'expected a string or class'
         else        ; input.class.name
-        end.to_s.downcase
+        end.to_s.underscore
       end
 
       # Lazy initialized
