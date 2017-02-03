@@ -3,7 +3,11 @@ module Effective
     module Klass
 
       def klass
-        namespaced_class_name.safe_constantize || class_name.safe_constantize || name.safe_constantize || name.classify.safe_constantize
+        @model_klass ||= (
+          namespaced_class_name.safe_constantize ||
+          class_name.safe_constantize ||
+          name.classify.safe_constantize
+        )
       end
 
       def datatable_klass
@@ -15,6 +19,14 @@ module Effective
           "Effective::Datatables::#{class_name.pluralize.camelize}".safe_constantize ||
           "Effective::Datatables::#{name.pluralize.camelize}".safe_constantize
         end
+      end
+
+      def controller_klass
+        @controller_klass ||= (
+          "#{namespaced_class_name.pluralize}Controller".safe_constantize ||
+          "#{class_name.pluralize.classify}Controller".safe_constantize ||
+          "#{name.pluralize.classify}Controller".safe_constantize
+        )
       end
 
     end

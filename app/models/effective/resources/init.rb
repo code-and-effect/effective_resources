@@ -15,6 +15,7 @@ module Effective
         when Symbol ; input
         when Class  ; input.name
         when (ActiveRecord::Reflection::MacroReflection rescue false); input.name
+        when (ActionDispatch::Journey::Route rescue false); input.defaults[:controller]
         when nil    ; raise 'expected a string or class'
         else        ; input.class.name
         end.to_s.underscore
