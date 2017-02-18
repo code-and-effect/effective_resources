@@ -7,13 +7,16 @@ module Effective
       def _initialize(obj)
         @input_name = _initialize_input_name(obj)
         @instance = obj if (klass && obj.instance_of?(klass))
+        @relation = obj if (klass && obj.kind_of?(ActiveRecord::Relation))
       end
 
       def _initialize_input_name(input)
+
         case input
         when String ; input
         when Symbol ; input
         when Class  ; input.name
+        when (ActiveRecord::Relation rescue false); input.klass
         when (ActiveRecord::Reflection::MacroReflection rescue false); input.name
         when (ActionDispatch::Journey::Route rescue false); input.defaults[:controller]
         when nil    ; raise 'expected a string or class'

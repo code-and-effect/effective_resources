@@ -106,31 +106,18 @@ module Effective
         klass.primary_key
       end
 
-      def order_by_associated_conditions(name, sort: nil, direction: :asc)
-        association = associated(name)
-        resource = Effective::Resource.new(association)
+      def postgres?
+        return @postgres unless @postgres.nil?
+        @postgres ||= (klass.connection.kind_of?(ActiveRecord::ConnectionAdapters::PostgreSQLAdapter) rescue false)
+      end
 
-        key = nil
-        association_key = nil
+      def mysql?
+        return @mysql unless @mysql.nil?
+        @mysql ||= (klass.connection.kind_of?(ActiveRecord::ConnectionAdapters::Mysql2Adapter) rescue false)
+      end
 
-        case association.macro
-        when :belongs_to
-          key = sql_column(name)
-          association_key = resource.klass.primary_key
-        else
-          key = sql_column(klass.primary_key)
-          association_key = association.foreign_key
-        end
-
-        # If sort is nil/false/true we want to guess. Otherwise it's a symbol or string
-        sort_column = (sort unless sort == true) || resource.sort_column
-
-        scope = resource.klass.where(nil)
-        scope = scope.merge(association.scope) if association.scope
-
-        keys = scope.order("#{resource.sql_column(sort_column)} #{sql_direction(direction)}").pluck(association_key)
-
-        keys.uniq.map { |value| "#{key}=#{value} DESC" }.join(',')
+      def ilike
+        @ilike ||= (postgres? ? 'ILIKE' : 'LIKE')  # Only Postgres supports ILIKE, Mysql and Sqlite3 use LIKE
       end
 
       private

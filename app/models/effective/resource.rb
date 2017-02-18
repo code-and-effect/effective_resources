@@ -7,6 +7,7 @@ module Effective
     include Effective::Resources::Klass
     include Effective::Resources::Naming
     include Effective::Resources::Paths
+    include Effective::Resources::Relation
     include Effective::Resources::Sql
 
     # post, Post, Admin::Post, admin::Post, admin/posts, admin/post, admin/effective::post
