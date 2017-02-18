@@ -24,7 +24,7 @@ module Effective
           end
         end
 
-        sort(attributes)
+        sort_attributes(attributes)
       end
 
       def belong_tos_attributes
@@ -42,7 +42,7 @@ module Effective
 
       private
 
-      def sort(attributes)
+      def sort_attributes(attributes)
         attributes.sort do |a, b|
           index = nil
 

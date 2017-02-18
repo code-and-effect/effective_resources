@@ -30,6 +30,11 @@ module Effective
       def scopes
       end
 
+      def associated(name)
+        name = (name.to_s.end_with?('_id') ? name.to_s[0...-3] : name).to_sym
+        klass.reflect_on_all_associations.find { |ass| ass.name == name }
+      end
+
       def belongs_to(name)
         name = (name.to_s.end_with?('_id') ? name.to_s[0...-3] : name).to_sym
         belong_tos.find { |ass| ass.name == name }
