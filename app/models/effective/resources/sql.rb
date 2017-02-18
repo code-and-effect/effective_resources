@@ -99,7 +99,7 @@ module Effective
       # This tries to figure out the column we should order this collection by.
       # Whatever would match up with the .to_s
       def sort_column
-        ['name', 'title', 'label', 'subject', 'description', 'email'].each do |name|
+        ['name', 'title', 'label', 'first_name', 'subject', 'description', 'email'].each do |name|
           return name if column_names.include?(name)
         end
 
