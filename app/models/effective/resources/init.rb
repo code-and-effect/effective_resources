@@ -24,12 +24,14 @@ module Effective
       end
 
       def _initialize_relation(input)
+        return nil unless klass && klass.respond_to?(:where)
+
         case input
         when ActiveRecord::Relation
           input
         when ActiveRecord::Reflection::MacroReflection
-          input.scope
-        end || (klass.where(nil) if (klass && klass.respond_to?(:where)))
+          klass.where(nil).merge(input.scope) if input.scope
+        end || klass.where(nil)
       end
 
       # Lazy initialized

@@ -1,6 +1,6 @@
 module Effective
   class Attribute
-    attr_accessor :name, :type
+    attr_accessor :name, :type, :klass
 
     # This parses the written attributes
     def self.parse_written(input)
@@ -20,8 +20,8 @@ module Effective
 
     # We also use this class to do value parsing in Datatables.
     # In that case it will be initialized with just a 'name'
-    def initialize(obj, type = nil, options = {})
-      @options = options
+    def initialize(obj, type = nil, klass: nil)
+      @klass = klass
 
       if obj.present? && type.present?
         @name = obj.to_s
@@ -69,7 +69,7 @@ module Effective
       when :decimal
         (value.kind_of?(String) ? value.gsub(/[^0-9|\.]/, '') : value).to_f
       when :effective_obfuscation
-        value.to_s
+        klass.respond_to?(:deobfuscate) ? klass.deobfuscate(value) : value.to_s
       when :effective_roles
         EffectiveRoles.roles_for(value)
       when :integer
@@ -86,8 +86,14 @@ module Effective
         else
           digits = value.to_s.gsub(/[^0-9|,]/, '') # 87 or 87,254,300 or Skills
 
-          if digits == value
-            digits.index(',') ? digits.split(',').map { |str| str.to_i } : digits.to_i
+          if digits == value && digits.index(',').present?
+            if klass.respond_to?(:deobfuscate)
+              digits.split(',').map { |str| klass.deobfuscate(str) }
+            else
+              digits.split(',').map { |str| str.to_i }
+            end
+          elsif digits == value
+            klass.respond_to?(:deobfuscate) ? klass.deobfuscate(digits) : digits.to_i
           else
             value.to_s
           end

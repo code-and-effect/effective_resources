@@ -49,12 +49,10 @@ module Effective
         fuzzy = true unless fuzzy == false
 
         association = associated(name)
-        term = Effective::Attribute.new(sql_type).parse(value, name: name)
+        term = Effective::Attribute.new(sql_type, klass: association.try(:klass) || klass).parse(value, name: name)
 
         case sql_type
         when :belongs_to
-          binding.pry
-
           case term
           when Integer  ; relation.where("#{sql_column} = ?", term)
           when Array    ; relation.where("#{sql_column} IN (?)", term)
@@ -62,11 +60,12 @@ module Effective
           end
         when :belongs_to_polymorphic
         when :has_many
+          relation.where(*search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :has_and_belongs_to_many
         when :effective_address
         when :effective_obfuscation
-          deobfuscated_id = relation.deobfuscate(term)  # If deobfuscated_id == term, we couldn't deobfuscated it, so its invalid
-          relation.where("#{sql_column} = ?", (deobfuscated_id == term ? 0 : deobfuscated_id))
+          # If value == term, it's an invalid deobfuscated id
+          relation.where("#{sql_column} = ?", (value == term ? 0 : term))
         when :effective_roles
           relation.with_role(term)
         when :boolean
@@ -137,7 +136,16 @@ module Effective
           association_key = association.foreign_key
         end
 
-        keys = resource.search_any(value, fuzzy: fuzzy).pluck(association_key)
+        relation = (
+          case value
+          when Integer, Array
+            resource.relation.where(resource.klass.primary_key => value)
+          else
+            resource.search_any(value, fuzzy: fuzzy)
+          end
+        )
+
+        keys = relation.pluck(association_key)
 
         ["#{key} IN (?)", keys]
       end
@@ -160,7 +168,7 @@ module Effective
         # If sort is nil/false/true we want to guess. Otherwise it's a symbol or string
         sort_column = (sort unless sort == true) || resource.sort_column
 
-        keys = resource.order("#{resource.sql_column(sort_column)} #{sql_direction(direction)}").pluck(association_key)
+        keys = resource.relation.order("#{resource.sql_column(sort_column)} #{sql_direction(direction)}").pluck(association_key)
 
         keys.uniq.map { |value| "#{key}=#{value} DESC" }.join(',')
       end
