@@ -53,11 +53,7 @@ module Effective
 
         case sql_type
         when :belongs_to
-          case term
-          when Integer  ; relation.where("#{sql_column} = ?", term)
-          when Array    ; relation.where("#{sql_column} IN (?)", term)
-          when String   ; relation.where(*search_by_associated_conditions(association, term, fuzzy: fuzzy))
-          end
+          relation.where(*search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :belongs_to_polymorphic
         when :has_many
           relation.where(*search_by_associated_conditions(association, term, fuzzy: fuzzy))

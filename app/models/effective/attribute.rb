@@ -88,12 +88,12 @@ module Effective
 
           if digits == value && digits.index(',').present?
             if klass.respond_to?(:deobfuscate)
-              digits.split(',').map { |str| klass.deobfuscate(str) }
+              digits.split(',').map { |str| klass.deobfuscate(str).to_i }
             else
               digits.split(',').map { |str| str.to_i }
             end
           elsif digits == value
-            klass.respond_to?(:deobfuscate) ? klass.deobfuscate(digits) : digits.to_i
+            klass.respond_to?(:deobfuscate) ? klass.deobfuscate(digits).to_i : digits.to_i
           else
             value.to_s
           end
