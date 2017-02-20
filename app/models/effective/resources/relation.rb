@@ -143,9 +143,13 @@ module Effective
           end
         )
 
+        if association.options[:as] # polymorphic
+          relation = relation.where(association.type => klass.name)
+        end
+
         keys = relation.pluck(association_key)
 
-        "#{key} IN (#{keys.uniq.join(',')})"
+        "#{key} IN (#{(keys.uniq.presence || [0]).join(',')})"
       end
 
       def order_by_associated_conditions(association, sort: nil, direction: :asc)
@@ -166,7 +170,13 @@ module Effective
         # If sort is nil/false/true we want to guess. Otherwise it's a symbol or string
         sort_column = (sort unless sort == true) || resource.sort_column
 
-        keys = resource.relation.order("#{resource.sql_column(sort_column)} #{sql_direction(direction)}").pluck(association_key)
+        relation = resource.relation.order("#{resource.sql_column(sort_column)} #{sql_direction(direction)}")
+
+        if association.options[:as] # polymorphic
+          relation = relation.where(association.type => klass.name)
+        end
+
+        keys = relation.pluck(association_key)
 
         keys.uniq.map { |value| "#{key}=#{value} DESC" }.join(',')
       end
