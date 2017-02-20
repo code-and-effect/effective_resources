@@ -6,12 +6,11 @@ module Effective
 
       def _initialize(obj)
         @input_name = _initialize_input_name(obj)
+        @relation = _initialize_relation(obj)
         @instance = obj if (klass && obj.instance_of?(klass))
-        @relation = obj if (klass && obj.kind_of?(ActiveRecord::Relation))
       end
 
       def _initialize_input_name(input)
-
         case input
         when String ; input
         when Symbol ; input
@@ -22,6 +21,15 @@ module Effective
         when nil    ; raise 'expected a string or class'
         else        ; input.class.name
         end.to_s.underscore
+      end
+
+      def _initialize_relation(input)
+        case input
+        when ActiveRecord::Relation
+          input
+        when ActiveRecord::Reflection::MacroReflection
+          input.scope
+        end || (klass.where(nil) if (klass && klass.respond_to?(:where)))
       end
 
       # Lazy initialized

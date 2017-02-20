@@ -23,14 +23,14 @@ module Effective
         when :belongs_to
           relation
             .order(postgres? ? "#{sql_column} IS NULL ASC" : "ISNULL(#{sql_column}) ASC")
-            .order(order_by_associated(association, sort: sort, direction: direction))
+            .order(order_by_associated_conditions(association, sort: sort, direction: direction))
         when :belongs_to_polymorphic
           relation
             .order("#{sql_column.sub('_id', '_type')} #{sql_direction}")
             .order("#{sql_column} #{sql_direction}")
         when :has_many
           relation
-            .order(order_by_associated(association, sort: sort, direction: direction))
+            .order(order_by_associated_conditions(association, sort: sort, direction: direction))
             .order("#{sql_column(klass.primary_key)} #{sql_direction}")
         else
           raise 'unsupported association macro'
@@ -53,6 +53,13 @@ module Effective
 
         case sql_type
         when :belongs_to
+          binding.pry
+
+          case term
+          when Integer  ; relation.where("#{sql_column} = ?", term)
+          when Array    ; relation.where("#{sql_column} IN (?)", term)
+          when String   ; relation.where(*search_by_associated_conditions(association, term, fuzzy: fuzzy))
+          end
         when :belongs_to_polymorphic
         when :has_many
         when :has_and_belongs_to_many
@@ -96,9 +103,46 @@ module Effective
         end
       end
 
+      def search_any(value, columns: nil, fuzzy: nil)
+        raise 'expected relation to be present' unless relation
+
+        columns = Array(columns || search_columns)
+        fuzzy = true unless fuzzy == false
+
+        conditions = (
+          if fuzzy
+            columns.map { |name| "#{sql_column(name)} #{ilike} :fuzzy" }
+          else
+            columns.map { |name| "#{sql_column(name)} = :value" }
+          end
+        ).join(' OR ')
+
+        relation.where(conditions, fuzzy: "%#{value}%", value: value)
+      end
+
       private
 
-      def order_by_associated(association, sort: nil, direction: :asc)
+      def search_by_associated_conditions(association, value, fuzzy: nil)
+        resource = Effective::Resource.new(association)
+
+        key = nil
+        association_key = nil
+
+        case association.macro
+        when :belongs_to
+          key = sql_column(association.name)
+          association_key = resource.klass.primary_key
+        else
+          key = sql_column(klass.primary_key)
+          association_key = association.foreign_key
+        end
+
+        keys = resource.search_any(value, fuzzy: fuzzy).pluck(association_key)
+
+        ["#{key} IN (?)", keys]
+      end
+
+      def order_by_associated_conditions(association, sort: nil, direction: :asc)
         resource = Effective::Resource.new(association)
 
         key = nil
@@ -116,10 +160,7 @@ module Effective
         # If sort is nil/false/true we want to guess. Otherwise it's a symbol or string
         sort_column = (sort unless sort == true) || resource.sort_column
 
-        scope = resource.klass.where(nil)
-        scope = scope.merge(association.scope) if association.scope
-
-        keys = scope.order("#{resource.sql_column(sort_column)} #{sql_direction(direction)}").pluck(association_key)
+        keys = resource.order("#{resource.sql_column(sort_column)} #{sql_direction(direction)}").pluck(association_key)
 
         keys.uniq.map { |value| "#{key}=#{value} DESC" }.join(',')
       end

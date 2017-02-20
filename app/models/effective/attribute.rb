@@ -35,6 +35,7 @@ module Effective
         when :datetime  ; :datetime
         when :decimal   ; :decimal
         when :integer   ; :integer
+        when :price     ; :price
         when :nil       ; :nil
         when :string    ; :string
         when FalseClass ; :boolean
@@ -79,6 +80,20 @@ module Effective
         (value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\.]/, '').to_f * 100.0)).to_i
       when :string
         value.to_s
+      when :belongs_to, :has_many, :has_and_belongs_to_many, :has_one  # Returns an Array of ints, an Int or String
+        if value.kind_of?(Integer) || value.kind_of?(Array)
+          value
+        else
+          digits = value.to_s.gsub(/[^0-9|,]/, '') # 87 or 87,254,300 or Skills
+
+          if digits == value
+            digits.index(',') ? digits.split(',').map { |str| str.to_i } : digits.to_i
+          else
+            value.to_s
+          end
+        end
+      else
+        raise 'unsupported type'
       end
     end
 

@@ -106,6 +106,12 @@ module Effective
         klass.primary_key
       end
 
+      # Any string or text columns
+      # TODO: filter out _type columns for polymorphic
+      def search_columns
+        columns.map { |column| column.name if [:string, :text].include?(column.type) }.compact
+      end
+
       def postgres?
         return @postgres unless @postgres.nil?
         @postgres ||= (klass.connection.kind_of?(ActiveRecord::ConnectionAdapters::PostgreSQLAdapter) rescue false)
