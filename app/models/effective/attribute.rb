@@ -80,6 +80,8 @@ module Effective
         (value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\.]/, '').to_f * 100.0)).to_i
       when :string
         value.to_s
+      when :belongs_to_polymorphic
+        value.to_s
       when :belongs_to, :has_many, :has_and_belongs_to_many, :has_one  # Returns an Array of ints, an Int or String
         if value.kind_of?(Integer) || value.kind_of?(Array)
           value

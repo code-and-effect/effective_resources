@@ -55,9 +55,13 @@ module Effective
         when :belongs_to
           relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :belongs_to_polymorphic
+          (type, id) = term.split('_')
+          relation.where("#{sql_column} = ?", id).where("#{sql_column.sub('_id', '_type')} = ?", type)
         when :has_many
           relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :has_and_belongs_to_many
+        when :has_one
+          relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :effective_address
         when :effective_obfuscation
           # If value == term, it's an invalid deobfuscated id
@@ -86,9 +90,7 @@ module Effective
         when :price
           relation.where("#{sql_column} = ?", term)
         when :string, :text
-          if term == 'nil'
-            relation.where("#{sql_column} = ? OR #{sql_column} IS NULL", term)
-          elsif fuzzy
+          if fuzzy
             relation.where("#{sql_column} #{ilike} ?", "%#{term}%")
           else
             relation.where("#{sql_column} = ?", term)
