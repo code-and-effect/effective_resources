@@ -18,9 +18,9 @@ module Effective
 
         attributes = (attributes.keys - [klass.primary_key, 'created_at', 'updated_at'] - belong_tos.map { |reference| reference.foreign_key }).map do |att|
           if klass.respond_to?(:column_for_attribute) # Rails 4+
-            Effective::Attribute.new(att, klass.column_for_attribute(att).try(:type))
+            Effective::Attribute.new(att, klass.column_for_attribute(att).type)
           else
-            Effective::Attribute.new(att, klass.columns_hash[att].try(:type))
+            Effective::Attribute.new(att, klass.columns_hash[att].type)
           end
         end
 

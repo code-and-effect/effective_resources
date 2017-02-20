@@ -2,6 +2,10 @@ module Effective
   module Resources
     module Associations
 
+      def macros
+        [:belongs_to, :belongs_to_polymorphic, :has_many, :has_and_belongs_to_many, :has_one]
+      end
+
       def belong_tos
         return [] unless klass.respond_to?(:reflect_on_all_associations)
         @belong_tos ||= klass.reflect_on_all_associations(:belongs_to)
