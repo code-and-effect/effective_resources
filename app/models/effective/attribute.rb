@@ -63,17 +63,18 @@ module Effective
       when :boolean
         [true, 'true', 't', '1'].include?(value)
       when :date, :datetime
-        if name.to_s.start_with?('end_')
-          Time.zone.parse(value).end_of_day
-        else
-          Time.zone.parse(value)
-        end
+        date = Time.zone.local(*value.to_s.scan(/(\d+)/).flatten)
+        name.to_s.start_with?('end_') ? date.end_of_day : date
       when :decimal
-        value.to_f
+        (value.kind_of?(String) ? value.gsub(/[^0-9|\.]/, '') : value).to_f
+      when :effective_roles
+        EffectiveRoles.roles_for(value)
       when :integer
-        value.to_i
+        (value.kind_of?(String) ? value.gsub(/\D/, '') : value).to_i
       when :nil
         value.presence
+      when :price
+        (value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\.]/, '').to_f * 100.0)).to_i
       when :string
         value.to_s
       end

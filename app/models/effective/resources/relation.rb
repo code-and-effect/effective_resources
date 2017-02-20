@@ -37,22 +37,19 @@ module Effective
         end
       end
 
-      def search(name, value = :_no_value, parsed_value: :_no_value, as: nil, fuzzy: true, sql_column: nil)
+      def search(name, value, as: nil, fuzzy: true, sql_column: nil)
         raise 'expected relation to be present' unless relation
-        raise 'expected second argument to be a value or parsed_value: to be set' if value == :_no_value && parsed_value == :_no_value
 
-        if ['SUM(', 'COUNT(', 'MAX(', 'MIN(', 'AVG('].any? { |str| (sql_column || '').include?(str) }
+        if ['SUM(', 'COUNT(', 'MAX(', 'MIN(', 'AVG('].any? { |str| sql_column.to_s.include?(str) }
           return relation.having("#{sql_column} = ?", value)
         end
 
         sql_column ||= sql_column(name)
         sql_type = (as || sql_type(name))
         fuzzy = true unless fuzzy == false
-        value = (parsed_value == :_no_value ? Effective::Attribute.new(sql_type).parse(value, name: name) : parsed_value)
 
         association = associated(name)
-
-        binding.pry
+        term = Effective::Attribute.new(sql_type).parse(value, name: name)
 
         case sql_type
         when :belongs_to
@@ -62,17 +59,35 @@ module Effective
         when :effective_obfuscation
         when :effective_address
         when :effective_roles
+          relation.with_role(term)
         when :boolean
+          relation.where("#{sql_column} = ?", term)
         when :datetime, :date
+          end_at = (
+            case (value.to_s.scan(/(\d+)/).flatten).length
+            when 1 ; term.end_of_year     # Year
+            when 2 ; term.end_of_month    # Year-Month
+            when 3 ; term.end_of_day      # Year-Month-Day
+            when 4 ; term.end_of_hour     # Year-Month-Day Hour
+            when 5 ; term.end_of_minute   # Year-Month-Day Hour-Minute
+            when 6 ; term + 1.second      # Year-Month-Day Hour-Minute-Second
+            else term
+            end
+          )
+          relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
         when :decimal
+          relation.where("#{sql_column} = ?", term)
         when :integer
+          relation.where("#{sql_column} = ?", term)
+        when :price
+          relation.where("#{sql_column} = ?", term)
         when :string, :text
-          if value == 'null' || value == 'nil'
-            relation.where("#{sql_column} = ? OR #{sql_column} IS NULL", value)
+          if term == 'nil'
+            relation.where("#{sql_column} = ? OR #{sql_column} IS NULL", term)
           elsif fuzzy
-            relation.where("#{sql_column} #{ilike} ?", "%#{value}%")
+            relation.where("#{sql_column} #{ilike} ?", "%#{term}%")
           else
-            relation.where("#{sql_column} = ?", value)
+            relation.where("#{sql_column} = ?", term)
           end
         else
           raise 'unsupported sql type'
