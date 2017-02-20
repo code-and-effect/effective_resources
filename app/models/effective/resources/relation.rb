@@ -53,10 +53,10 @@ module Effective
 
         case sql_type
         when :belongs_to
-          relation.where(*search_by_associated_conditions(association, term, fuzzy: fuzzy))
+          relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :belongs_to_polymorphic
         when :has_many
-          relation.where(*search_by_associated_conditions(association, term, fuzzy: fuzzy))
+          relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :has_and_belongs_to_many
         when :effective_address
         when :effective_obfuscation
@@ -143,7 +143,7 @@ module Effective
 
         keys = relation.pluck(association_key)
 
-        ["#{key} IN (?)", keys]
+        "#{key} IN (#{keys.uniq.join(',')})"
       end
 
       def order_by_associated_conditions(association, sort: nil, direction: :asc)

@@ -28,7 +28,7 @@ module Effective
         @type = type.to_sym
       end
 
-      @type = (
+      @type ||= (
         case obj
         when :boolean   ; :boolean
         when :date      ; :date
@@ -84,7 +84,7 @@ module Effective
         if value.kind_of?(Integer) || value.kind_of?(Array)
           value
         else
-          digits = value.to_s.gsub(/[^0-9|,]/, '') # 87 or 87,254,300 or Skills
+          digits = value.to_s.gsub(/[^0-9|,]/, '') # '87' or '87,254,300' or 'something'
 
           if digits == value && digits.index(',').present?
             if klass.respond_to?(:deobfuscate)
