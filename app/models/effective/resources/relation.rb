@@ -56,8 +56,10 @@ module Effective
         when :belongs_to_polymorphic
         when :has_many
         when :has_and_belongs_to_many
-        when :effective_obfuscation
         when :effective_address
+        when :effective_obfuscation
+          deobfuscated_id = relation.deobfuscate(term)  # If deobfuscated_id == term, we couldn't deobfuscated it, so its invalid
+          relation.where("#{sql_column} = ?", (deobfuscated_id == term ? 0 : deobfuscated_id))
         when :effective_roles
           relation.with_role(term)
         when :boolean

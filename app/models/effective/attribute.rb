@@ -67,6 +67,8 @@ module Effective
         name.to_s.start_with?('end_') ? date.end_of_day : date
       when :decimal
         (value.kind_of?(String) ? value.gsub(/[^0-9|\.]/, '') : value).to_f
+      when :effective_obfuscation
+        value.to_s
       when :effective_roles
         EffectiveRoles.roles_for(value)
       when :integer
