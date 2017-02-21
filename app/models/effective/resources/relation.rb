@@ -32,7 +32,7 @@ module Effective
             .order(order_by_associated_conditions(association, sort: sort, direction: direction))
             .order("#{sql_column(klass.primary_key)} #{sql_direction}")
         when :effective_roles
-          relation.order("#{sql_column('roles_mask')} #{sql_direction}")
+          relation.order("#{sql_column(:roles_mask)} #{sql_direction}")
         else
           relation.order("#{sql_column} #{sql_direction}")
         end
