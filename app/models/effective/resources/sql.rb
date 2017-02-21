@@ -20,8 +20,6 @@ module Effective
       end
 
       def max_id
-        binding.pry
-
         @max_id ||= klass.maximum(klass.primary_key).to_i
       end
 

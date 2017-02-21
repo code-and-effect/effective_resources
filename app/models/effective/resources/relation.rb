@@ -122,6 +122,14 @@ module Effective
       def search_by_associated_conditions(association, value, fuzzy: nil)
         resource = Effective::Resource.new(association)
 
+        if association.through_reflection.present?
+          keys = association.through_reflection.klass
+            .where(association.source_reflection.foreign_key => value)
+            .pluck(association.through_reflection.foreign_key)
+
+          return "#{sql_column(klass.primary_key)} IN (#{(keys.uniq.presence || [0]).join(',')})"
+        end
+
         key = nil
         association_key = nil
 

@@ -16,7 +16,6 @@ module Effective
         when Symbol ; input
         when Class  ; input.name
         when ActiveRecord::Relation ; input.klass
-        when ActiveRecord::Reflection::MacroReflection ; input.name
         when ActiveRecord::Reflection::AbstractReflection ; input.name
         when ActionDispatch::Journey::Route ; input.defaults[:controller]
         when nil    ; raise 'expected a string or class'
@@ -30,7 +29,7 @@ module Effective
         case input
         when ActiveRecord::Relation
           input
-        when ActiveRecord::Reflection::MacroReflection
+        when ActiveRecord::Reflection::AbstractReflection
           klass.where(nil).merge(input.scope) if input.scope
         end || klass.where(nil)
       end

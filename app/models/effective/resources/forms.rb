@@ -38,7 +38,7 @@ module Effective
 
       private
 
-      def associated_search_collection(association, max_id = 1500)
+      def associated_search_collection(association, max_id = 1000)
         res = Effective::Resource.new(association)
 
         if res.max_id > max_id
