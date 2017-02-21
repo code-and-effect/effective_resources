@@ -60,9 +60,10 @@ module Effective
         when :has_many
           relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :has_and_belongs_to_many
+          relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :has_one
           relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
-        when :effective_address
+        when :effective_addresses
         when :effective_obfuscation
           # If value == term, it's an invalid deobfuscated id
           relation.where("#{sql_column} = ?", (value == term ? 0 : term))
@@ -103,6 +104,12 @@ module Effective
       def search_any(value, columns: nil, fuzzy: nil)
         raise 'expected relation to be present' unless relation
 
+        # Assume this is a set of IDs
+        if value.kind_of?(Integer) || value.kind_of?(Array)
+          return relation.where(klass.primary_key => value)
+        end
+
+        # Otherwise, we fall back to a string/text search of all columns
         columns = Array(columns || search_columns)
         fuzzy = true unless fuzzy == false
 
@@ -122,40 +129,40 @@ module Effective
       def search_by_associated_conditions(association, value, fuzzy: nil)
         resource = Effective::Resource.new(association)
 
-        if association.through_reflection.present?
-          keys = association.through_reflection.klass
-            .where(association.source_reflection.foreign_key => value)
-            .pluck(association.through_reflection.foreign_key)
-
-          return "#{sql_column(klass.primary_key)} IN (#{(keys.uniq.presence || [0]).join(',')})"
-        end
-
-        key = nil
-        association_key = nil
-
-        case association.macro
-        when :belongs_to
-          key = sql_column(association.name)
-          association_key = resource.klass.primary_key
-        else
-          key = sql_column(klass.primary_key)
-          association_key = association.foreign_key
-        end
-
-        relation = (
-          case value
-          when Integer, Array
-            resource.relation.where(resource.klass.primary_key => value)
-          else
-            resource.search_any(value, fuzzy: fuzzy)
-          end
-        )
+        # Search the target model for its matching records / keys
+        relation = resource.search_any(value, fuzzy: fuzzy)
 
         if association.options[:as] # polymorphic
           relation = relation.where(association.type => klass.name)
         end
 
-        keys = relation.pluck(association_key)
+        # key: the id, or associated_id on my table
+        # keys: the ids themselves as per the target table
+
+        if association.macro == :belongs_to
+          key = sql_column(association.foreign_key)
+          keys = relation.pluck(association.klass.primary_key)
+        elsif association.macro == :has_and_belongs_to_many
+          key = sql_column(klass.primary_key)
+          values = relation.pluck(association.source_reflection.klass.primary_key) # The searched keys
+
+          keys = klass.joins(association.name)
+            .where(association.name => { association.source_reflection.klass.primary_key => values })
+            .pluck(klass.primary_key)
+        elsif association.macro == :has_many && association.options[:through].present?
+          key = sql_column(klass.primary_key)
+          values = relation.pluck(association.source_reflection.klass.primary_key) # The searched keys
+
+          keys = association.through_reflection.klass
+            .where(association.source_reflection.foreign_key => values)
+            .pluck(association.through_reflection.foreign_key)
+        elsif association.macro == :has_many
+          key = sql_column(klass.primary_key)
+          keys = relation.pluck(association.foreign_key)
+        elsif association.macro == :has_one
+          key = sql_column(klass.primary_key)
+          keys = relation.pluck(association.foreign_key)
+        end
 
         "#{key} IN (#{(keys.uniq.presence || [0]).join(',')})"
       end
