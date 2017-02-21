@@ -28,6 +28,10 @@ module Effective
           relation
             .order("#{sql_column.sub('_id', '_type')} #{sql_direction}")
             .order("#{sql_column} #{sql_direction}")
+        when :has_and_belongs_to_many
+          relation
+            .order(order_by_associated_conditions(association, sort: sort, direction: direction))
+            .order("#{sql_column(klass.primary_key)} #{sql_direction}")
         when :has_many
           relation
             .order(order_by_associated_conditions(association, sort: sort, direction: direction))
@@ -52,17 +56,11 @@ module Effective
         term = Effective::Attribute.new(sql_type, klass: association.try(:klass) || klass).parse(value, name: name)
 
         case sql_type
-        when :belongs_to
+        when :belongs_to, :has_many, :has_and_belongs_to_many, :has_one
           relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :belongs_to_polymorphic
           (type, id) = term.split('_')
           relation.where("#{sql_column} = ?", id).where("#{sql_column.sub('_id', '_type')} = ?", type)
-        when :has_many
-          relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
-        when :has_and_belongs_to_many
-          relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
-        when :has_one
-          relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :effective_addresses
         when :effective_obfuscation
           # If value == term, it's an invalid deobfuscated id
@@ -144,14 +142,14 @@ module Effective
           keys = relation.pluck(association.klass.primary_key)
         elsif association.macro == :has_and_belongs_to_many
           key = sql_column(klass.primary_key)
-          values = relation.pluck(association.source_reflection.klass.primary_key) # The searched keys
+          values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact
 
           keys = klass.joins(association.name)
             .where(association.name => { association.source_reflection.klass.primary_key => values })
             .pluck(klass.primary_key)
         elsif association.macro == :has_many && association.options[:through].present?
           key = sql_column(klass.primary_key)
-          values = relation.pluck(association.source_reflection.klass.primary_key) # The searched keys
+          values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact
 
           keys = association.through_reflection.klass
             .where(association.source_reflection.foreign_key => values)
@@ -164,25 +162,13 @@ module Effective
           keys = relation.pluck(association.foreign_key)
         end
 
-        "#{key} IN (#{(keys.uniq.presence || [0]).join(',')})"
+        "#{key} IN (#{(keys.uniq.compact.presence || [0]).join(',')})"
       end
 
       def order_by_associated_conditions(association, sort: nil, direction: :asc)
         resource = Effective::Resource.new(association)
 
-        key = nil
-        association_key = nil
-
-        case association.macro
-        when :belongs_to
-          key = sql_column(association.name)
-          association_key = resource.klass.primary_key
-        else
-          key = sql_column(klass.primary_key)
-          association_key = association.foreign_key
-        end
-
-        # If sort is nil/false/true we want to guess. Otherwise it's a symbol or string
+        # Order the target model for its matching records / keys
         sort_column = (sort unless sort == true) || resource.sort_column
 
         relation = resource.relation.order("#{resource.sql_column(sort_column)} #{sql_direction(direction)}")
@@ -191,9 +177,39 @@ module Effective
           relation = relation.where(association.type => klass.name)
         end
 
-        keys = relation.pluck(association_key)
+        # key: the id, or associated_id on my table
+        # keys: the ids themselves as per the target table
 
-        keys.uniq.map { |value| "#{key}=#{value} DESC" }.join(',')
+        if association.macro == :belongs_to
+          key = sql_column(association.foreign_key)
+          keys = relation.pluck(association.klass.primary_key)
+        elsif association.macro == :has_and_belongs_to_many
+          key = sql_column(klass.primary_key)
+
+          source = "#{association.join_table}.#{association.source_reflection.association_foreign_key}"
+          values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact # The searched keys
+
+          keys = klass.joins(association.name)
+            .order(values.uniq.compact.map { |value| "#{source}=#{value} DESC" }.join(','))
+            .pluck(klass.primary_key)
+        elsif association.macro == :has_many && association.options[:through].present?
+          key = sql_column(klass.primary_key)
+
+          source = association.source_reflection.foreign_key
+          values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact # The searched keys
+
+          keys = association.through_reflection.klass
+            .order(values.uniq.compact.map { |value| "#{source}=#{value} DESC" }.join(','))
+            .pluck(association.through_reflection.foreign_key)
+        elsif association.macro == :has_many
+          key = sql_column(klass.primary_key)
+          keys = relation.pluck(association.foreign_key)
+        elsif association.macro == :has_one
+          key = sql_column(klass.primary_key)
+          keys = relation.pluck(association.foreign_key)
+        end
+
+        keys.uniq.compact.map { |value| "#{key}=#{value} DESC" }.join(',')
       end
 
     end
