@@ -9,27 +9,32 @@ module Effective
       # name: sort by this column, or this relation
       # sort: when a symbol or boolean, this is the relation's column to sort by
 
-      def order(name, direction: :asc, sort: nil, sql_column: nil)
+      def order(name, direction = :asc, as: nil, sort: nil, sql_column: nil)
         raise 'expected relation to be present' unless relation
 
         sql_column ||= sql_column(name)
-        sql_direction = sql_direction(direction)
+        sql_type = (as || sql_type(name))
 
         association = associated(name)
+        sql_direction = sql_direction(direction)
 
-        case association.try(:macro)
-        when nil
-          relation.order("#{sql_column} #{sql_direction}")
+        case sql_type
         when :belongs_to
           relation
             .order(postgres? ? "#{sql_column} IS NULL ASC" : "ISNULL(#{sql_column}) ASC")
             .order(order_by_associated_conditions(association, sort: sort, direction: direction))
+        when :belongs_to_polymorphic
+          relation
+            .order("#{sql_column.sub('_id', '_type')} #{sql_direction}")
+            .order("#{sql_column} #{sql_direction}")
         when :has_and_belongs_to_many, :has_many, :has_one
           relation
             .order(order_by_associated_conditions(association, sort: sort, direction: direction))
             .order("#{sql_column(klass.primary_key)} #{sql_direction}")
+        when :effective_roles
+          relation.order("#{sql_column('roles_mask')} #{sql_direction}")
         else
-          raise 'unsupported association macro'
+          relation.order("#{sql_column} #{sql_direction}")
         end
       end
 
@@ -54,6 +59,7 @@ module Effective
           (type, id) = term.split('_')
           relation.where("#{sql_column} = ?", id).where("#{sql_column.sub('_id', '_type')} = ?", type)
         when :effective_addresses
+          raise 'not yet implemented'
         when :effective_obfuscation
           # If value == term, it's an invalid deobfuscated id
           relation.where("#{sql_column} = ?", (value == term ? 0 : term))
