@@ -15,9 +15,10 @@ module Effective
         when String ; input
         when Symbol ; input
         when Class  ; input.name
-        when (ActiveRecord::Relation rescue false); input.klass
-        when (ActiveRecord::Reflection::MacroReflection rescue false); input.name
-        when (ActionDispatch::Journey::Route rescue false); input.defaults[:controller]
+        when ActiveRecord::Relation ; input.klass
+        when ActiveRecord::Reflection::MacroReflection ; input.name
+        when ActiveRecord::Reflection::AbstractReflection ; input.name
+        when ActionDispatch::Journey::Route ; input.defaults[:controller]
         when nil    ; raise 'expected a string or class'
         else        ; input.class.name
         end.to_s.underscore

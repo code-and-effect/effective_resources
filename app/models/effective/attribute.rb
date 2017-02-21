@@ -50,7 +50,7 @@ module Effective
         when :has_many                    ; :has_many
         when :has_and_belongs_to_many     ; :has_and_belongs_to_many
         when :has_one                     ; :has_one
-        when :effective_address           ; :effective_address
+        when :effective_addresses         ; :effective_addresses
         when :effective_obfuscation       ; :effective_obfuscation
         when :effective_roles             ; :effective_roles
         else
