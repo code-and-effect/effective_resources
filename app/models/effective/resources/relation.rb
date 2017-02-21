@@ -24,15 +24,7 @@ module Effective
           relation
             .order(postgres? ? "#{sql_column} IS NULL ASC" : "ISNULL(#{sql_column}) ASC")
             .order(order_by_associated_conditions(association, sort: sort, direction: direction))
-        when :belongs_to_polymorphic
-          relation
-            .order("#{sql_column.sub('_id', '_type')} #{sql_direction}")
-            .order("#{sql_column} #{sql_direction}")
-        when :has_and_belongs_to_many
-          relation
-            .order(order_by_associated_conditions(association, sort: sort, direction: direction))
-            .order("#{sql_column(klass.primary_key)} #{sql_direction}")
-        when :has_many
+        when :has_and_belongs_to_many, :has_many, :has_one
           relation
             .order(order_by_associated_conditions(association, sort: sort, direction: direction))
             .order("#{sql_column(klass.primary_key)} #{sql_direction}")
@@ -44,19 +36,19 @@ module Effective
       def search(name, value, as: nil, fuzzy: true, sql_column: nil)
         raise 'expected relation to be present' unless relation
 
-        if ['SUM(', 'COUNT(', 'MAX(', 'MIN(', 'AVG('].any? { |str| sql_column.to_s.include?(str) }
-          return relation.having("#{sql_column} = ?", value)
-        end
-
         sql_column ||= sql_column(name)
         sql_type = (as || sql_type(name))
         fuzzy = true unless fuzzy == false
+
+        if ['SUM(', 'COUNT(', 'MAX(', 'MIN(', 'AVG('].any? { |str| sql_column.to_s.include?(str) }
+          return relation.having("#{sql_column} = ?", value)
+        end
 
         association = associated(name)
         term = Effective::Attribute.new(sql_type, klass: association.try(:klass) || klass).parse(value, name: name)
 
         case sql_type
-        when :belongs_to, :has_many, :has_and_belongs_to_many, :has_one
+        when :belongs_to, :has_and_belongs_to_many, :has_many, :has_one
           relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :belongs_to_polymorphic
           (type, id) = term.split('_')
