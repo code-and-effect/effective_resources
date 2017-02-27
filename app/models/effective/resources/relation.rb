@@ -34,7 +34,8 @@ module Effective
         when :effective_roles
           relation.order("#{sql_column(:roles_mask)} #{sql_direction}")
         else
-          relation.order("#{sql_column} #{sql_direction}")
+          relation
+            .order("#{sql_column} #{sql_direction}")
         end
       end
 
