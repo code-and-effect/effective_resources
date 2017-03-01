@@ -8,10 +8,6 @@ module Effective
 
       if (scanned = input.scan(/^\W*(\w+)\W*:(\w+)/).first).present?
         new(*scanned)
-      elsif input.start_with?('#')
-        new(nil)
-      else
-        new(input)
       end
     end
 

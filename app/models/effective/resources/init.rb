@@ -52,6 +52,7 @@ module Effective
 
           if first && last
             @written_attributes = reader.select(from: first+1, to: last-1).map do |line|
+
               Effective::Attribute.parse_written(line).presence
             end.compact
           end
