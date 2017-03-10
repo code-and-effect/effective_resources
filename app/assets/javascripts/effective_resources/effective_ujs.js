@@ -35,10 +35,10 @@
         formGroup.find('abbr').remove();
         input.parent().find('abbr').remove();
 
-        if(input.parent().is('label')) {
+        if(input.parent().is('label') && input.parent().parent().hasClass('radio') == false) {
           input.after("<abbr title='required'>*</abbr> ");
         } else if(formGroup.length > 0) {
-          formGroup.find('label').prepend("<abbr title='required'>*</abbr> ");
+          formGroup.find('label').first().prepend("<abbr title='required'>*</abbr> ");
         } else {
           input.parent().find('label').prepend("<abbr title='required'>*</abbr> ");
         }

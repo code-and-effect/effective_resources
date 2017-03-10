@@ -32,7 +32,7 @@ module Effective
       end
 
       def human_name
-        class_name.gsub('::', ' ')
+        class_name.gsub('::', ' ').underscore.gsub('_', ' ')
       end
 
     end

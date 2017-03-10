@@ -43,10 +43,10 @@ module Effective
       EffectiveResources.authorized?(self, :create, resource)
 
       if resource.save
-        flash[:success] = "Successfully created #{resource_name}"
+        flash[:success] = "Successfully created #{resource_human_name}"
         redirect_to(resource_redirect_path)
       else
-        flash.now[:danger] = "Unable to create #{resource_name}: #{resource.errors.full_messages.to_sentence}"
+        flash.now[:danger] = "Unable to create #{resource_human_name}: #{resource.errors.full_messages.to_sentence}"
         render :new
       end
     end
@@ -72,10 +72,10 @@ module Effective
       EffectiveResources.authorized?(self, :update, resource)
 
       if resource.update_attributes(send(resource_params_method_name))
-        flash[:success] = "Successfully updated #{resource_name}"
+        flash[:success] = "Successfully updated #{resource_human_name}"
         redirect_to(resource_redirect_path)
       else
-        flash.now[:danger] = "Unable to update #{resource_name}: #{resource.errors.full_messages.to_sentence}"
+        flash.now[:danger] = "Unable to update #{resource_human_name}: #{resource.errors.full_messages.to_sentence}"
         render :edit
       end
     end
@@ -87,9 +87,9 @@ module Effective
       EffectiveResources.authorized?(self, :destroy, resource)
 
       if resource.destroy
-        flash[:success] = "Successfully deleted #{resource_name}"
+        flash[:success] = "Successfully deleted #{resource_human_name}"
       else
-        flash[:danger] = "Unable to delete #{resource_name}: #{resource.errors.full_messages.to_sentence}"
+        flash[:danger] = "Unable to delete #{resource_human_name}: #{resource.errors.full_messages.to_sentence}"
       end
 
       request.referer.present? ? redirect_to(request.referer) : redirect_to(send(resource_index_path))
@@ -130,6 +130,10 @@ module Effective
 
     def resource_name # 'thing'
       effective_resource.name
+    end
+
+    def resource_human_name
+      effective_resource.human_name
     end
 
     def resource_plural_name # 'things'
