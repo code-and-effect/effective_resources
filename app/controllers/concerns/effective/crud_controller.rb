@@ -25,7 +25,7 @@ module Effective
       self.resources ||= resource_class.all
 
       if resource_datatable_class
-        @datatable ||= resource_datatable_class.new(resource_datatable_attributes, params[:scopes])
+        @datatable ||= resource_datatable_class.new(self, resource_datatable_attributes)
       end
     end
 

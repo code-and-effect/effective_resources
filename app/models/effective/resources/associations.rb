@@ -61,7 +61,7 @@ module Effective
 
       def has_one(name)
         name = name.to_sym
-        has_ones.find { |ho| ass.name == name }
+        has_ones.find { |ass| ass.name == name }
       end
 
       def nested_resource(name)

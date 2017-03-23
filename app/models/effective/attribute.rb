@@ -26,20 +26,24 @@ module Effective
 
       @type ||= (
         case obj
-        when :boolean   ; :boolean
-        when :date      ; :date
-        when :datetime  ; :datetime
-        when :decimal   ; :decimal
-        when :integer   ; :integer
-        when :price     ; :price
-        when :nil       ; :nil
-        when :string    ; :string
-        when FalseClass ; :boolean
-        when Fixnum     ; :integer
-        when Float      ; :decimal
-        when NilClass   ; :nil
-        when String     ; :string
-        when TrueClass  ; :boolean
+        when :boolean     ; :boolean
+        when :currency    ; :currency
+        when :date        ; :date
+        when :datetime    ; :datetime
+        when :decimal     ; :decimal
+        when :duration    ; :duration
+        when :integer     ; :integer
+        when :percentage  ; :percentage
+        when :price       ; :price
+        when :nil         ; :nil
+        when :string      ; :string
+        when :text        ; :text
+        when FalseClass   ; :boolean
+        when Fixnum       ; :integer
+        when Float        ; :decimal
+        when NilClass     ; :nil
+        when String       ; :string
+        when TrueClass    ; :boolean
         when ActiveSupport::TimeWithZone  ; :datetime
         when :belongs_to                  ; :belongs_to
         when :belongs_to_polymorphic      ; :belongs_to_polymorphic
@@ -50,7 +54,7 @@ module Effective
         when :effective_obfuscation       ; :effective_obfuscation
         when :effective_roles             ; :effective_roles
         else
-          raise 'unsupported type'
+          raise "unsupported type for #{obj}"
         end
       )
     end
@@ -62,19 +66,26 @@ module Effective
       when :date, :datetime
         date = Time.zone.local(*value.to_s.scan(/(\d+)/).flatten)
         name.to_s.start_with?('end_') ? date.end_of_day : date
-      when :decimal
-        (value.kind_of?(String) ? value.gsub(/[^0-9|\.]/, '') : value).to_f
+      when :decimal, :currency
+        (value.kind_of?(String) ? value.gsub(/[^0-9|\-|\.]/, '') : value).to_f
+      when :duration
+        if value.to_s.include?('h')
+          (hours, minutes) = (value.to_s.gsub(/[^0-9|\-|h]/, '').split('h'))
+          (hours.to_i * 60) + ((hours.to_i < 0) ? -(minutes.to_i) : minutes.to_i)
+        else
+          value.to_s.gsub(/[^0-9|\-|h]/, '').to_i
+        end
       when :effective_obfuscation
         klass.respond_to?(:deobfuscate) ? klass.deobfuscate(value) : value.to_s
       when :effective_roles
         EffectiveRoles.roles_for(value)
-      when :integer
+      when :integer, :percentage
         (value.kind_of?(String) ? value.gsub(/\D/, '') : value).to_i
       when :nil
         value.presence
       when :price
-        (value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\.]/, '').to_f * 100.0)).to_i
-      when :string
+        (value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f * 100.0)).to_i
+      when :string, :text
         value.to_s
       when :belongs_to_polymorphic
         value.to_s

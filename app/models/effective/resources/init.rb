@@ -12,7 +12,7 @@ module Effective
 
       def _initialize_input_name(input)
         case input
-        when String ; input
+        when String ; input.start_with?('/') ? input[1..-1] : input
         when Symbol ; input
         when Class  ; input.name
         when ActiveRecord::Relation

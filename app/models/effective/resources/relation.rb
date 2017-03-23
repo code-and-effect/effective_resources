@@ -33,9 +33,12 @@ module Effective
             .order("#{sql_column(klass.primary_key)} #{sql_direction}")
         when :effective_roles
           relation.order("#{sql_column(:roles_mask)} #{sql_direction}")
+        when :string, :text
+          relation
+            .order((("ISNULL(#{sql_column}}), ") if mysql?).to_s + "#{sql_column}='' ASC, #{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?))
         else
           relation
-            .order("#{sql_column} #{sql_direction}")
+            .order((("ISNULL(#{sql_column}}), ") if mysql?).to_s + "#{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?))
         end
       end
 
@@ -82,8 +85,28 @@ module Effective
           )
           relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
         when :decimal
-          relation.where("#{sql_column} = ?", term)
+          if fuzzy && (term.round(0) == term) && value.to_s.include?('.') == false
+            if term < 0
+              relation.where("#{sql_column} <= ? AND #{sql_column} > ?", term, term-1.0)
+            else
+              relation.where("#{sql_column} >= ? AND #{sql_column} < ?", term, term+1.0)
+            end
+          else
+            relation.where("#{sql_column} = ?", term)
+          end
+        when :duration
+          if fuzzy && (term % 60) == 0 && value.to_s.include?('m') == false
+            if term < 0
+              relation.where("#{sql_column} <= ? AND #{sql_column} > ?", term, term-60)
+            else
+              relation.where("#{sql_column} >= ? AND #{sql_column} < ?", term, term+60)
+            end
+          else
+            relation.where("#{sql_column} = ?", term)
+          end
         when :integer
+          relation.where("#{sql_column} = ?", term)
+        when :percentage
           relation.where("#{sql_column} = ?", term)
         when :price
           relation.where("#{sql_column} = ?", term)
