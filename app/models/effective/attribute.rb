@@ -97,14 +97,12 @@ module Effective
         else
           digits = value.to_s.gsub(/[^0-9|,]/, '') # '87' or '87,254,300' or 'something'
 
-          if digits == value && digits.index(',').present?
+          if digits == value || digits.length == 10
             if klass.respond_to?(:deobfuscate)
               digits.split(',').map { |str| klass.deobfuscate(str).to_i }
             else
               digits.split(',').map { |str| str.to_i }
             end
-          elsif digits == value
-            klass.respond_to?(:deobfuscate) ? klass.deobfuscate(digits).to_i : digits.to_i
           else
             value.to_s
           end
