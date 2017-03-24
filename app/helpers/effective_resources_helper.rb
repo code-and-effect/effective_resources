@@ -24,7 +24,8 @@ module EffectiveResourcesHelper
     [
       ('-' if duration < 0),
       ("#{value / 60}h " if value >= 60),
-      "#{'%0.2d' % (value % 60)}m"
+      ("#{'%0.2d' % (value % 60)}m" if value > 0),
+      ('0m' if value == 0),
     ].compact.join
   end
 

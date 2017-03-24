@@ -29,6 +29,10 @@ module Effective
         )
       end
 
+      def active_record?
+        klass.ancestors.include?(ActiveRecord::Base)
+      end
+
     end
   end
 end

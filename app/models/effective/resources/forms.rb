@@ -6,15 +6,15 @@ module Effective
       def search_form_field(name, type = nil)
         case (type || sql_type(name))
         when :belongs_to
-          { as: :select }.merge(associated_search_collection(belongs_to(name)))
+          { as: :select }.merge(search_form_field_collection(belongs_to(name)))
         when :belongs_to_polymorphic
           { as: :grouped_select, polymorphic: true, collection: nil}
         when :has_and_belongs_to_many
-          { as: :select }.merge(associated_search_collection(has_and_belongs_to_many(name)))
+          { as: :select }.merge(search_form_field_collection(has_and_belongs_to_many(name)))
         when :has_many
-          { as: :select, multiple: true }.merge(associated_search_collection(has_many(name)))
+          { as: :select, multiple: true }.merge(search_form_field_collection(has_many(name)))
         when :has_one
-          { as: :select, multiple: true }.merge(associated_search_collection(has_one(name)))
+          { as: :select, multiple: true }.merge(search_form_field_collection(has_one(name)))
         when :effective_addresses
           { as: :string }
         when :effective_roles
@@ -31,15 +31,15 @@ module Effective
           { as: :number }
         when :text
           { as: :text }
+        when ActiveRecord::Base
+          { as: :select }.merge(Effective::Resource.new(type).search_form_field_collection)
         else
           { as: :string }
         end
       end
 
-      private
-
-      def associated_search_collection(association, max_id = 1000)
-        res = Effective::Resource.new(association)
+      def search_form_field_collection(association = nil, max_id = 1000)
+        res = (association.nil? ? self : Effective::Resource.new(association))
 
         if res.max_id > max_id
           { as: :string }
