@@ -36,6 +36,7 @@ module Effective
         when :percentage  ; :percentage
         when :price       ; :price
         when :nil         ; :nil
+        when :resource    ; :resource
         when :string      ; :string
         when :text        ; :text
         when FalseClass   ; :boolean
@@ -45,6 +46,7 @@ module Effective
         when String       ; :string
         when TrueClass    ; :boolean
         when ActiveSupport::TimeWithZone  ; :datetime
+        when ActiveRecord::Base           ; :resource
         when :belongs_to                  ; :belongs_to
         when :belongs_to_polymorphic      ; :belongs_to_polymorphic
         when :has_many                    ; :has_many
@@ -89,7 +91,7 @@ module Effective
         value.to_s
       when :belongs_to_polymorphic
         value.to_s
-      when :belongs_to, :has_many, :has_and_belongs_to_many, :has_one  # Returns an Array of ints, an Int or String
+      when :belongs_to, :has_many, :has_and_belongs_to_many, :has_one, :resource  # Returns an Array of ints, an Int or String
         if value.kind_of?(Integer) || value.kind_of?(Array)
           value
         else

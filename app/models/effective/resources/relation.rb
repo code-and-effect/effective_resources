@@ -84,7 +84,7 @@ module Effective
             end
           )
           relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
-        when :decimal
+        when :decimal, :currency
           if fuzzy && (term.round(0) == term) && value.to_s.include?('.') == false
             if term < 0
               relation.where("#{sql_column} <= ? AND #{sql_column} > ?", term, term-1.0)
@@ -125,7 +125,7 @@ module Effective
         raise 'expected relation to be present' unless relation
 
         # Assume this is a set of IDs
-        if value.kind_of?(Integer) || value.kind_of?(Array)
+        if value.kind_of?(Integer) || value.kind_of?(Array) || (value.to_i.to_s == value)
           return relation.where(klass.primary_key => value)
         end
 
