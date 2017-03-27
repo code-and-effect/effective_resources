@@ -18,7 +18,7 @@ module Effective
         when ActiveRecord::Relation
           input.klass
         when ActiveRecord::Reflection::AbstractReflection
-          @model_klass = input.klass
+          @model_klass = input.klass unless input.options[:polymorphic]
           input.name
         when ActionDispatch::Journey::Route
           input.defaults[:controller]
