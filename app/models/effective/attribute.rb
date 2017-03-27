@@ -32,6 +32,7 @@ module Effective
         when :datetime    ; :datetime
         when :decimal     ; :decimal
         when :duration    ; :duration
+        when :email       ; :email
         when :integer     ; :integer
         when :percentage  ; :percentage
         when :price       ; :price
@@ -80,14 +81,14 @@ module Effective
       when :effective_obfuscation
         klass.respond_to?(:deobfuscate) ? klass.deobfuscate(value) : value.to_s
       when :effective_roles
-        EffectiveRoles.roles_for(value)
+        EffectiveRoles.roles.include?(value.to_sym) ? value : EffectiveRoles.roles_for(value)
       when :integer, :percentage
         (value.kind_of?(String) ? value.gsub(/\D/, '') : value).to_i
       when :nil
         value.presence
       when :price
         (value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f * 100.0)).to_i
-      when :string, :text
+      when :string, :text, :email
         value.to_s
       when :belongs_to_polymorphic
         value.to_s

@@ -110,7 +110,7 @@ module Effective
           relation.where("#{sql_column} = ?", term)
         when :price
           relation.where("#{sql_column} = ?", term)
-        when :string, :text
+        when :string, :text, :email
           if fuzzy
             relation.where("#{sql_column} #{ilike} ?", "%#{term}%")
           else
