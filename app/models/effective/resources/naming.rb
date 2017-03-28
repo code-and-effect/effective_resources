@@ -20,7 +20,7 @@ module Effective
       end
 
       def namespaced_class_name # 'Admin::Effective::Post'
-        (namespaces.map { |name| name.classify } + [class_name]) * '::'
+        (namespaces.to_a.map { |name| name.classify } + [class_name]) * '::'
       end
 
       def namespace # 'admin/things'
