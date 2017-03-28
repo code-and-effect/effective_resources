@@ -6,6 +6,8 @@ module Effective
 
       def _initialize(obj)
         @input_name = _initialize_input_name(obj)
+        _initialize_names(@input_name)
+
         @relation = _initialize_relation(obj)
         @instance = obj if (klass && obj.instance_of?(klass))
       end
@@ -25,6 +27,20 @@ module Effective
         when nil    ; raise 'expected a string or class'
         else        ; input.class.name
         end.to_s.underscore
+      end
+
+      def _initialize_names(input)
+        names = input.split('/')
+
+        0.upto(names.length-1) do |index|
+          class_name = (names[index..-1].map { |name| name.classify } * '::')
+
+          if (@model_klass = class_name.safe_constantize).present?
+            @class_name = class_name
+            @namespaces = names[0...index]
+            break
+          end
+        end
       end
 
       def _initialize_relation(input)

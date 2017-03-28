@@ -48,8 +48,6 @@ module Effective
           :has_many
         elsif has_one(name)
           :has_one
-        elsif name.end_with?('_address') && defined?(EffectiveAddresses) && instance.respond_to?(:effective_addresses)
-          :effective_addresses
         elsif name == 'id' && defined?(EffectiveObfuscation) && klass.respond_to?(:deobfuscate)
           :effective_obfuscation
         elsif name == 'roles' && defined?(EffectiveRoles) && klass.respond_to?(:with_role)

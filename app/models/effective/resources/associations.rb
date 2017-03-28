@@ -31,9 +31,6 @@ module Effective
         @nested_resources ||= klass.reflect_on_all_associations(:has_many).select { |ass| ass.options[:autosave] && ass.options[:class_name] != 'Effective::Attachment' }
       end
 
-      def scopes
-      end
-
       def associated(name)
         name = (name.to_s.end_with?('_id') ? name.to_s[0...-3] : name).to_sym
         klass.reflect_on_all_associations.find { |ass| ass.name == name }

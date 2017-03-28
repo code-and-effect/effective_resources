@@ -12,7 +12,7 @@ module Effective
       end
 
       def class_name # 'Effective::Post'
-        @class_name ||= (@input_name.split(SPLIT) - namespaces).map { |name| name.classify } * '::'
+        @class_name
       end
 
       def class_path # 'effective'
@@ -24,11 +24,11 @@ module Effective
       end
 
       def namespace # 'admin/things'
-        @namespace ||= (namespaces.join('/') if namespaces.present?)
+        (namespaces.join('/') if namespaces.present?)
       end
 
       def namespaces # ['admin', 'things']
-        @namespaces ||= @input_name.split('/')[0...-1]
+        @namespaces
       end
 
       def human_name
