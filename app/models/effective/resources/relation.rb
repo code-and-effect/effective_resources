@@ -54,14 +54,21 @@ module Effective
         end
 
         association = associated(name)
-        term = Effective::Attribute.new(sql_type, klass: association.try(:klass) || klass).parse(value, name: name)
+
+        term = Effective::Attribute.new(sql_type, klass: (association.try(:klass) rescue nil) || klass).parse(value, name: name)
 
         case sql_type
         when :belongs_to, :has_and_belongs_to_many, :has_many, :has_one
           relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :belongs_to_polymorphic
           (type, id) = term.split('_')
-          relation.where("#{sql_column} = ?", id).where("#{sql_column.sub('_id', '_type')} = ?", type)
+
+          if type.present? && id.present?
+            relation.where("#{sql_column} = ?", id).where("#{sql_column.sub('_id', '_type')} = ?", type)
+          else
+            id ||= Effective::Attribute.new(:integer).parse(term)
+            relation.where("#{sql_column} = ? OR #{sql_column.sub('_id', '_type')} = ?", id, (type || term))
+          end
         when :effective_addresses
           raise 'not yet implemented'
         when :effective_obfuscation

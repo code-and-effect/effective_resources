@@ -3,11 +3,7 @@ module Effective
     module Klass
 
       def klass
-        @model_klass ||= (
-          namespaced_class_name.safe_constantize ||
-          class_name.safe_constantize ||
-          name.classify.safe_constantize
-        )
+        @model_klass
       end
 
       def datatable_klass
