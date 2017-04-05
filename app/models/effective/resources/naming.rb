@@ -12,7 +12,7 @@ module Effective
       end
 
       def class_name # 'Effective::Post'
-        @class_name || ''
+        @model_klass.try(:name) || @class_name || ''
       end
 
       def class_path # 'effective'
