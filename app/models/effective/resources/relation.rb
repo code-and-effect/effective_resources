@@ -31,6 +31,10 @@ module Effective
           relation
             .order(order_by_associated_conditions(association, sort: sort, direction: direction))
             .order("#{sql_column(klass.primary_key)} #{sql_direction}")
+        when :effective_addresses
+          relation
+            .order(order_by_associated_conditions(associated(:addresses), sort: sort, direction: direction))
+            .order("#{sql_column(klass.primary_key)} #{sql_direction}")
         when :effective_roles
           relation.order("#{sql_column(:roles_mask)} #{sql_direction}")
         when :string, :text
@@ -57,6 +61,10 @@ module Effective
 
         term = Effective::Attribute.new(sql_type, klass: (association.try(:klass) rescue nil) || klass).parse(value, name: name)
 
+        if term == 'nil' && ![:has_and_belongs_to_many, :has_many, :has_one, :belongs_to_polymorphic, :effective_roles].include?(sql_type)
+          return relation.where("#{sql_column} IS NULL")
+        end
+
         case sql_type
         when :belongs_to, :has_and_belongs_to_many, :has_many, :has_one
           relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
@@ -70,7 +78,7 @@ module Effective
             relation.where("#{sql_column} = ? OR #{sql_column.sub('_id', '_type')} = ?", id, (type || term))
           end
         when :effective_addresses
-          raise 'not yet implemented'
+          relation.where(id: Effective::Resource.new(association).search_any(value, fuzzy: fuzzy).pluck(:addressable_id))
         when :effective_obfuscation
           # If value == term, it's an invalid deobfuscated id
           relation.where("#{sql_column} = ?", (value == term ? 0 : term))
@@ -124,7 +132,7 @@ module Effective
             relation.where("#{sql_column} = ?", term)
           end
         else
-          raise 'unsupported sql type'
+          raise "unsupported sql type #{sql_type}"
         end
       end
 
@@ -200,7 +208,7 @@ module Effective
         # Order the target model for its matching records / keys
         sort_column = (sort unless sort == true) || resource.sort_column
 
-        relation = resource.relation.order("#{resource.sql_column(sort_column)} #{sql_direction(direction)}")
+        relation = resource.relation.reorder(nil).order("#{resource.sql_column(sort_column)} #{sql_direction(direction)}")
 
         if association.options[:as] # polymorphic
           relation = relation.where(association.type => klass.name)

@@ -33,7 +33,7 @@ module Effective
 
       def associated(name)
         name = (name.to_s.end_with?('_id') ? name.to_s[0...-3] : name).to_sym
-        klass.reflect_on_all_associations.find { |ass| ass.name == name }
+        klass.reflect_on_all_associations.find { |ass| ass.name == name } || effective_addresses(name)
       end
 
       def belongs_to(name)
@@ -59,6 +59,18 @@ module Effective
       def has_one(name)
         name = name.to_sym
         has_ones.find { |ass| ass.name == name }
+      end
+
+      def effective_addresses(name)
+        return unless defined?(EffectiveAddresses) && has_many(:addresses).try(:klass) == Effective::Address
+
+        name = name.to_s.downcase
+        return unless name.end_with?('_address') || name.end_with?('_addresses')
+
+        category = name.split('_').reject { |name| name == 'address' || name == 'addresses' }.join('_')
+        return unless category.present?
+
+        Effective::Address.where(category: category).where(addressable_type: class_name)
       end
 
       def nested_resource(name)
