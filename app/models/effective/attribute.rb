@@ -92,7 +92,7 @@ module Effective
         value.to_s
       when :belongs_to_polymorphic
         value.to_s
-      when :belongs_to, :has_many, :has_and_belongs_to_many, :has_one, :resource  # Returns an Array of ints, an Int or String
+      when :belongs_to, :has_many, :has_and_belongs_to_many, :has_one, :resource, :effective_addresses  # Returns an Array of ints, an Int or String
         if value.kind_of?(Integer) || value.kind_of?(Array)
           value
         else
@@ -109,7 +109,7 @@ module Effective
           end
         end
       else
-        raise 'unsupported type'
+        raise "unsupported type #{type}"
       end
     end
 

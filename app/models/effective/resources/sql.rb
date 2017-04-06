@@ -20,7 +20,7 @@ module Effective
       end
 
       def max_id
-        @max_id ||= klass.maximum(klass.primary_key).to_i
+        @max_id ||= klass.unscoped.maximum(klass.primary_key).to_i
       end
 
       def sql_column(name)
@@ -52,6 +52,8 @@ module Effective
           :effective_obfuscation
         elsif name == 'roles' && defined?(EffectiveRoles) && klass.respond_to?(:with_role)
           :effective_roles
+        elsif (name.include?('_address') || name.include?('_addresses')) && defined?(EffectiveAddresses) && (klass.new rescue nil).respond_to?(:effective_addresses)
+          :effective_addresses
         elsif (column = column(name))
           column.type
         elsif name.ends_with?('_id')

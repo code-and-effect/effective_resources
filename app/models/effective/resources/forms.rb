@@ -23,7 +23,7 @@ module Effective
         when :effective_obfuscation
           { as: :effective_obfuscation }
         when :boolean
-          { as: :boolean, collection: [['true', true], ['false', false]] }
+          { as: :boolean, collection: [['Yes', true], ['No', false]] }
         when :datetime
           { as: :datetime }
         when :date

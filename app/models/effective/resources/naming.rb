@@ -4,7 +4,7 @@ module Effective
       SPLIT = /\/|::/  # / or ::
 
       def name # 'post'
-        @name ||= @input_name.split(SPLIT).last.singularize
+        @name ||= (klass.try(:name).to_s.split(SPLIT).last || '').singularize.downcase
       end
 
       def plural_name # 'posts'
@@ -12,7 +12,7 @@ module Effective
       end
 
       def class_name # 'Effective::Post'
-        @model_klass.try(:name) || @class_name || ''
+        @model_klass.try(:name).to_s
       end
 
       def class_path # 'effective'
@@ -20,7 +20,7 @@ module Effective
       end
 
       def namespaced_class_name # 'Admin::Effective::Post'
-        (namespaces.to_a.map { |name| name.classify } + [class_name]) * '::'
+        (Array(namespaces).map { |name| name.classify } + [class_name]) * '::'
       end
 
       def namespace # 'admin/things'

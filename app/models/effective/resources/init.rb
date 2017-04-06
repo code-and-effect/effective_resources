@@ -4,41 +4,42 @@ module Effective
 
       private
 
-      def _initialize(obj)
-        @input_name = _initialize_input_name(obj)
-        _initialize_names(@input_name)
+      def _initialize(input, namespace: nil)
+        @namespaces = (namespace.kind_of?(String) ? namespace.split('/') : Array(namespace)) if namespace
 
-        @relation = _initialize_relation(obj)
-        @instance = obj if (klass && obj.instance_of?(klass))
-      end
-
-      def _initialize_input_name(input)
-        case input
-        when String ; input.start_with?('/') ? input[1..-1] : input
-        when Symbol ; input
-        when Class  ; input.name
+        @model_klass = case input
+        when String, Symbol
+          _klass_by_name(input)
         when ActiveRecord::Relation
           input.klass
         when ActiveRecord::Reflection::AbstractReflection
-          @model_klass = input.klass unless input.options[:polymorphic]
-          input.name
+          input.klass unless input.options[:polymorphic]
         when ActionDispatch::Journey::Route
-          input.defaults[:controller]
+          _klass_by_name(input.defaults[:controller])
+        when Class
+          input
         when nil    ; raise 'expected a string or class'
-        else        ; input.class.name
-        end.to_s.underscore
+        else        ; _klass_by_name(input.class.name)
+        end
+
+        @relation = _initialize_relation(input)
+        @instance = input if (klass && input.instance_of?(klass))
       end
 
-      def _initialize_names(input)
+      def _klass_by_name(input)
+        input = input.to_s
+        input = input[1..-1] if input.start_with?('/')
+
         names = input.split('/')
 
         0.upto(names.length-1) do |index|
           class_name = (names[index..-1].map { |name| name.classify } * '::')
+          klass = (class_name.safe_constantize rescue nil)
 
-          if (@model_klass ||= class_name.safe_constantize).present?
-            @class_name = class_name
+          if klass.present?
             @namespaces = names[0...index]
-            break
+            @model_klass = klass
+            return klass
           end
         end
       end

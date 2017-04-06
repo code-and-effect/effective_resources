@@ -12,8 +12,8 @@ module Effective
     include Effective::Resources::Sql
 
     # post, Post, Admin::Post, admin::Post, admin/posts, admin/post, admin/effective::post
-    def initialize(input)
-      _initialize(input)
+    def initialize(input, namespace: nil)
+      _initialize(input, namespace: namespace)
     end
 
     def to_s
