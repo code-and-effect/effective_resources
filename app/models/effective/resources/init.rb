@@ -12,7 +12,7 @@ module Effective
           _klass_by_name(input)
         when ActiveRecord::Relation
           input.klass
-        when ActiveRecord::Reflection::AbstractReflection
+        when ActiveRecord::Reflection::MacroReflection
           input.klass unless input.options[:polymorphic]
         when ActionDispatch::Journey::Route
           _klass_by_name(input.defaults[:controller])
@@ -50,7 +50,7 @@ module Effective
         case input
         when ActiveRecord::Relation
           input
-        when ActiveRecord::Reflection::AbstractReflection
+        when ActiveRecord::Reflection::MacroReflection
           klass.where(nil).merge(input.scope) if input.scope
         end || klass.where(nil)
       end

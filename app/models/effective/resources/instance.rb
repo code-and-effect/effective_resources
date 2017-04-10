@@ -32,9 +32,11 @@ module Effective
       end
 
       def instance_changes
-        return {} unless instance.present?
+        return {} unless (instance.present? && instance.changes.present?)
 
-        changes = instance.changes
+        changes = instance.changes.delete_if do |attribute, (before, after)|
+          (before.kind_of?(ActiveSupport::TimeWithZone) && after.kind_of?(ActiveSupport::TimeWithZone) && before.to_i == after.to_i)
+        end
 
         # Log to_s changes on all belongs_to associations
         belong_tos.each do |association|
