@@ -11,16 +11,19 @@ module Effective
       end
 
       # All attributes from the klass, sorted as per attributes block.
-      # Does not include :id, :created_at, :updated_at
-      def klass_attributes
+      # Does not include :id, :created_at, :updated_at unless all is passed
+      def klass_attributes(all: false)
         attributes = (klass.new().attributes rescue nil)
         return [] unless attributes
 
-        attributes = (attributes.keys - [klass.primary_key, 'created_at', 'updated_at'] - belong_tos.map { |reference| reference.foreign_key }).map do |att|
+        names = attributes.keys - belong_tos.map { |reference| reference.foreign_key }
+        names = names - [klass.primary_key, 'created_at', 'updated_at'] unless all
+
+        attributes = names.map do |name|
           if klass.respond_to?(:column_for_attribute) # Rails 4+
-            Effective::Attribute.new(att, klass.column_for_attribute(att).type)
+            Effective::Attribute.new(name, klass.column_for_attribute(name).type)
           else
-            Effective::Attribute.new(att, klass.columns_hash[att].type)
+            Effective::Attribute.new(name, klass.columns_hash[name].type)
           end
         end
 
