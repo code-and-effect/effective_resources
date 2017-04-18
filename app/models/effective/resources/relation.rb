@@ -57,6 +57,8 @@ module Effective
           return relation.having("#{sql_column} = ?", value)
         end
 
+        binding.pry
+
         association = associated(name)
 
         term = Effective::Attribute.new(sql_type, klass: (association.try(:klass) rescue nil) || klass).parse(value, name: name)
@@ -186,7 +188,16 @@ module Effective
             .pluck(klass.primary_key)
         elsif association.macro == :has_many && association.options[:through].present?
           key = sql_column(klass.primary_key)
-          values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact
+
+          if association.source_reflection.options[:polymorphic]
+            reflected_klass = association.klass
+          else
+            reflected_klass = association.source_reflection.klass
+          end
+
+          values = relation.pluck(reflected_klass.primary_key).uniq.compact
+
+          binding.pry
 
           keys = association.through_reflection.klass
             .where(association.source_reflection.foreign_key => values)
