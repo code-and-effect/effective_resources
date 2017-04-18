@@ -12,8 +12,10 @@ module Effective
           _klass_by_name(input)
         when ActiveRecord::Relation
           input.klass
+        when (ActiveRecord::Reflection::AbstractReflection rescue :nil)
+          (input.klass.presence || _klass_by_name(input.class_name)) unless input.options[:polymorphic]
         when ActiveRecord::Reflection::MacroReflection
-          input.klass unless input.options[:polymorphic]
+          (input.klass.presence || _klass_by_name(input.class_name)) unless input.options[:polymorphic]
         when ActionDispatch::Journey::Route
           _klass_by_name(input.defaults[:controller])
         when Class
@@ -42,6 +44,8 @@ module Effective
             return klass
           end
         end
+
+        nil
       end
 
       def _initialize_relation(input)

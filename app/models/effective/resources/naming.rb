@@ -4,7 +4,7 @@ module Effective
       SPLIT = /\/|::/  # / or ::
 
       def name # 'post'
-        @name ||= (klass.try(:name).to_s.split(SPLIT).last || '').singularize.downcase
+        @name ||= (klass.try(:name).to_s.split(SPLIT).last || '').singularize.underscore
       end
 
       def plural_name # 'posts'
