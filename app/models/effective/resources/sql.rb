@@ -20,6 +20,7 @@ module Effective
       end
 
       def max_id
+        return 999999 unless klass.respond_to?(:unscoped)
         @max_id ||= klass.unscoped.maximum(klass.primary_key).to_i
       end
 

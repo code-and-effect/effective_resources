@@ -13,9 +13,9 @@ module Effective
         when ActiveRecord::Relation
           input.klass
         when (ActiveRecord::Reflection::AbstractReflection rescue :nil)
-          (input.klass.presence || _klass_by_name(input.class_name)) unless input.options[:polymorphic]
+          ((input.klass rescue nil).presence || _klass_by_name(input.class_name)) unless input.options[:polymorphic]
         when ActiveRecord::Reflection::MacroReflection
-          (input.klass.presence || _klass_by_name(input.class_name)) unless input.options[:polymorphic]
+          ((input.klass rescue nil).presence || _klass_by_name(input.class_name)) unless input.options[:polymorphic]
         when ActionDispatch::Journey::Route
           _klass_by_name(input.defaults[:controller])
         when Class
