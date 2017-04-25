@@ -147,9 +147,14 @@ module Effective
           effective_resource.klass
         else
           case (resource_scope = send(resource_scope_method_name))
-          when Hash   ; effective_resource.klass.where(resource_scope)
-          when Symbol ; effective_resource.klass.send(resource_scope)
-          when nil    ; effective_resource.klass
+          when ActiveRecord::Relation
+            effective_resource.relation.merge(resource_scope)
+          when Hash
+            effective_resource.klass.where(resource_scope)
+          when Symbol
+            effective_resource.klass.send(resource_scope)
+          when nil
+            effective_resource.klass
           else
             raise "expected #{resource_scope_method_name} to return a Hash or Symbol"
           end
@@ -161,6 +166,7 @@ module Effective
       return {} unless resource_scope_method_name.present?
 
       case (resource_scope = send(resource_scope_method_name))
+      when ActiveRecord::Relation ; {resource_scope: true}
       when Hash   ; resource_scope
       when Symbol ; {resource_scope: true}
       when nil    ; {}
