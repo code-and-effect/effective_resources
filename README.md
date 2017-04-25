@@ -36,8 +36,15 @@ class PostsController < ApplicationController
 
   protected
 
+  # If it's a Hash of attributes, the controller will call .where(attributes)
+  # and the attributes will be used to initialize the datatable on index
+  #
+  # If it's an ActiveRecord scope, or symbol, we initialize a datatable with {resource_scope: true}
+  # and leave it as a TODO for the datatable to do the right thin .
   def post_scope
-    {client_id: current_user.client_id} # Or a symbol
+    {client_id: current_user.client_id}
+    # Post.where(client_id: current_user.client_id)
+    # :approved
   end
 
   def post_params
