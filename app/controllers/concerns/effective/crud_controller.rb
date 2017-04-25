@@ -12,8 +12,32 @@ module Effective
         define_method(action) do
           self.resource ||= resource_class.find(params[:id])
 
-          @page_title ||= resource.to_s
           EffectiveResources.authorized?(self, action, resource)
+
+          if (request.post? || request.patch? || request.put?)
+            raise "expected @#{resource_name} to respond to #{action}!" unless resource.respond_to?("#{action}!")
+
+            if (resource.send("#{action}!") rescue false)
+              flash[:success] = "Successfully #{action}#{action.to_s.end_with?('e') ? 'd' : 'ed'} #{resource_human_name}"
+              redirect_to :back, fallback: resource_redirect_path
+            else
+              flash.now[:danger] = "Unable to #{action} #{resource_human_name}: #{resource.errors.full_messages.to_sentence}"
+
+              if request.referer.to_s.end_with?(send(effective_resource.edit_path, resource))
+                @page_title ||= "Edit #{resource}"
+                render :edit
+              elsif request.referer.to_s.end_with?(send(effective_resource.new_path))
+                @page_title ||= "New #{resource_name.titleize}"
+                render :new
+              else
+                @page_title ||= resource.to_s
+                flash[:danger] = flash.now.delete(:danger)
+                redirect_to :back, fallback: resource_redirect_path
+              end
+
+            end
+          end
+
         end
       end
     end
@@ -102,7 +126,7 @@ module Effective
       when 'Save'               ; send(effective_resource.edit_path, resource)
       when 'Save and Continue'  ; send(effective_resource.index_path)
       when 'Save and Add New'   ; send(effective_resource.new_path)
-      else send(effective_resource.show_path, resource)
+      else send((effective_resource.show_path(check: true) || effective_resource.edit_path), resource)
       end
     end
 
