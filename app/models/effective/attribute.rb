@@ -47,6 +47,7 @@ module Effective
         when String       ; :string
         when TrueClass    ; :boolean
         when ActiveSupport::TimeWithZone  ; :datetime
+        when Date                         ; :date
         when ActiveRecord::Base           ; :resource
         when :belongs_to                  ; :belongs_to
         when :belongs_to_polymorphic      ; :belongs_to_polymorphic
@@ -67,8 +68,10 @@ module Effective
       when :boolean
         [true, 'true', 't', '1'].include?(value)
       when :date, :datetime
-        date = Time.zone.local(*value.to_s.scan(/(\d+)/).flatten)
-        name.to_s.start_with?('end_') ? date.end_of_day : date
+        if (digits = value.to_s.scan(/(\d+)/).flatten).present?
+          date = Time.zone.local(*digits)
+          name.to_s.start_with?('end_') ? date.end_of_day : date
+        end
       when :decimal, :currency
         (value.kind_of?(String) ? value.gsub(/[^0-9|\-|\.]/, '') : value).to_f
       when :duration
