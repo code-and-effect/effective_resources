@@ -184,7 +184,7 @@ module Effective
           keys = klass.joins(association.name)
             .where(association.name => { association.source_reflection.klass.primary_key => values })
             .pluck(klass.primary_key)
-        elsif association.macro == :has_many && association.options[:through].present?
+        elsif association.options[:through].present?
           key = sql_column(klass.primary_key)
 
           if association.source_reflection.options[:polymorphic]
@@ -201,7 +201,14 @@ module Effective
             scope = scope.where(association.source_reflection.foreign_type => reflected_klass.name)
           end
 
-          keys = scope.pluck(association.through_reflection.foreign_key)
+          if association.through_reflection.macro == :has_many
+            keys = scope.pluck(association.through_reflection.foreign_key)
+          elsif association.through_reflection.macro == :belongs_to
+            key = association.through_reflection.foreign_key
+            keys = scope.pluck(association.through_reflection.klass.primary_key)
+          else
+            raise 'not sure how to search this column'
+          end
         elsif association.macro == :has_many
           key = sql_column(klass.primary_key)
           keys = relation.pluck(association.foreign_key)

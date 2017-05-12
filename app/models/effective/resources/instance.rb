@@ -5,6 +5,10 @@ module Effective
 
       # This is written for use by effective_logging and effective_trash
 
+      def instance
+        @instance || klass.new
+      end
+
       def instance_attributes
         return {} unless instance.present?
 
