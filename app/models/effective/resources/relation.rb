@@ -201,13 +201,11 @@ module Effective
             scope = scope.where(association.source_reflection.foreign_type => reflected_klass.name)
           end
 
-          if association.through_reflection.macro == :has_many
-            keys = scope.pluck(association.through_reflection.foreign_key)
-          elsif association.through_reflection.macro == :belongs_to
+          if association.through_reflection.macro == :belongs_to
             key = association.through_reflection.foreign_key
             keys = scope.pluck(association.through_reflection.klass.primary_key)
           else
-            raise 'not sure how to search this column'
+            keys = scope.pluck(association.through_reflection.foreign_key)
           end
         elsif association.macro == :has_many
           key = sql_column(klass.primary_key)
