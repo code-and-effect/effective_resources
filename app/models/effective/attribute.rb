@@ -85,6 +85,16 @@ module Effective
         klass.respond_to?(:deobfuscate) ? klass.deobfuscate(value) : value.to_s
       when :effective_roles
         EffectiveRoles.roles.include?(value.to_sym) ? value : EffectiveRoles.roles_for(value)
+      when :integer
+        (value.kind_of?(String) ? value.gsub(/\D/, '') : value).to_i
+      when :percentage
+        # We want this to return 0.81 when we type 81% or 0.81 or 81.5
+        if value.to_s.include?('.')
+          value = value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f
+          value >= 1.0 ? (value / 100.0) : value
+        else
+          (value.to_s.gsub(/\D/, '').to_f / 100.0)
+        end
       when :integer, :percentage
         (value.kind_of?(String) ? value.gsub(/\D/, '') : value).to_i
       when :nil

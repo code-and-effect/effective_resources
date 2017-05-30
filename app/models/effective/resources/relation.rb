@@ -61,7 +61,8 @@ module Effective
 
         term = Effective::Attribute.new(sql_type, klass: (association.try(:klass) rescue nil) || klass).parse(value, name: name)
 
-        if term == 'nil' && ![:has_and_belongs_to_many, :has_many, :has_one, :belongs_to_polymorphic, :effective_roles].include?(sql_type)
+        # term == 'nil' rescue false is a Rails 4.1 fix, where you can't compare a TimeWithZone to 'nil'
+        if (term == 'nil' rescue false) && ![:has_and_belongs_to_many, :has_many, :has_one, :belongs_to_polymorphic, :effective_roles].include?(sql_type)
           return relation.where("#{sql_column} IS NULL")
         end
 
@@ -122,7 +123,7 @@ module Effective
         when :integer
           relation.where("#{sql_column} = ?", term)
         when :percentage
-          relation.where("#{sql_column} = ?", term)
+          relation.where("#{sql_column} = ?", sql_type(name) == :integer ? (term * 100).to_i : term)
         when :price
           relation.where("#{sql_column} = ?", term)
         when :string, :text, :email
