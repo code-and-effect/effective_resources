@@ -96,6 +96,10 @@ module Effective
         @ilike ||= (postgres? ? 'ILIKE' : 'LIKE')  # Only Postgres supports ILIKE, Mysql and Sqlite3 use LIKE
       end
 
+      def is_null(sql_column)
+        mysql? == true ? "ISNULL(#{sql_column})" : "#{sql_column} IS NULL"
+      end
+
     end
   end
 end

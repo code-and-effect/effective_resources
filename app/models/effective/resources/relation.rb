@@ -21,7 +21,7 @@ module Effective
         case sql_type
         when :belongs_to
           relation
-            .order(postgres? ? "#{sql_column} IS NULL ASC" : "ISNULL(#{sql_column}) ASC")
+            .order("#{is_null(sql_column)} ASC")
             .order(order_by_associated_conditions(association, sort: sort, direction: direction))
         when :belongs_to_polymorphic
           relation
@@ -39,10 +39,10 @@ module Effective
           relation.order("#{sql_column(:roles_mask)} #{sql_direction}")
         when :string, :text
           relation
-            .order((("ISNULL(#{sql_column}}), ") if mysql?).to_s + "#{sql_column}='' ASC, #{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?))
+            .order(("ISNULL(#{sql_column}), " if mysql?).to_s + "#{sql_column}='' ASC, #{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?).to_s)
         else
           relation
-            .order((("ISNULL(#{sql_column}}), ") if mysql?).to_s + "#{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?))
+            .order(("ISNULL(#{sql_column}), " if mysql?).to_s + "#{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?).to_s)
         end
       end
 
@@ -63,7 +63,7 @@ module Effective
 
         # term == 'nil' rescue false is a Rails 4.1 fix, where you can't compare a TimeWithZone to 'nil'
         if (term == 'nil' rescue false) && ![:has_and_belongs_to_many, :has_many, :has_one, :belongs_to_polymorphic, :effective_roles].include?(sql_type)
-          return relation.where("#{sql_column} IS NULL")
+          return relation.where(is_null(sql_column))
         end
 
         case sql_type

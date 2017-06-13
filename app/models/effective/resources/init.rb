@@ -36,7 +36,8 @@ module Effective
 
         0.upto(names.length-1) do |index|
           class_name = (names[index..-1].map { |name| name.classify } * '::')
-          klass = (class_name.safe_constantize rescue nil)
+
+          klass = class_name.safe_constantize
 
           if klass.present?
             @namespaces = names[0...index]
