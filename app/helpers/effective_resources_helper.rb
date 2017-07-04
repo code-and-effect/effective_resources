@@ -71,5 +71,42 @@ module EffectiveResourcesHelper
   alias_method :bootstrap_icon_to, :glyphicon_to
   alias_method :glyph_icon_to, :glyphicon_to
 
+  ### Tableize attributes
+
+  # This is used by effective_orders, effective_logging, effective_trash and effective_mergery
+  def tableize_hash(obj, table: 'table', th: true, sub_table: 'table', sub_th: true, flatten: true)
+    case obj
+    when Hash
+      if flatten && obj[:attributes].kind_of?(Hash)
+        obj = obj[:attributes].merge(obj.except(:attributes))
+      end
+
+      content_tag(:table, class: table.presence) do
+        content_tag(:tbody) do
+          obj.map do |key, value|
+            content_tag(:tr, class: key.to_s) do
+              content_tag((th == true ? :th : :td), key) +
+              content_tag(:td) { tableize_hash(value, table: sub_table, th: sub_th, sub_table: sub_table, sub_th: sub_th, flatten: flatten) }
+            end
+          end.join.html_safe
+        end
+      end
+    when Array
+      obj.map { |value| tableize_hash(value, table: sub_table, th: sub_th, sub_table: sub_table, sub_th: sub_th, flatten: flatten) }.join('<br>')
+    when Symbol
+      ":#{obj}"
+    when NilClass
+      '-'
+    else
+      obj.to_s.presence || '""'
+    end.html_safe
+  end
+
+  def format_resource_value(value)
+    @format_resource_tags ||= ActionView::Base.sanitized_allowed_tags.to_a + ['table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th']
+    @format_resource_atts ||= ActionView::Base.sanitized_allowed_attributes.to_a + ['colspan', 'rowspan']
+
+    simple_format(sanitize(value.to_s, tags: @format_resource_tags, attributes: @format_resource_atts), {}, sanitize: false)
+  end
 
 end

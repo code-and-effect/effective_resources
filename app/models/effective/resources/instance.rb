@@ -19,17 +19,25 @@ module Effective
           attributes[association.name] = instance.send(association.name).to_s
         end
 
-        has_ones.each do |association|
-          attributes[association.name] = instance.send(association.name).to_s
-        end
-
         nested_resources.each do |association|
-          attributes[association.name] = {}
+          attributes[association.name] ||= {}
 
           Array(instance.send(association.name)).each_with_index do |child, index|
             resource = Effective::Resource.new(child)
             attributes[association.name][index] = resource.instance_attributes
           end
+        end
+
+        has_ones.each do |association|
+          attributes[association.name] = instance.send(association.name).to_s
+        end
+
+        has_manys.each do |association|
+          attributes[association.name] = instance.send(association.name).map { |obj| obj.to_s }
+        end
+
+        has_and_belongs_to_manys.each do |association|
+          attributes[association.name] = instance.send(association.name).map { |obj| obj.to_s }
         end
 
         attributes.delete_if { |_, value| value.blank? }

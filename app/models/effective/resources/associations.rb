@@ -28,7 +28,7 @@ module Effective
 
       def nested_resources
         return [] unless klass.respond_to?(:reflect_on_all_associations)
-        @nested_resources ||= klass.reflect_on_all_associations(:has_many).select { |ass| ass.options[:autosave] && ass.options[:class_name] != 'Effective::Attachment' }
+        @nested_resources ||= klass.reflect_on_all_associations(:has_many).select { |ass| ass.options[:autosave] }
       end
 
       def associated(name)
