@@ -84,7 +84,7 @@ module EffectiveResourcesHelper
       content_tag(:table, class: table.presence) do
         content_tag(:tbody) do
           obj.map do |key, value|
-            content_tag(:tr, class: key.to_s) do
+            content_tag(:tr) do
               content_tag((th == true ? :th : :td), key) +
               content_tag(:td) { tableize_hash(value, table: sub_table, th: sub_th, sub_table: sub_table, sub_th: sub_th, flatten: flatten) }
             end
