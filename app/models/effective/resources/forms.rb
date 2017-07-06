@@ -8,7 +8,7 @@ module Effective
         when :belongs_to
           { as: :select }.merge(search_form_field_collection(belongs_to(name)))
         when :belongs_to_polymorphic
-          #{ as: :grouped_select, polymorphic: true, collection: nil}
+          #{ as: :select, grouped: true, polymorphic: true, collection: nil}
           { as: :string }
         when :has_and_belongs_to_many
           { as: :select }.merge(search_form_field_collection(has_and_belongs_to_many(name)))
