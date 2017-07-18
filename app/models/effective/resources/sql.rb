@@ -36,8 +36,9 @@ module Effective
       end
 
       # This is for EffectiveDatatables (col as:)
+      # Might be :name, or 'users.name'
       def sql_type(name)
-        name = name.to_s
+        name = name.to_s.split('.').first
 
         if belongs_to_polymorphic(name)
           :belongs_to_polymorphic
@@ -66,7 +67,10 @@ module Effective
 
       # This tries to figure out the column we should order this collection by.
       # Whatever would match up with the .to_s
+      # Unless it's set from outside by datatables...
       def sort_column
+        return @_sort_column if @_sort_column
+
         ['name', 'title', 'label', 'subject', 'full_name', 'first_name', 'email', 'description'].each do |name|
           return name if column_names.include?(name)
         end
@@ -74,10 +78,22 @@ module Effective
         klass.primary_key
       end
 
+      def sort_column=(name)
+        raise "unknown sort column: #{name}" unless column_names.include?(name)
+        @_sort_column = name
+      end
+
       # Any string or text columns
       # TODO: filter out _type columns for polymorphic
       def search_columns
+        return @_search_columns if @_search_columns
         columns.map { |column| column.name if [:string, :text].include?(column.type) }.compact
+      end
+
+      def search_columns=(name)
+        names = Array(name)
+        names.each { |name| raise "unknown search column: #{name}" unless column_names.include?(name) }
+        @_search_columns = names
       end
 
       private
