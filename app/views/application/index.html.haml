@@ -1,0 +1,23 @@
+- resource = (@_effective_resource || Effective::Resource.new(controller_path))
+
+.row
+  .col-sm-6
+    %h1= @page_title
+  .col-sm-6
+    %p.text-right
+      - if can?(:new, resource.klass) && resource.new_path(check: true).present?
+        = link_to "New #{resource.human_name.titleize}", send(resource.new_path), class: 'btn btn-primary'
+
+- if @datatable
+  = render_datatable(@datatable)
+
+- elsif instance_variable_get('@' + resource.plural_name)
+  = render instance_variable_get('@' + resource.plural_name)
+
+- elsif instance_variable_get('@' + resource.name)
+  = render instance_variable_get('@' + resource.name)
+
+- elsif Rails.env.development?
+  %p effective_resources index view is not sure what to render.
+  %p Define an @datatable, @#{resource.plural_name}, or @#{resource.name}.
+  %p or include Effective::CrudController in your controller

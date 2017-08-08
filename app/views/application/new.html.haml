@@ -1,0 +1,5 @@
+- resource = (@_effective_resource || Effective::Resource.new(controller_path))
+
+%h1= @page_title
+
+= render 'form', resource.name.to_sym => instance_variable_get('@' + resource.name)

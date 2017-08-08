@@ -1,5 +1,6 @@
 module Effective
   class Resource
+    include Effective::Resources::Actions
     include Effective::Resources::Associations
     include Effective::Resources::Attributes
     include Effective::Resources::Init

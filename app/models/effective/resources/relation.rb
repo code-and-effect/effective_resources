@@ -111,7 +111,7 @@ module Effective
             relation.where("#{sql_column} = ?", term)
           end
         when :duration
-          if fuzzy && (term % 60) == 0 && value.to_s.include?('m') == false
+          if fuzzy && (term % 60 == 0) && value.to_s.include?('m') == false
             if term < 0
               relation.where("#{sql_column} <= ? AND #{sql_column} > ?", term, term-60)
             else

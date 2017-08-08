@@ -30,7 +30,12 @@ module Effective
 
       def action_path(action, check: false)
         path = [action, namespace, name, 'path'].compact * '_'
-        path if (!check || path_exists?(path, 1))
+        path if (!check || path_exists?(path, 1, :any))
+      end
+
+      def action_post_path(action, check: false)
+        path = [action, namespace, name, 'path'].compact * '_'
+        path if (!check || path_exists?(path, 1, :post) || path_exists?(path, 1, :put) || path_exists?(path, 1, :patch))
       end
 
       def path_exists?(path, param = nil, verb = :get)
