@@ -35,6 +35,7 @@ module Effective
         when :email       ; :email
         when :integer     ; :integer
         when :percentage  ; :percentage
+        when :phone       ; :phone
         when :price       ; :price
         when :nil         ; :nil
         when :resource    ; :resource
@@ -95,7 +96,12 @@ module Effective
         else
           (value.to_s.gsub(/\D/, '').to_f / 100.0)
         end
-      when :integer, :percentage
+      when :phone
+        digits = value.to_s.gsub(/\D/, '').chars.first(10)
+        digits += ('0' * (10 - digits.length)).chars
+
+        "(#{digits[0..2].join}) #{digits[3..5].join}-#{digits[6..10].join}"
+      when :integer
         (value.kind_of?(String) ? value.gsub(/\D/, '') : value).to_i
       when :nil
         value.presence
