@@ -64,6 +64,10 @@ module Effective
     def new
       self.resource ||= resource_class.new
 
+      self.resource.assign_attributes(
+        params.to_unsafe_h.except(:controller, :action).select { |k, v| resource.respond_to?("#{k}=") }
+      )
+
       @page_title ||= "New #{resource_name.titleize}"
       EffectiveResources.authorized?(self, :new, resource)
     end
@@ -73,6 +77,8 @@ module Effective
 
       @page_title ||= "New #{resource_name.titleize}"
       EffectiveResources.authorized?(self, :create, resource)
+
+      resource.created_by ||= current_user if resource.respond_to?(:created_by=)
 
       if resource.save
         flash[:success] = "Successfully created #{resource_human_name}"
