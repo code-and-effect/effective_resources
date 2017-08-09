@@ -18,7 +18,7 @@ module Effective
             raise "expected @#{resource_name} to respond to #{action}!" unless resource.respond_to?("#{action}!")
 
             begin
-              raise 'exception' unless resource.send("#{action}!")
+              resource.send("#{action}!") || raise('exception')
 
               flash[:success] = "Successfully #{action}#{action.to_s.end_with?('e') ? 'd' : 'ed'} #{resource_human_name}"
               redirect_back fallback_location: resource_redirect_path
@@ -130,7 +130,12 @@ module Effective
         flash[:danger] = "Unable to delete #{resource_human_name}: #{resource.errors.full_messages.to_sentence}"
       end
 
-      request.referer.present? ? redirect_to(request.referer) : redirect_to(send(resource_index_path))
+      if request.referer.present? && !request.referer.include?(send(effective_resource.show_path))
+        redirect_to(request.referer)
+      else
+        redirect_to(send(resource_index_path))
+      end
+
     end
 
     protected
@@ -140,7 +145,10 @@ module Effective
       when 'Save'               ; send(effective_resource.edit_path, resource)
       when 'Save and Continue'  ; send(effective_resource.index_path)
       when 'Save and Add New'   ; send(effective_resource.new_path)
-      else send((effective_resource.show_path(check: true) || effective_resource.edit_path), resource)
+      when 'Save and Return'
+        request.referer.present? ? request.referer : send(resource_index_path)
+      else
+        send((effective_resource.show_path(check: true) || effective_resource.edit_path), resource)
       end
     end
 
