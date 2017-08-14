@@ -11,13 +11,13 @@
 - if @datatable
   = render_datatable(@datatable)
 
-- elsif instance_variable_get('@' + resource.plural_name)
+- elsif instance_variable_get('@' + resource.plural_name).respond_to?(:to_partial_path)
   = render instance_variable_get('@' + resource.plural_name)
 
-- elsif instance_variable_get('@' + resource.name)
+- elsif instance_variable_get('@' + resource.name).respond_to?(:to_partial_path)
   = render instance_variable_get('@' + resource.name)
 
 - elsif Rails.env.development?
   %p effective_resources index view is not sure what to render.
-  %p Define an @datatable, @#{resource.plural_name}, or @#{resource.name}.
+  %p Define an @datatable, @#{resource.try(:plural_name) || 'a plural'}, or @#{resource.try(:name) || 'a singular'}.
   %p or include Effective::CrudController in your controller

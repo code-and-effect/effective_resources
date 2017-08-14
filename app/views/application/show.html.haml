@@ -1,20 +1,21 @@
 - resource = (@_effective_resource || Effective::Resource.new(controller_path))
-- @resource = instance_variable_get('@' + resource.name)
+- @resource = instance_variable_get('@' + resource.name) if resource.name
 
-.row
-  .col-sm-6
-    %h1= @page_title
-  .col-sm-6
-    %p.text-right
-      - resource.member_post_actions.each do |action|
-        - if EffectiveResources.authorized?(controller, action.to_sym, @resource)
-          - if resource.action_post_path(action, check: true).present?
-            = link_to action.titleize, send(resource.action_post_path(action), @resource), class: 'btn btn-primary',
-              data: { confirm: "Really #{action} #{@resource}?", method: :post }
+- if @resource
+  .row
+    .col-sm-6
+      %h1= @page_title
+    .col-sm-6
+      %p.text-right
+        - resource.member_post_actions.each do |action|
+          - if EffectiveResources.authorized?(controller, action.to_sym, @resource)
+            - if resource.action_post_path(action, check: true).present?
+              = link_to action.titleize, send(resource.action_post_path(action), @resource), class: 'btn btn-primary',
+                data: { confirm: "Really #{action} #{@resource}?", method: :post }
 
-      - if EffectiveResources.authorized?(controller, :destroy, @resource)
-        - if resource.destroy_path(check: true).present?
-          = link_to 'Delete', send(resource.destroy_path, @resource), class: 'btn btn-danger',
-            data: { confirm: "Really delete #{@resource}?", method: :delete }
+        - if EffectiveResources.authorized?(controller, :destroy, @resource)
+          - if resource.destroy_path(check: true).present?
+            = link_to 'Delete', send(resource.destroy_path, @resource), class: 'btn btn-danger',
+              data: { confirm: "Really delete #{@resource}?", method: :delete }
 
-= render @resource
+  = render @resource

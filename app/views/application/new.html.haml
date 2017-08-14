@@ -2,4 +2,5 @@
 
 %h1= @page_title
 
-= render 'form', resource.name.to_sym => instance_variable_get('@' + resource.name)
+- if resource.name.present? && instance_variable_get('@' + resource.name)
+  = render 'form', resource.name.to_sym => instance_variable_get('@' + resource.name)
