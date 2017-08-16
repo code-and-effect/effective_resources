@@ -11,6 +11,10 @@ module Effective
         name.pluralize
       end
 
+      def initialized_name
+        @initialized_name
+      end
+
       def class_name # 'Effective::Post'
         @model_klass.try(:name).to_s
       end

@@ -17,6 +17,7 @@ module Effective
         when ActiveRecord::Reflection::MacroReflection
           ((input.klass rescue nil).presence || _klass_by_name(input.class_name)) unless input.options[:polymorphic]
         when ActionDispatch::Journey::Route
+          @initialized_name = input.defaults[:controller]
           _klass_by_name(input.defaults[:controller])
         when Class
           input

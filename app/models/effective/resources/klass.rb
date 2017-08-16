@@ -21,7 +21,9 @@ module Effective
         @controller_klass ||= (
           "#{namespaced_class_name.pluralize}Controller".safe_constantize ||
           "#{class_name.pluralize.classify}Controller".safe_constantize ||
-          "#{name.pluralize.classify}Controller".safe_constantize
+          "#{name.pluralize.classify}Controller".safe_constantize ||
+          "#{initialized_name.to_s.classify.pluralize}Controller".safe_constantize ||
+          "#{initialized_name.to_s.classify}Controller".safe_constantize
         )
       end
 
