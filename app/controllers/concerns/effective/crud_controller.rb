@@ -27,12 +27,19 @@ module Effective
 
               referer = request.referer.to_s
 
-              if referer.end_with?(send(effective_resource.edit_path, resource))
+              edit_path = send(effective_resource.edit_path, resource) if respond_to?(effective_resource.edit_path)
+              new_path = effective_resource.new_path if respond_to?(effective_resource.new_path)
+              show_path = effective_resource.show_path if respond_to?(effective_resource.show_path)
+
+              if edit_path && referer.end_with?(edit_path)
                 @page_title ||= "Edit #{resource}"
                 render :edit
-              elsif referer.end_with?(send(effective_resource.new_path))
+              elsif new_path && referer.end_with?(new_path)
                 @page_title ||= "New #{resource_name.titleize}"
                 render :new
+              elsif show_path && referer.end_with?(show_path)
+                @page_title ||= resource_name.titleize
+                render :show
               else
                 @page_title ||= resource.to_s
                 flash[:danger] = flash.now[:danger]
@@ -45,6 +52,13 @@ module Effective
               end
             end
           end
+        end
+      end
+
+      # page_title 'My Title', only: [:new]
+      def page_title(label, opts = {})
+        instance_eval do
+          before_action(opts) { @page_title = label }
         end
       end
 
@@ -121,7 +135,7 @@ module Effective
     def destroy
       self.resource = resource_class.find(params[:id])
 
-      @page_title = "Destroy #{resource}"
+      @page_title ||= "Destroy #{resource}"
       EffectiveResources.authorized?(self, :destroy, resource)
 
       if resource.destroy
@@ -143,8 +157,8 @@ module Effective
     def resource_redirect_path
       case params[:commit].to_s
       when 'Save'               ; send(effective_resource.edit_path, resource)
-      when 'Save and Continue'  ; send(effective_resource.index_path)
       when 'Save and Add New'   ; send(effective_resource.new_path)
+      when 'Save and Continue'  ; send(resource_index_path)
       when 'Save and Return'
         request.referer.present? ? request.referer : send(resource_index_path)
       else
@@ -229,6 +243,7 @@ module Effective
       ["#{resource_name}_params", "#{resource_plural_name}_params", 'permitted_params'].find { |name| respond_to?(name, true) } || 'params'
     end
 
+    # Override this with Team.where(team: current_user.team) to build and create with team
     def resource_scope_method_name
       ["#{resource_name}_scope", "#{resource_plural_name}_scope", 'resource_scope', 'default_scope'].find { |name| respond_to?(name, true) }
     end
