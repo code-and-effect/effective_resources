@@ -183,7 +183,13 @@ module Effective
       successes = 0
 
       resource_class.transaction do
-        successes = resources.select { |resource| (resource.public_send("#{action}!") rescue false) }.length
+        successes = resources.select do |resource|
+          begin
+            resource.public_send("#{action}!") if EffectiveResources.authorized?(self, action, resource)
+          rescue => e
+            false
+          end
+        end.length
       end
 
       render json: { status: 200, message: "Successfully #{action_verb(action)} #{successes} / #{resources.length} selected #{resource_plural_name}" }
