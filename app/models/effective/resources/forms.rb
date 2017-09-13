@@ -38,9 +38,9 @@ module Effective
           name = name.to_s
 
           # If the method is named :status, and there is a Class::STATUSES
-          if (klass || NilClass).const_defined?(name.pluralize.upcase)
+          if ((klass || NilClass).const_defined?(name.pluralize.upcase) rescue false)
             { as: :select, collection: klass.const_get(name.pluralize.upcase) }
-          elsif (klass || NilClass).const_defined?(name.singularize.upcase)
+          elsif ((klass || NilClass).const_defined?(name.singularize.upcase) rescue false)
             { as: :select, collection: klass.const_get(name.singularize.upcase) }
           else
             { as: :string }

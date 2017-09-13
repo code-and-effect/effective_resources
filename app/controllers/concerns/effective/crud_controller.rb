@@ -14,44 +14,29 @@ module Effective
 
           EffectiveResources.authorized?(self, action, resource)
 
-          if (request.post? || request.patch? || request.put?)
-            raise "expected @#{resource_name} to respond to #{action}!" unless resource.respond_to?("#{action}!")
+          @page_title ||= "#{action.to_s.titleize} #{resource}"
 
-            begin
-              resource.send("#{action}!") || raise('exception')
+          member_post_action(action) unless request.get?
+        end
+      end
 
-              flash[:success] = "Successfully #{action}#{action.to_s.end_with?('e') ? 'd' : 'ed'} #{resource_human_name}"
-              redirect_back fallback_location: resource_redirect_path
-            rescue => e
-              flash.now[:danger] = "Unable to #{action} #{resource_human_name}: #{resource.errors.full_messages.to_sentence.presence || e.message}"
-
-              referer = request.referer.to_s
-
-              edit_path = send(effective_resource.edit_path, resource) if respond_to?(effective_resource.edit_path)
-              new_path = effective_resource.new_path if respond_to?(effective_resource.new_path)
-              show_path = effective_resource.show_path if respond_to?(effective_resource.show_path)
-
-              if edit_path && referer.end_with?(edit_path)
-                @page_title ||= "Edit #{resource}"
-                render :edit
-              elsif new_path && referer.end_with?(new_path)
-                @page_title ||= "New #{resource_name.titleize}"
-                render :new
-              elsif show_path && referer.end_with?(show_path)
-                @page_title ||= resource_name.titleize
-                render :show
-              else
-                @page_title ||= resource.to_s
-                flash[:danger] = flash.now[:danger]
-
-                if referer.present? && (Rails.application.routes.recognize_path(URI(referer).path) rescue false)
-                  redirect_back fallback_location: resource_redirect_path
-                else
-                  redirect_to(resource_redirect_path)
-                end
-              end
-            end
+      def collection_action(action)
+        define_method(action) do
+          if params[:ids].present?
+            self.resources ||= resource_class.where(id: params[:ids])
           end
+
+          if effective_resource.scope?(action)
+            self.resources ||= resource_class.send(action)
+          end
+
+          self.resources ||= resource_class.all
+
+          EffectiveResources.authorized?(self, action, resource_class.new)
+
+          @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
+
+          collection_post_action(action) unless request.get?
         end
       end
 
@@ -149,7 +134,59 @@ module Effective
       else
         redirect_to(send(resource_index_path))
       end
+    end
 
+    def member_post_action(action)
+      raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
+      raise "expected @#{resource_name} to respond to #{action}!" unless resource.respond_to?("#{action}!")
+
+      begin
+        resource.public_send("#{action}!") || raise("failed to #{action} #{resource}")
+
+        flash[:success] = "Successfully #{action_verb(action)} #{resource_human_name}"
+        redirect_back(fallback_location: resource_redirect_path)
+      rescue => e
+        flash.now[:danger] = "Unable to #{action} #{resource_human_name}: #{resource.errors.full_messages.to_sentence.presence || e.message}"
+
+        referer = request.referer.to_s
+
+        edit_path = send(effective_resource.edit_path, resource) if respond_to?(effective_resource.edit_path)
+        new_path = effective_resource.new_path if respond_to?(effective_resource.new_path)
+        show_path = effective_resource.show_path if respond_to?(effective_resource.show_path)
+
+        if edit_path && referer.end_with?(edit_path)
+          @page_title ||= "Edit #{resource}"
+          render :edit
+        elsif new_path && referer.end_with?(new_path)
+          @page_title ||= "New #{resource_name.titleize}"
+          render :new
+        elsif show_path && referer.end_with?(show_path)
+          @page_title ||= resource_name.titleize
+          render :show
+        else
+          @page_title ||= resource.to_s
+          flash[:danger] = flash.now[:danger]
+
+          if referer.present? && (Rails.application.routes.recognize_path(URI(referer).path) rescue false)
+            redirect_back fallback_location: resource_redirect_path
+          else
+            redirect_to(resource_redirect_path)
+          end
+        end
+      end
+    end
+
+    def collection_post_action(action)
+      raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
+      raise "expected #{resource_name} to respond to #{action}!" if resources.to_a.present? && resources.first.respond_to?(action)
+
+      successes = 0
+
+      resource_class.transaction do
+        successes = resources.select { |resource| (resource.public_send("#{action}!") rescue false) }.length
+      end
+
+      render json: { status: 200, message: "Successfully #{action_verb(action)} #{successes} / #{resources.length} selected #{resource_plural_name}" }
     end
 
     protected
@@ -198,6 +235,10 @@ module Effective
 
     def resource_plural_name # 'things'
       effective_resource.plural_name
+    end
+
+    def action_verb(action)
+      (action.to_s + (action.to_s.end_with?('e') ? 'd' : 'ed'))
     end
 
     # Scoped to resource_scope_method_name

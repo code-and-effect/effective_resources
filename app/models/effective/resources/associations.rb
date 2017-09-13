@@ -78,6 +78,23 @@ module Effective
         nested_resources.find { |ass| ass.name == name }
       end
 
+      def scope?(name)
+        return false unless klass.respond_to?(name)
+
+        is_scope = false
+
+        ActiveRecord::Base.transaction do
+          begin
+            relation = klass.public_send(name).kind_of?(ActiveRecord::Relation)
+          rescue => e
+          end
+
+          raise ActiveRecord::Rollback
+        end
+
+        is_scope
+      end
+
     end
   end
 end
