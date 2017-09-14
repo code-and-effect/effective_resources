@@ -32,7 +32,7 @@ module Effective
 
           self.resources ||= resource_class.all
 
-          EffectiveResources.authorized?(self, action, resource_class.new)
+          EffectiveResources.authorized?(self, action, resource_class)
 
           @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
 
@@ -51,7 +51,7 @@ module Effective
 
     def index
       @page_title ||= resource_plural_name.titleize
-      EffectiveResources.authorized?(self, :index, resource_class.new)
+      EffectiveResources.authorized?(self, :index, resource_class)
 
       self.resources ||= resource_class.all
 
@@ -177,8 +177,10 @@ module Effective
     end
 
     def collection_post_action(action)
+      action = action.to_s.gsub('bulk_', '').to_sym
+
       raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
-      raise "expected #{resource_name} to respond to #{action}!" if resources.to_a.present? && resources.first.respond_to?(action)
+      raise "expected #{resource_name} to respond to #{action}!" if resources.to_a.present? && !resources.first.respond_to?("#{action}!")
 
       successes = 0
 
