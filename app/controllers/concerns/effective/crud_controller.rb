@@ -10,7 +10,7 @@ module Effective
       # member_action :print
       def member_action(action)
         define_method(action) do
-          self.resource ||= resource_class.find(params[:id])
+          self.resource ||= resource_relation.find(params[:id])
 
           EffectiveResources.authorized?(self, action, resource)
 
@@ -23,16 +23,16 @@ module Effective
       def collection_action(action)
         define_method(action) do
           if params[:ids].present?
-            self.resources ||= resource_class.where(id: params[:ids])
+            self.resources ||= resource_relation.where(id: params[:ids])
           end
 
           if effective_resource.scope?(action)
-            self.resources ||= resource_class.send(action)
+            self.resources ||= resource_relation.send(action)
           end
 
-          self.resources ||= resource_class.all
+          self.resources ||= resource_relation.all
 
-          EffectiveResources.authorized?(self, action, resource_class)
+          EffectiveResources.authorized?(self, action, resource_klass)
 
           @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
 
@@ -41,9 +41,38 @@ module Effective
       end
 
       # page_title 'My Title', only: [:new]
-      def page_title(label, opts = {})
+      def page_title(label = nil, opts = {}, &block)
+        raise 'expected a label or block' unless (label || block_given?)
+
         instance_eval do
-          before_action(opts) { @page_title = label }
+          before_action(opts) { @page_title ||= (block_given? ? instance_eval(&block) : label) }
+        end
+      end
+
+      # resource_scope -> { current_user.things }
+      # resource_scope -> { Thing.active.where(user: current_user) }
+      # resource_scope do
+      #   { user_id: current_user.id }
+      # end
+
+      # Return value should be:
+      # a Relation: Thing.where(user: current_user)
+      # a Hash: { user_id: current_user.id }
+      def resource_scope(obj = nil, opts = {}, &block)
+        raise 'expected a proc or block' unless (obj.respond_to?(:call) || block_given?)
+
+        instance_eval do
+          before_action(opts) do
+            @_effective_resource_scope ||= (
+              if block_given?
+                instance_exec(&block)
+              elsif obj.respond_to?(:call)
+                instance_exec(&obj)
+              else
+               obj
+              end
+            )
+          end
         end
       end
 
@@ -51,9 +80,9 @@ module Effective
 
     def index
       @page_title ||= resource_plural_name.titleize
-      EffectiveResources.authorized?(self, :index, resource_class)
+      EffectiveResources.authorized?(self, :index, resource_klass)
 
-      self.resources ||= resource_class.all
+      self.resources ||= resource_relation.all
 
       if resource_datatable_class
         @datatable ||= resource_datatable_class.new(self, resource_datatable_attributes)
@@ -61,7 +90,7 @@ module Effective
     end
 
     def new
-      self.resource ||= resource_class.new
+      self.resource ||= resource_relation.new
 
       self.resource.assign_attributes(
         params.to_unsafe_h.except(:controller, :action).select { |k, v| resource.respond_to?("#{k}=") }
@@ -72,7 +101,7 @@ module Effective
     end
 
     def create
-      self.resource ||= resource_class.new(send(resource_params_method_name))
+      self.resource ||= resource_relation.new(send(resource_params_method_name))
 
       @page_title ||= "New #{resource_name.titleize}"
       EffectiveResources.authorized?(self, :create, resource)
@@ -89,21 +118,21 @@ module Effective
     end
 
     def show
-      self.resource ||= resource_class.find(params[:id])
+      self.resource ||= resource_relation.find(params[:id])
 
       @page_title ||= resource.to_s
       EffectiveResources.authorized?(self, :show, resource)
     end
 
     def edit
-      self.resource ||= resource_class.find(params[:id])
+      self.resource ||= resource_relation.find(params[:id])
 
       @page_title ||= "Edit #{resource}"
       EffectiveResources.authorized?(self, :edit, resource)
     end
 
     def update
-      self.resource ||= resource_class.find(params[:id])
+      self.resource ||= resource_relation.find(params[:id])
 
       @page_title = "Edit #{resource}"
       EffectiveResources.authorized?(self, :update, resource)
@@ -118,7 +147,7 @@ module Effective
     end
 
     def destroy
-      self.resource = resource_class.find(params[:id])
+      self.resource = resource_relation.find(params[:id])
 
       @page_title ||= "Destroy #{resource}"
       EffectiveResources.authorized?(self, :destroy, resource)
@@ -184,7 +213,7 @@ module Effective
 
       successes = 0
 
-      resource_class.transaction do
+      resource_klass.transaction do
         successes = resources.select do |resource|
           begin
             resource.public_send("#{action}!") if EffectiveResources.authorized?(self, action, resource)
@@ -209,6 +238,10 @@ module Effective
       else
         send((effective_resource.show_path(check: true) || effective_resource.edit_path), resource)
       end
+    end
+
+    def resource_index_path
+      effective_resource.index_path
     end
 
     def resource # @thing
@@ -237,6 +270,10 @@ module Effective
       effective_resource.name
     end
 
+    def resource_klass # Thing
+      effective_resource.klass
+    end
+
     def resource_human_name
       effective_resource.human_name
     end
@@ -249,39 +286,32 @@ module Effective
       (action.to_s + (action.to_s.end_with?('e') ? 'd' : 'ed'))
     end
 
-    # Scoped to resource_scope_method_name
-    def resource_class # Thing
-      @resource_class ||= (
-        if resource_scope_method_name.blank?
-          effective_resource.klass
+    # Returns an ActiveRecord relation based on the computed value of `resource_scope` dsl method
+    def resource_relation # Thing
+      @_effective_resource_relation ||= (
+        relation = case @_effective_resource_scope  # If this was initialized by the resource_scope before_filter
+        when ActiveRecord::Relation
+          @_effective_resource_scope
+        when Hash
+          effective_resource.klass.where(@_effective_resource_scope)
+        when Symbol
+          effective_resource.klass.send(@_effective_resource_scope)
+        when nil
+          effective_resource.klass.all
         else
-          case (resource_scope = send(resource_scope_method_name))
-          when ActiveRecord::Relation
-            effective_resource.relation.merge(resource_scope)
-          when Hash
-            effective_resource.klass.where(resource_scope)
-          when Symbol
-            effective_resource.klass.send(resource_scope)
-          when nil
-            effective_resource.klass
-          else
-            raise "expected #{resource_scope_method_name} to return a Hash or Symbol"
-          end
+          raise "expected resource_scope method to return an ActiveRecord::Relation or Hash"
         end
+
+        unless relation.kind_of?(ActiveRecord::Relation)
+          raise("unable to build resource relation for #{effective_resource.klass || 'unknown klass'}.")
+        end
+
+        relation
       )
     end
 
     def resource_datatable_attributes
-      return {} unless resource_scope_method_name.present?
-
-      case (resource_scope = send(resource_scope_method_name))
-      when ActiveRecord::Relation ; {resource_scope: true}
-      when Hash   ; resource_scope
-      when Symbol ; {resource_scope: true}
-      when nil    ; {}
-      else
-        raise "expected #{resource_scope_method_name} to return a Hash or Symbol"
-      end
+      resource_relation.where_values_hash.symbolize_keys
     end
 
     def resource_datatable_class # ThingsDatatable
@@ -292,14 +322,6 @@ module Effective
       ["#{resource_name}_params", "#{resource_plural_name}_params", 'permitted_params'].find { |name| respond_to?(name, true) } || 'params'
     end
 
-    # Override this with Team.where(team: current_user.team) to build and create with team
-    def resource_scope_method_name
-      ["#{resource_name}_scope", "#{resource_plural_name}_scope", 'resource_scope', 'default_scope'].find { |name| respond_to?(name, true) }
-    end
-
-    def resource_index_path
-      effective_resource.index_path
-    end
 
   end
 end
