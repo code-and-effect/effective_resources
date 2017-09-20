@@ -10,7 +10,7 @@ module Effective
       # member_action :print
       def member_action(action)
         define_method(action) do
-          self.resource ||= resource_relation.find(params[:id])
+          self.resource ||= resource_scope.find(params[:id])
 
           EffectiveResources.authorized?(self, action, resource)
 
@@ -23,14 +23,14 @@ module Effective
       def collection_action(action)
         define_method(action) do
           if params[:ids].present?
-            self.resources ||= resource_relation.where(id: params[:ids])
+            self.resources ||= resource_scope.where(id: params[:ids])
           end
 
           if effective_resource.scope?(action)
-            self.resources ||= resource_relation.send(action)
+            self.resources ||= resource_scope.send(action)
           end
 
-          self.resources ||= resource_relation.all
+          self.resources ||= resource_scope.all
 
           EffectiveResources.authorized?(self, action, resource_klass)
 
@@ -82,7 +82,7 @@ module Effective
       @page_title ||= resource_plural_name.titleize
       EffectiveResources.authorized?(self, :index, resource_klass)
 
-      self.resources ||= resource_relation.all
+      self.resources ||= resource_scope.all
 
       if resource_datatable_class
         @datatable ||= resource_datatable_class.new(self, resource_datatable_attributes)
@@ -90,7 +90,7 @@ module Effective
     end
 
     def new
-      self.resource ||= resource_relation.new
+      self.resource ||= resource_scope.new
 
       self.resource.assign_attributes(
         params.to_unsafe_h.except(:controller, :action).select { |k, v| resource.respond_to?("#{k}=") }
@@ -101,7 +101,7 @@ module Effective
     end
 
     def create
-      self.resource ||= resource_relation.new(send(resource_params_method_name))
+      self.resource ||= resource_scope.new(send(resource_params_method_name))
 
       @page_title ||= "New #{resource_name.titleize}"
       EffectiveResources.authorized?(self, :create, resource)
@@ -118,21 +118,21 @@ module Effective
     end
 
     def show
-      self.resource ||= resource_relation.find(params[:id])
+      self.resource ||= resource_scope.find(params[:id])
 
       @page_title ||= resource.to_s
       EffectiveResources.authorized?(self, :show, resource)
     end
 
     def edit
-      self.resource ||= resource_relation.find(params[:id])
+      self.resource ||= resource_scope.find(params[:id])
 
       @page_title ||= "Edit #{resource}"
       EffectiveResources.authorized?(self, :edit, resource)
     end
 
     def update
-      self.resource ||= resource_relation.find(params[:id])
+      self.resource ||= resource_scope.find(params[:id])
 
       @page_title = "Edit #{resource}"
       EffectiveResources.authorized?(self, :update, resource)
@@ -147,7 +147,7 @@ module Effective
     end
 
     def destroy
-      self.resource = resource_relation.find(params[:id])
+      self.resource = resource_scope.find(params[:id])
 
       @page_title ||= "Destroy #{resource}"
       EffectiveResources.authorized?(self, :destroy, resource)
@@ -287,7 +287,7 @@ module Effective
     end
 
     # Returns an ActiveRecord relation based on the computed value of `resource_scope` dsl method
-    def resource_relation # Thing
+    def resource_scope # Thing
       @_effective_resource_relation ||= (
         relation = case @_effective_resource_scope  # If this was initialized by the resource_scope before_filter
         when ActiveRecord::Relation
@@ -311,7 +311,7 @@ module Effective
     end
 
     def resource_datatable_attributes
-      resource_relation.where_values_hash.symbolize_keys
+      resource_scope.where_values_hash.symbolize_keys
     end
 
     def resource_datatable_class # ThingsDatatable
