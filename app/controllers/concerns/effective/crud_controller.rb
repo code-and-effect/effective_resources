@@ -27,7 +27,7 @@ module Effective
           end
 
           if effective_resource.scope?(action)
-            self.resources ||= resource_scope.send(action)
+            self.resources ||= resource_scope.public_send(action)
           end
 
           self.resources ||= resource_scope.all
@@ -44,8 +44,8 @@ module Effective
       def page_title(label = nil, opts = {}, &block)
         raise 'expected a label or block' unless (label || block_given?)
 
-        instance_eval do
-          before_action(opts) { @page_title ||= (block_given? ? instance_eval(&block) : label) }
+        instance_exec do
+          before_action(opts) { @page_title ||= (block_given? ? instance_exec(&block) : label) }
         end
       end
 
@@ -61,17 +61,9 @@ module Effective
       def resource_scope(obj = nil, opts = {}, &block)
         raise 'expected a proc or block' unless (obj.respond_to?(:call) || block_given?)
 
-        instance_eval do
+        instance_exec do
           before_action(opts) do
-            @_effective_resource_scope ||= (
-              if block_given?
-                instance_exec(&block)
-              elsif obj.respond_to?(:call)
-                instance_exec(&obj)
-              else
-               obj
-              end
-            )
+            @_effective_resource_scope ||= instance_exec(&(block_given? ? block : obj))
           end
         end
       end
@@ -158,10 +150,10 @@ module Effective
         flash[:danger] = "Unable to delete #{resource_human_name}: #{resource.errors.full_messages.to_sentence}"
       end
 
-      if request.referer.present? && !request.referer.include?(send(effective_resource.show_path))
+      if request.referer.present? && !request.referer.include?(effective_resource.show_path)
         redirect_to(request.referer)
       else
-        redirect_to(send(resource_index_path))
+        redirect_to(resource_index_path)
       end
     end
 
@@ -179,17 +171,13 @@ module Effective
 
         referer = request.referer.to_s
 
-        edit_path = send(effective_resource.edit_path, resource) if respond_to?(effective_resource.edit_path)
-        new_path = effective_resource.new_path if respond_to?(effective_resource.new_path)
-        show_path = effective_resource.show_path if respond_to?(effective_resource.show_path)
-
-        if edit_path && referer.end_with?(edit_path)
+        if resource_edit_path && referer.end_with?(resource_edit_path)
           @page_title ||= "Edit #{resource}"
           render :edit
-        elsif new_path && referer.end_with?(new_path)
+        elsif resource_new_path && referer.end_with?(resource_new_path)
           @page_title ||= "New #{resource_name.titleize}"
           render :new
-        elsif show_path && referer.end_with?(show_path)
+        elsif resource_show_path && referer.end_with?(resource_show_path)
           @page_title ||= resource_name.titleize
           render :show
         else
@@ -197,7 +185,7 @@ module Effective
           flash[:danger] = flash.now[:danger]
 
           if referer.present? && (Rails.application.routes.recognize_path(URI(referer).path) rescue false)
-            redirect_back fallback_location: resource_redirect_path
+            redirect_back(fallback_location: resource_redirect_path)
           else
             redirect_to(resource_redirect_path)
           end
@@ -230,18 +218,37 @@ module Effective
 
     def resource_redirect_path
       case params[:commit].to_s
-      when 'Save'               ; send(effective_resource.edit_path, resource)
-      when 'Save and Add New'   ; send(effective_resource.new_path)
-      when 'Save and Continue'  ; send(resource_index_path)
+      when 'Save'
+        [resource_edit_path, resource_show_path, resource_index_path].compact.first
+      when 'Save and Add New'
+        [resource_new_path, resource_index_path].compact.first
+      when 'Save and Continue'
+        resource_index_path
       when 'Save and Return'
-        request.referer.present? ? request.referer : send(resource_index_path)
+        request.referer.present? ? request.referer : resource_index_path
       else
-        send((effective_resource.show_path(check: true) || effective_resource.edit_path), resource)
+        [resource_edit_path, resource_show_path, resource_index_path].compact.first
       end
     end
 
     def resource_index_path
-      effective_resource.index_path
+      send(effective_resource.index_path) if effective_resource.index_path(check: true)
+    end
+
+    def resource_new_path
+      send(effective_resource.new_path) if effective_resource.new_path(check: true)
+    end
+
+    def resource_edit_path
+      send(effective_resource.edit_path, resource) if effective_resource.edit_path(check: true)
+    end
+
+    def resource_show_path
+      send(effective_resource.show_path, resource) if effective_resource.show_path(check: true)
+    end
+
+    def resource_destroy_path
+      send(effective_resource.destroy_path, resource) if effective_resource.destroy_path(check: true)
     end
 
     def resource # @thing
@@ -303,7 +310,7 @@ module Effective
         end
 
         unless relation.kind_of?(ActiveRecord::Relation)
-          raise("unable to build resource relation for #{effective_resource.klass || 'unknown klass'}.")
+          raise("unable to build resource_scope for #{effective_resource.klass || 'unknown klass'}.")
         end
 
         relation
@@ -321,7 +328,6 @@ module Effective
     def resource_params_method_name
       ["#{resource_name}_params", "#{resource_plural_name}_params", 'permitted_params'].find { |name| respond_to?(name, true) } || 'params'
     end
-
 
   end
 end
