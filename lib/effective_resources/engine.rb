@@ -9,5 +9,12 @@ module EffectiveResources
       eval File.read("#{config.root}/config/effective_resources.rb")
     end
 
+    # Register the flash_messages concern so that it can be called in ActionController
+    initializer 'effective_resources.action_controller' do |app|
+      ActiveSupport.on_load :action_controller do
+        include(Effective::FlashMessages)
+      end
+    end
+
   end
 end

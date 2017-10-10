@@ -23,7 +23,7 @@ module Effective
         controller_routes.map { |route| route.defaults[:action] if is_get_member?(route) }.compact - crud_actions
       end
 
-      # GET actions
+      # POST/PUT/PATCH actions
       def member_post_actions
         controller_routes.map { |route| route.defaults[:action] if is_post_member?(route) }.compact - crud_actions
       end

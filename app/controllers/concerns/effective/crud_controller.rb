@@ -101,10 +101,10 @@ module Effective
       resource.created_by ||= current_user if resource.respond_to?(:created_by=)
 
       if resource.save
-        flash[:success] = "Successfully created #{resource_human_name}"
+        flash[:success] = flash_success(resource)
         redirect_to(resource_redirect_path)
       else
-        flash.now[:danger] = "Unable to create #{resource_human_name}: #{resource.errors.full_messages.to_sentence}"
+        flash.now[:danger] = flash_danger(resource)
         render :new
       end
     end
@@ -130,10 +130,10 @@ module Effective
       EffectiveResources.authorized?(self, :update, resource)
 
       if resource.update_attributes(send(resource_params_method_name))
-        flash[:success] = "Successfully updated #{resource_human_name}"
+        flash[:success] = flash_success(resource)
         redirect_to(resource_redirect_path)
       else
-        flash.now[:danger] = "Unable to update #{resource_human_name}: #{resource.errors.full_messages.to_sentence}"
+        flash.now[:danger] = flash_danger(resource)
         render :edit
       end
     end
@@ -145,9 +145,9 @@ module Effective
       EffectiveResources.authorized?(self, :destroy, resource)
 
       if resource.destroy
-        flash[:success] = "Successfully deleted #{resource_human_name}"
+        flash[:success] = flash_success(resource, :delete)
       else
-        flash[:danger] = "Unable to delete #{resource_human_name}: #{resource.errors.full_messages.to_sentence}"
+        flash[:danger] = flash_danger(resource, :delete)
       end
 
       if request.referer.present? && !request.referer.include?(effective_resource.show_path)
@@ -164,10 +164,10 @@ module Effective
       begin
         resource.public_send("#{action}!") || raise("failed to #{action} #{resource}")
 
-        flash[:success] = "Successfully #{action_verb(action)} #{resource_human_name}"
+        flash[:success] = flash_success(resource, action)
         redirect_back(fallback_location: resource_redirect_path)
       rescue => e
-        flash.now[:danger] = "Unable to #{action} #{resource_human_name}: #{resource.errors.full_messages.to_sentence.presence || e.message}"
+        flash.now[:danger] = flash_danger(resource, action, e: e)
 
         referer = request.referer.to_s
 

@@ -32,21 +32,31 @@ Add to your contoller:
 class PostsController < ApplicationController
   include Effective::CrudController
 
-  member_action :something
+  # Sets the @page_title in a before_filter
+  page_title 'My Posts', only: [:index]
+
+  # All queries and objects will be built with this scope
+  resource_scope -> { current_user.posts }
+
+  # Similar to above, with block syntax
+  resource_scope do
+    Post.active.where(user: current_user)
+  end
+
+  # When GET request, will render the approve page
+  # When POST|PATCH|PUT request, will call @post.approve! and do the right thing
+  member_action :approve
+
+  # When GET request, will render an index page scoped to this method (if it's a scope on the model i.e. Post.approved)
+  collection_action :approved
+
+  # When POST|PATCH|PUT request, will call @post.approve! on each post as per params[:ids]
+  # Created with effective_datatables bulk actions in mind
+  collection_action :bulk_approve
 
   protected
 
-  # If it's a Hash of attributes, the controller will call .where(attributes)
-  # and the attributes will be used to initialize the datatable on index
-  #
-  # If it's an ActiveRecord scope, or symbol, we initialize a datatable with {resource_scope: true}
-  # and leave it as a TODO for the datatable to do the right thin .
-  def post_scope
-    {client_id: current_user.client_id}
-    # Post.where(client_id: current_user.client_id)
-    # :approved
-  end
-
+  # The permitted parameters for this post.  Other recognized method names are posts_params and permitted_params
   def post_params
     params.require(:post).permit(:id, :title, :body)
   end
@@ -58,11 +68,13 @@ end
 
 Implements the 7 RESTful actions: `index`, `new`, `create`, `show`, `edit`, `update`, `destroy`.
 
-- Loads an appropriate `@post` type instance
+- Loads an appropriate `@posts` or `@post` type instance variable.
 - Sets a `@page_title` (effective_pages).
 - Calls authorize as per the configured `EffectiveResources.authorization_method` (flow through to CanCan or Pundit)
 - Does the create/update save
 - Sets a `flash[:success]` and redirects on success, or sets a `flash.now[:danger]` and renders on error.
+- Does the right thing with member and collection actions
+- Intelligently redirects based on commit message
 
 ## Helpers
 
