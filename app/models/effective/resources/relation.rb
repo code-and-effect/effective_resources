@@ -9,7 +9,7 @@ module Effective
       # name: sort by this column, or this relation
       # sort: when a symbol or boolean, this is the relation's column to sort by
 
-      def order(name, direction = :asc, as: nil, sort: nil, sql_column: nil)
+      def order(name, direction = :asc, as: nil, sort: nil, sql_column: nil, limit: nil, reorder: false)
         raise 'expected relation to be present' unless relation
 
         sql_column ||= sql_column(name)
@@ -17,23 +17,24 @@ module Effective
 
         association = associated(name)
         sql_direction = sql_direction(direction)
+        @relation = relation.reorder(nil) if reorder
 
         case sql_type
         when :belongs_to
           relation
             .order("#{is_null(sql_column)} ASC")
-            .order(order_by_associated_conditions(association, sort: sort, direction: direction))
+            .order(order_by_associated_conditions(association, sort: sort, direction: direction, limit: limit))
         when :belongs_to_polymorphic
           relation
             .order("#{sql_column.sub('_id', '_type')} #{sql_direction}")
             .order("#{sql_column} #{sql_direction}")
         when :has_and_belongs_to_many, :has_many, :has_one
           relation
-            .order(order_by_associated_conditions(association, sort: sort, direction: direction))
+            .order(order_by_associated_conditions(association, sort: sort, direction: direction, limit: limit))
             .order("#{sql_column(klass.primary_key)} #{sql_direction}")
         when :effective_addresses
           relation
-            .order(order_by_associated_conditions(associated(:addresses), sort: sort, direction: direction))
+            .order(order_by_associated_conditions(associated(:addresses), sort: sort, direction: direction, limit: limit))
             .order("#{sql_column(klass.primary_key)} #{sql_direction}")
         when :effective_roles
           relation.order("#{sql_column(:roles_mask)} #{sql_direction}")
@@ -219,13 +220,13 @@ module Effective
         "#{key} IN (#{(keys.uniq.compact.presence || [0]).join(',')})"
       end
 
-      def order_by_associated_conditions(association, sort: nil, direction: :asc)
+      def order_by_associated_conditions(association, sort: nil, direction: :asc, limit: nil)
         resource = Effective::Resource.new(association)
 
         # Order the target model for its matching records / keys
         sort_column = (sort unless sort == true) || resource.sort_column
 
-        relation = resource.relation.reorder(nil).order("#{resource.sql_column(sort_column)} #{sql_direction(direction)}")
+        relation = resource.order(sort_column, direction, limit: limit, reorder: true).limit([limit, 1000].compact.min)
 
         if association.options[:as] # polymorphic
           relation = relation.where(association.type => klass.name)
