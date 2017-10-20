@@ -13,9 +13,9 @@ module EffectiveResourcesHelper
     end
   end
 
-  def simple_form_save(form, options = {class: 'form-actions'}, &block)
+  def simple_form_save(form, label = 'Save', options = {class: 'form-actions'}, &block)
     content_tag(:div, class: options[:class]) do
-      form.button(:submit, 'Save', data: { disable_with: 'Saving...' }) + (capture(&block) if block_given?)
+      form.button(:submit, label, data: { disable_with: 'Saving...' }) + (capture(&block) if block_given?)
     end
   end
 
