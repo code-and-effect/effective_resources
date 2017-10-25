@@ -3,12 +3,40 @@ module Effective
     extend ActiveSupport::Concern
 
     included do
+      class << self
+        def member_actions
+          @_effective_member_actions ||= []
+        end
+      end
     end
 
     module ClassMethods
       # Add the following to your controller for a simple member action
       # member_action :print
-      def member_action(action)
+      #
+      # Add to your permissions:  can :print, Thing
+      #
+      # If you want to POST and do an action based on this:
+      # Make sure your model responds to approve!
+      # member_action :approve
+      # If you want it to automatically show up in your forms
+      # member_action :approve, 'Save and Approve', if: -> { approved? }
+      # member_action :approve, 'Save and Approve', unless: -> { !approved? }
+
+      def member_action(action, commit = nil, args = {})
+
+        if commit.present?
+          if args.key?(:if) && args[:if].respond_to?(:call) == false
+            raise "expected if: to be callable. Try member_action :approve, 'Save and Approve', if: -> { submitted? }"
+          end
+
+          if args.key?(:unless) && args[:unless].respond_to?(:call) == false
+            raise "expected unless: to be callable. Try member_action :approve, 'Save and Approve', unless: -> { declined? }"
+          end
+
+          member_actions << (args || {}).merge(action: action, commit: commit)
+        end
+
         define_method(action) do
           self.resource ||= resource_scope.find(params[:id])
 
@@ -212,6 +240,17 @@ module Effective
       end
 
       render json: { status: 200, message: "Successfully #{action_verb(action)} #{successes} / #{resources.length} selected #{resource_plural_name}" }
+    end
+
+    # Here we look at all available (class level) member actions, see which ones apply to the current resource
+    # This feeds into the helper simple_form_submit(f)
+    # Returns an Array of [String, Hash]
+    # ['Save', data: { disable_with: 'Saving'}]
+    def member_actions_for(obj)
+      self.class.member_actions.select do |action|
+        (action.key?(:if) ? obj.instance_exec(&action[:if]) : true) &&
+        (action.key?(:unless) ? !obj.instance_exec(&action[:unless]) : true)
+      end.map { |action| [action[:commit], action.except(:action, :commit, :if, :unless)] }
     end
 
     protected
