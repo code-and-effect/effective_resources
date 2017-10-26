@@ -201,6 +201,7 @@ module Effective
       end
     end
 
+    # No attributes are assigned or saved. We purely call action! on the resource.
     def member_post_action(action)
       raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
 
@@ -227,6 +228,7 @@ module Effective
       end
     end
 
+    # No attributes are assigned or saved. We purely call action! on the resource
     def collection_post_action(action)
       action = action.to_s.gsub('bulk_', '').to_sym
 
@@ -250,13 +252,15 @@ module Effective
 
     # Here we look at all available (class level) member actions, see which ones apply to the current resource
     # This feeds into the helper simple_form_submit(f)
-    # Returns a Hash of {'Save': {data-disable-with: 'Saving...'}, 'Save and Continue': {data-disable-with: 'Saving...'}}
+    # Returns a Hash of {'Save': {data-disable-with: 'Saving...'}, 'Approve': {data-disable-with: 'Approve'}}
     def member_actions_for(obj)
       self.class.member_actions.select do |commit, args|
         (args.key?(:if) ? obj.instance_exec(&args[:if]) : true) &&
         (args.key?(:unless) ? !obj.instance_exec(&args[:unless]) : true)
       end.inject({}) { |h, (commit, args)| h[commit] = args.except(:action, :if, :unless, :redirect); h }
     end
+
+    protected
 
     # This calls the appropriate member action, probably save!, on the resource.
     def save_resource(resource, action = :save)
@@ -276,12 +280,6 @@ module Effective
       end
 
       false
-    end
-
-    protected
-
-    def resource_commit_action
-      self.class.member_actions[params[:commit].to_s] || self.class.member_actions['Save'] || raise("expected member_actions['Save'] to be present")
     end
 
     def resource_redirect_path
@@ -305,7 +303,7 @@ module Effective
         resource_index_path
       else
         [referer_redirect_path, resource_index_path].compact.first
-      end
+      end.presence || root_path
     end
 
     def referer_redirect_path
@@ -378,6 +376,10 @@ module Effective
 
     def action_verb(action)
       (action.to_s + (action.to_s.end_with?('e') ? 'd' : 'ed'))
+    end
+
+    def resource_commit_action
+      self.class.member_actions[params[:commit].to_s] || self.class.member_actions['Save'] || raise("expected member_actions['Save'] to be present")
     end
 
     # Returns an ActiveRecord relation based on the computed value of `resource_scope` dsl method
