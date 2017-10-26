@@ -136,6 +136,9 @@ module Effective
       action = resource_commit_action[:action]
       EffectiveResources.authorized?(self, action, resource) unless action == :save
 
+      resource.assign_attributes(send(resource_params_method_name))
+      resource.created_by ||= current_user if resource.respond_to?(:created_by=)
+
       if save_resource(resource, action)
         flash[:success] ||= flash_success(resource, action)
         redirect_to(resource_redirect_path)
@@ -167,6 +170,8 @@ module Effective
 
       action = resource_commit_action[:action]
       EffectiveResources.authorized?(self, action, resource) unless action == :save
+
+      resource.assign_attributes(send(resource_params_method_name))
 
       if save_resource(resource, action)
         flash[:success] ||= flash_success(resource, action)
@@ -257,9 +262,6 @@ module Effective
     def save_resource(resource, action = :save)
       raise "expected @#{resource_name} to respond to #{action}!" unless resource.respond_to?("#{action}!")
 
-      resource.assign_attributes(send(resource_params_method_name))
-
-      resource.created_by ||= current_user if resource.respond_to?(:created_by=)
       resource.current_user ||= current_user if resource.respond_to?(:current_user=)
 
       resource_klass.transaction do
