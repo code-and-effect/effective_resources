@@ -41,6 +41,9 @@ module Effective
         when :string, :text
           relation
             .order(("ISNULL(#{sql_column}), " if mysql?).to_s + "#{sql_column}='' ASC, #{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?).to_s)
+          when :time
+            relation
+              .order(("ISNULL(#{sql_column}), " if mysql?).to_s + "EXTRACT(hour from #{sql_column}) #{sql_direction}, EXTRACT(minute from #{sql_column}) #{sql_direction}" + (" NULLS LAST" if postgres?).to_s)
         else
           relation
             .order(("ISNULL(#{sql_column}), " if mysql?).to_s + "#{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?).to_s)
@@ -101,6 +104,10 @@ module Effective
             end
           )
           relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
+        when :time
+          timed = relation.where("EXTRACT(hour from #{sql_column}) = ?", term.utc.hour)
+          timed = timed.where("EXTRACT(minute from #{sql_column}) = ?", term.utc.min) if term.min > 0
+          timed
         when :decimal, :currency
           if fuzzy && (term.round(0) == term) && value.to_s.include?('.') == false
             if term < 0

@@ -32,6 +32,8 @@ module Effective
           { as: :number }
         when :text
           { as: :text }
+        when :time
+          { as: :time }
         when ActiveRecord::Base
           { as: :select }.merge(Effective::Resource.new(type).search_form_field_collection)
         else

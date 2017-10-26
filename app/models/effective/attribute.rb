@@ -41,6 +41,7 @@ module Effective
         when :resource    ; :resource
         when :string      ; :string
         when :text        ; :text
+        when :time        ; :time
         when FalseClass   ; :boolean
         when Fixnum       ; :integer
         when Float        ; :decimal
@@ -72,6 +73,11 @@ module Effective
         if (digits = value.to_s.scan(/(\d+)/).flatten).present?
           date = Time.zone.local(*digits)
           name.to_s.start_with?('end_') ? date.end_of_day : date
+        end
+      when :time
+        if (digits = value.to_s.scan(/(\d+)/).flatten).present?
+          now = Time.zone.now
+          Time.zone.local(now.year, now.month, now.day, *digits)
         end
       when :decimal, :currency
         (value.kind_of?(String) ? value.gsub(/[^0-9|\-|\.]/, '') : value).to_f
