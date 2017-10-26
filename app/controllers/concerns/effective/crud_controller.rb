@@ -23,7 +23,7 @@ module Effective
       # member_action :approve
       # If you want it to automatically show up in your forms
       # member_action :approve, 'Save and Approve', if: -> { approved? }
-      # member_action :approve, 'Save and Approve', unless: -> { !approved? }
+      # member_action :approve, 'Save and Approve', unless: -> { !approved? }, redirect: :show
 
       def member_action(action, commit = nil, args = {})
         if commit.present?
@@ -128,18 +128,19 @@ module Effective
     end
 
     def create
-      self.resource ||= resource_scope.new(send(resource_params_method_name))
+      self.resource ||= resource_scope.new
 
       @page_title ||= "New #{resource_name.titleize}"
       EffectiveResources.authorized?(self, :create, resource)
 
-      resource.created_by ||= current_user if resource.respond_to?(:created_by=)
+      action = resource_commit_action[:action]
+      EffectiveResources.authorized?(self, action, resource) unless action == :save
 
-      if resource.save
-        flash[:success] = flash_success(resource)
+      if save_resource(resource, action)
+        flash[:success] ||= flash_success(resource, action)
         redirect_to(resource_redirect_path)
       else
-        flash.now[:danger] = flash_danger(resource)
+        flash.now[:danger] ||= flash_danger(resource, action)
         render :new
       end
     end
@@ -164,11 +165,14 @@ module Effective
       @page_title = "Edit #{resource}"
       EffectiveResources.authorized?(self, :update, resource)
 
-      if resource.update_attributes(send(resource_params_method_name))
-        flash[:success] = flash_success(resource)
+      action = resource_commit_action[:action]
+      EffectiveResources.authorized?(self, action, resource) unless action == :save
+
+      if save_resource(resource, action)
+        flash[:success] ||= flash_success(resource, action)
         redirect_to(resource_redirect_path)
       else
-        flash.now[:danger] = flash_danger(resource)
+        flash.now[:danger] ||= flash_danger(resource, action)
         render :edit
       end
     end
@@ -180,13 +184,13 @@ module Effective
       EffectiveResources.authorized?(self, :destroy, resource)
 
       if resource.destroy
-        flash[:success] = flash_success(resource, :delete)
+        flash[:success] ||= flash_success(resource, :delete)
       else
-        flash[:danger] = flash_danger(resource, :delete)
+        flash[:danger] ||= flash_danger(resource, :delete)
       end
 
-      if request.referer.present? && !request.referer.include?(effective_resource.show_path)
-        redirect_to(request.referer)
+      if referer_redirect_path && !request.referer.include?(resource_show_path)
+        redirect_to(referer_redirect_path)
       else
         redirect_to(resource_index_path)
       end
@@ -194,36 +198,26 @@ module Effective
 
     def member_post_action(action)
       raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
-      raise "expected @#{resource_name} to respond to #{action}!" unless resource.respond_to?("#{action}!")
 
-      begin
-        resource.public_send("#{action}!") || raise("failed to #{action} #{resource}")
+      if save_resource(resource, action)
+        flash[:success] ||= flash_success(resource, action)
+        redirect_to(referer_redirect_path || resource_redirect_path)
+      else
+        flash.now[:danger] ||= flash_danger(resource, action)
 
-        flash[:success] = flash_success(resource, action)
-        redirect_back(fallback_location: resource_redirect_path)
-      rescue => e
-        flash.now[:danger] = flash_danger(resource, action, e: e)
-
-        referer = request.referer.to_s
-
-        if resource_edit_path && referer.end_with?(resource_edit_path)
+        if resource_edit_path && (referer_redirect_path || '').end_with?(resource_edit_path)
           @page_title ||= "Edit #{resource}"
           render :edit
-        elsif resource_new_path && referer.end_with?(resource_new_path)
+        elsif resource_new_path && (referer_redirect_path || '').end_with?(resource_new_path)
           @page_title ||= "New #{resource_name.titleize}"
           render :new
-        elsif resource_show_path && referer.end_with?(resource_show_path)
+        elsif resource_show_path && (referer_redirect_path || '').end_with?(resource_show_path)
           @page_title ||= resource_name.titleize
           render :show
         else
           @page_title ||= resource.to_s
           flash[:danger] = flash.now[:danger]
-
-          if referer.present? && (Rails.application.routes.recognize_path(URI(referer).path) rescue false)
-            redirect_back(fallback_location: resource_redirect_path)
-          else
-            redirect_to(resource_redirect_path)
-          end
+          redirect_to(referer_redirect_path || resource_redirect_path)
         end
       end
     end
@@ -256,12 +250,50 @@ module Effective
       self.class.member_actions.select do |commit, args|
         (args.key?(:if) ? obj.instance_exec(&args[:if]) : true) &&
         (args.key?(:unless) ? !obj.instance_exec(&args[:unless]) : true)
-      end.inject({}) { |h, (commit, args)| h[commit] = args.except(:action, :if, :unless); h }
+      end.inject({}) { |h, (commit, args)| h[commit] = args.except(:action, :if, :unless, :redirect); h }
+    end
+
+    # This calls the appropriate member action, probably save!, on the resource.
+    def save_resource(resource, action = :save)
+      raise "expected @#{resource_name} to respond to #{action}!" unless resource.respond_to?("#{action}!")
+
+      resource.assign_attributes(send(resource_params_method_name))
+
+      resource.created_by ||= current_user if resource.respond_to?(:created_by=)
+      resource.current_user ||= current_user if resource.respond_to?(:current_user=)
+
+      resource_klass.transaction do
+        begin
+          resource.public_send("#{action}!") || raise("failed to #{action} #{resource}")
+          return true
+        rescue => e
+          flash.delete(:success)
+          flash.now[:danger] = flash_danger(resource, action, e: e)
+          raise ActiveRecord::Rollback
+        end
+      end
+
+      false
     end
 
     protected
 
+    def resource_commit_action
+      self.class.member_actions[params[:commit].to_s] || self.class.member_actions['Save'] || raise("expected member_actions['Save'] to be present")
+    end
+
     def resource_redirect_path
+      commit_action_redirect = case resource_commit_action[:redirect]
+        when :index ; resource_index_path
+        when :edit  ; resource_edit_path
+        when :show  ; resource_show_path
+        when :back  ; referer_redirect_path
+        when nil    ; nil
+        else        ; resource_member_action_path(resource_commit_action[:action])
+      end
+
+      return commit_action_redirect if commit_action_redirect.present?
+
       case params[:commit].to_s
       when 'Save'
         [resource_edit_path, resource_show_path, resource_index_path].compact.first
@@ -269,10 +301,14 @@ module Effective
         [resource_new_path, resource_index_path].compact.first
       when 'Save and Continue'
         resource_index_path
-      when 'Save and Return'
-        request.referer.present? ? request.referer : resource_index_path
       else
-        [resource_edit_path, resource_show_path, resource_index_path].compact.first
+        [referer_redirect_path, resource_index_path].compact.first
+      end
+    end
+
+    def referer_redirect_path
+      if request.referer.present? && (Rails.application.routes.recognize_path(URI(request.referer.to_s).path) rescue false)
+        request.referer.to_s
       end
     end
 
@@ -294,6 +330,10 @@ module Effective
 
     def resource_destroy_path
       send(effective_resource.destroy_path, resource) if effective_resource.destroy_path(check: true)
+    end
+
+    def resource_member_action_path(action)
+      send(effective_resource.action_path(action), resource) if effective_resource.action_path(action, check: true)
     end
 
     def resource # @thing

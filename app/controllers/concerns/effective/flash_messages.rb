@@ -9,7 +9,7 @@ module Effective
       action ||= :save
       name ||= resource.class.model_name.human
 
-      "#{name.to_s.titleize} was successfully #{action}#{(action.to_s.end_with?('e') ? 'd' : 'ed')}"
+      "#{name.to_s.titleize} was successfully #{action}#{(action.to_s == 'submit' ? 't' : '')}#{(action.to_s.end_with?('e') ? 'd' : 'ed')}"
     end
 
     # flash.now[:danger] = flash_danger(@post)
