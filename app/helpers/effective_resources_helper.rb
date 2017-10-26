@@ -3,21 +3,18 @@ module EffectiveResourcesHelper
   def simple_form_submit(form, options = {class: 'form-actions'}, &block)
     resource = (@_effective_resource || Effective::Resource.new(controller_path))
 
-    buttons = [
-      ['Save', data: { disable_with: 'Saving...' }]
-    ]
-
-    buttons += if controller.respond_to?(:member_actions_for)
+    actions = if controller.respond_to?(:member_actions_for)
       controller.member_actions_for(form.object)
     else
-      [
-        (['Save and Continue', data: { disable_with: 'Saving...' }] if resource.index_path(check: true)),
-        (['Save and Add New', data: { disable_with: 'Saving...' }] if resource.new_path(check: true))
-      ]
-    end.compact
+      {}.tap do |actions|
+        actions['Save'] = { data: { disable_with: 'Saving...' }}
+        actions['Save and Continue'] = { data: { disable_with: 'Saving...' }} if resource.index_path(check: true)
+        actions['Save and Add New'] = { data: { disable_with: 'Saving...' }} if resource.new_path(check: true)
+      end
+    end
 
     content_tag(:div, class: options[:class]) do
-      (buttons.map { |args| form.button(:submit, *args) } + [(capture(&block) if block_given?)]).compact.join(' ').html_safe
+      (actions.map { |action| form.button(:submit, *action.to_a) } + [(capture(&block) if block_given?)]).compact.join(' ').html_safe
     end
   end
 

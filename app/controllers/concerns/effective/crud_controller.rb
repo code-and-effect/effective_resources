@@ -5,7 +5,9 @@ module Effective
     included do
       class << self
         def member_actions
-          @_effective_member_actions ||= []
+          @_effective_member_actions ||= {
+            'Save' => { action: :save, data: { disable_with: 'Saving...' }}
+          }
         end
       end
     end
@@ -24,8 +26,13 @@ module Effective
       # member_action :approve, 'Save and Approve', unless: -> { !approved? }
 
       def member_action(action, commit = nil, args = {})
-
         if commit.present?
+          raise 'expected args to be a Hash or false' unless args.kind_of?(Hash) || args == false
+
+          if args == false
+            member_actions.delete(commit); return
+          end
+
           if args.key?(:if) && args[:if].respond_to?(:call) == false
             raise "expected if: to be callable. Try member_action :approve, 'Save and Approve', if: -> { submitted? }"
           end
@@ -34,7 +41,7 @@ module Effective
             raise "expected unless: to be callable. Try member_action :approve, 'Save and Approve', unless: -> { declined? }"
           end
 
-          member_actions << (args || {}).merge(action: action, commit: commit)
+          member_actions[commit] = (args || {}).merge(action: action)
         end
 
         define_method(action) do
@@ -244,13 +251,12 @@ module Effective
 
     # Here we look at all available (class level) member actions, see which ones apply to the current resource
     # This feeds into the helper simple_form_submit(f)
-    # Returns an Array of [String, Hash]
-    # ['Save', data: { disable_with: 'Saving'}]
+    # Returns a Hash of {'Save': {data-disable-with: 'Saving...'}, 'Save and Continue': {data-disable-with: 'Saving...'}}
     def member_actions_for(obj)
-      self.class.member_actions.select do |action|
-        (action.key?(:if) ? obj.instance_exec(&action[:if]) : true) &&
-        (action.key?(:unless) ? !obj.instance_exec(&action[:unless]) : true)
-      end.map { |action| [action[:commit], action.except(:action, :commit, :if, :unless)] }
+      self.class.member_actions.select do |commit, args|
+        (args.key?(:if) ? obj.instance_exec(&args[:if]) : true) &&
+        (args.key?(:unless) ? !obj.instance_exec(&args[:unless]) : true)
+      end.inject({}) { |h, (commit, args)| h[commit] = args.except(:action, :if, :unless); h }
     end
 
     protected
