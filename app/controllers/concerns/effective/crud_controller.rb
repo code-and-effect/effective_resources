@@ -7,8 +7,8 @@ module Effective
         def member_actions
           @_effective_member_actions ||= {
             'Save' => { action: :save, data: { disable_with: 'Saving...' }},
-            'Save and Continue' => { action: :save, data: { disable_with: 'Saving...' }},
-            'Save and Add New' => { action: :save, data: { disable_with: 'Saving...' }}
+            'Continue' => { action: :save, data: { disable_with: 'Saving...' }},
+            'Add New' => { action: :save, data: { disable_with: 'Saving...' }}
           }
         end
       end
@@ -262,7 +262,18 @@ module Effective
       self.class.member_actions.select do |commit, args|
         (args.key?(:if) ? obj.instance_exec(&args[:if]) : true) &&
         (args.key?(:unless) ? !obj.instance_exec(&args[:unless]) : true)
-      end.inject({}) { |h, (commit, args)| h[commit] = args.except(:action, :if, :unless, :redirect); h }
+      end.sort do |(commit_x, x), (commit_y, y)|
+        danger = (x[:class].to_s.index('danger') || -1) <=> (y[:class].to_s.index('danger') || -1)
+        danger = nil if danger == 0
+
+        save_action = (x[:action] == :save ? 0 : -1) <=> (y[:action] == :save ? 0 : -1)
+        save_action = nil if save_action == 0
+
+        danger || save_action || 0
+      end.inject({}) do |h, (commit, args)|
+        Rails.logger.info commit
+        h[commit] = args.except(:action, :if, :unless, :redirect); h
+      end
     end
 
     protected

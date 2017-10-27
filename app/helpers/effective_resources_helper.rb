@@ -3,18 +3,41 @@ module EffectiveResourcesHelper
   def simple_form_submit(form, options = {class: 'form-actions'}, &block)
     resource = (@_effective_resource || Effective::Resource.new(controller_path))
 
+    # Apply btn-primary to the first item, only if the class isn't already present
     actions = if controller.respond_to?(:member_actions_for)
-      controller.member_actions_for(form.object)
+      controller.member_actions_for(form.object).transform_values.with_index do |opts, index|
+        if opts[:class].present?
+          opts
+        else
+          opts[:class] = "btn #{index == 0 ? 'btn-primary' : 'btn-default'}"
+        end
+
+        opts
+      end
+
     else
       {}.tap do |actions|
-        actions['Save'] = { data: { disable_with: 'Saving...' }}
-        actions['Save and Continue'] = { data: { disable_with: 'Saving...' }} if resource.index_path(check: true)
-        actions['Save and Add New'] = { data: { disable_with: 'Saving...' }} if resource.new_path(check: true)
+        actions['Save'] = { class: 'btn btn-primary', data: { disable_with: 'Saving...' }}
+        actions['Continue'] = { class: 'btn btn-default', data: { disable_with: 'Saving...' }} if resource.index_path(check: true)
+        actions['Add New'] = { class: 'btn btn-default', data: { disable_with: 'Saving...' }} if resource.new_path(check: true)
       end
     end
 
     content_tag(:div, class: options[:class]) do
-      (actions.map { |action| form.button(:submit, *action.to_a) } + [(capture(&block) if block_given?)]).compact.join(' ').html_safe
+      buttons = actions.group_by { |(_, args)| args[:class] }.flat_map do |_, action|
+        action.map { |action| form.button(:submit, *action) } + ['']
+      end
+
+      # I think this is a bug. I can't override default button class when passing my own class: variable. it merges them.
+      if (btn_class = SimpleForm.button_class).present?
+        buttons = buttons.map { |button| button.sub(btn_class, '') }
+      end
+
+      if block_given?
+        buttons = [capture(&block), ''] + buttons
+      end
+
+      result = buttons.join('&nbsp;').html_safe
     end
   end
 
