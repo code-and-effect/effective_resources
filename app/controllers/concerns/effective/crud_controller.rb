@@ -6,7 +6,9 @@ module Effective
       class << self
         def member_actions
           @_effective_member_actions ||= {
-            'Save' => { action: :save, data: { disable_with: 'Saving...' }}
+            'Save' => { action: :save, data: { disable_with: 'Saving...' }},
+            'Save and Continue' => { action: :save, data: { disable_with: 'Saving...' }},
+            'Save and Add New' => { action: :save, data: { disable_with: 'Saving...' }}
           }
         end
       end
