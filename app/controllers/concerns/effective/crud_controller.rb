@@ -196,7 +196,8 @@ module Effective
         flash[:danger] ||= flash_danger(resource, :delete)
       end
 
-      if referer_redirect_path && !request.referer.include?(resource_show_path)
+      # Make sure we didn't come from a member action that we no longer exist at
+      if referer_redirect_path && !request.referer.to_s.include?("/#{resource.to_param}/")
         redirect_to(referer_redirect_path)
       else
         redirect_to(resource_index_path)
