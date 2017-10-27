@@ -43,7 +43,9 @@ module Effective
             raise "expected unless: to be callable. Try member_action :approve, 'Save and Approve', unless: -> { declined? }"
           end
 
-          member_actions[commit] = (args || {}).merge(action: action)
+          redirect = args.delete(:redirect_to) || args.delete(:redirect) # Remove redirect_to keyword. use redirect.
+
+          member_actions[commit] = (args || {}).merge(action: action, redirect: redirect)
         end
 
         define_method(action) do
