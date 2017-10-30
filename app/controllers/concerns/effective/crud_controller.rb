@@ -271,7 +271,6 @@ module Effective
 
         danger || save_action || 0
       end.inject({}) do |h, (commit, args)|
-        Rails.logger.info commit
         h[commit] = args.except(:action, :if, :unless, :redirect); h
       end
     end
@@ -313,9 +312,9 @@ module Effective
       case params[:commit].to_s
       when 'Save'
         [resource_edit_path, resource_show_path, resource_index_path].compact.first
-      when 'Save and Add New'
+      when 'Save and Add New', 'Add New'
         [resource_new_path, resource_index_path].compact.first
-      when 'Save and Continue'
+      when 'Continue', 'Save and Continue'
         resource_index_path
       else
         [referer_redirect_path, resource_index_path].compact.first

@@ -1,6 +1,6 @@
 module EffectiveResourcesHelper
 
-  def simple_form_submit(form, options = {class: 'form-actions'}, &block)
+  def simple_form_submit(form, options = {}, &block)
     resource = (@_effective_resource || Effective::Resource.new(controller_path))
 
     # Apply btn-primary to the first item, only if the class isn't already present
@@ -23,7 +23,9 @@ module EffectiveResourcesHelper
       end
     end
 
-    content_tag(:div, class: options[:class]) do
+    wrapper_options = { class: 'form-actions' }.merge(options.delete(:wrapper_html) || {})
+
+    content_tag(:div, wrapper_options) do
       buttons = actions.group_by { |(_, args)| args[:class] }.flat_map do |_, action|
         action.map { |action| form.button(:submit, *action) } + ['']
       end
@@ -41,9 +43,12 @@ module EffectiveResourcesHelper
     end
   end
 
-  def simple_form_save(form, label = 'Save', options = {class: 'form-actions'}, &block)
-    content_tag(:div, class: options[:class]) do
-      form.button(:submit, label, data: { disable_with: 'Saving...' }) + (capture(&block) if block_given?)
+  def simple_form_save(form, label = 'Save', options = {}, &block)
+    wrapper_options = { class: 'form-actions' }.merge(options.delete(:wrapper_html) || {})
+    options = { class: 'btn btn-primary', data: { disable_with: 'Saving...'} }.merge(options)
+
+    content_tag(:div, wrapper_options) do
+      form.button(:submit, label, options) + (capture(&block) if block_given?)
     end
   end
 
