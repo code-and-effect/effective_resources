@@ -18,8 +18,11 @@ module Effective
 
     module ClassMethods
 
-      def before_render(*args, &block)
-        set_callback(:resource_render, :before, *args, &block)
+      # https://github.com/rails/rails/blob/v5.1.4/actionpack/lib/abstract_controller/callbacks.rb
+      def before_render(*names, &blk)
+        _insert_callbacks(names, blk) do |name, options|
+          set_callback(:resource_render, :before, name, options)
+        end
       end
 
       # Add the following to your controller for a simple member action
@@ -125,6 +128,8 @@ module Effective
       if resource_datatable_class
         @datatable ||= resource_datatable_class.new(self, resource_datatable_attributes)
       end
+
+      run_callbacks(:resource_render)
     end
 
     def new
@@ -136,6 +141,8 @@ module Effective
 
       @page_title ||= "New #{resource_name.titleize}"
       EffectiveResources.authorized?(self, :new, resource)
+
+      run_callbacks(:resource_render)
     end
 
     def create
@@ -164,6 +171,8 @@ module Effective
 
       @page_title ||= resource.to_s
       EffectiveResources.authorized?(self, :show, resource)
+
+      run_callbacks(:resource_render)
     end
 
     def edit
