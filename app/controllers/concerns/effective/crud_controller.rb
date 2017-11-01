@@ -12,9 +12,16 @@ module Effective
           }
         end
       end
+
+      define_callbacks :resource_render
     end
 
     module ClassMethods
+
+      def before_render(*args, &block)
+        set_callback(:resource_render, :before, *args, &block)
+      end
+
       # Add the following to your controller for a simple member action
       # member_action :print
       #
@@ -164,6 +171,8 @@ module Effective
 
       @page_title ||= "Edit #{resource}"
       EffectiveResources.authorized?(self, :edit, resource)
+
+      run_callbacks(:resource_render)
     end
 
     def update
