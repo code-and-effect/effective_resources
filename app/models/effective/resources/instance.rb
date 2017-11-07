@@ -47,7 +47,12 @@ module Effective
         return {} unless (instance.present? && instance.changes.present?)
 
         changes = instance.changes.delete_if do |attribute, (before, after)|
-          (before.kind_of?(ActiveSupport::TimeWithZone) && after.kind_of?(ActiveSupport::TimeWithZone) && before.to_i == after.to_i)
+          begin
+            (before.kind_of?(ActiveSupport::TimeWithZone) && after.kind_of?(ActiveSupport::TimeWithZone) && before.to_i == after.to_i) ||
+            (before == nil && after == false) || (before == nil && after == ''.freeze)
+          rescue => e
+            true
+          end
         end
 
         # Log to_s changes on all belongs_to associations
