@@ -316,6 +316,10 @@ module Effective
     end
 
     def resource_redirect_path
+      if resource_commit_action[:redirect].respond_to?(:call)
+        return instance_exec(&resource_commit_action[:redirect])
+      end
+
       commit_action_redirect = case resource_commit_action[:redirect]
         when :index ; resource_index_path
         when :edit  ; resource_edit_path
