@@ -1,12 +1,11 @@
 - resource = (@_effective_resource || Effective::Resource.new(controller_path))
 
 .row
-  .col-sm-6
+  .col-xs-8
     %h1= @page_title
-  .col-sm-6
-    %p.text-right
-      - if can?(:new, resource.klass) && resource.new_path(check: true).present?
-        = link_to "New #{resource.human_name.titleize}", send(resource.new_path), class: 'btn btn-primary'
+  .col-xs-4.text-right
+    - if EffectiveResources.authorized?(controller, :new, resource.klass) && (path = resource.action_path(:new)).present?
+      = link_to "New #{resource.human_name.titleize}", path, class: 'btn btn-primary'
 
 - if @datatable
   = render_datatable(@datatable)

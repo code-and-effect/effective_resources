@@ -3,19 +3,14 @@
 
 - if @resource
   .row
-    .col-sm-6
+    .col-xs-8
       %h1= @page_title
-    .col-sm-6
-      %p.text-right
-        - resource.member_post_actions.each do |action|
-          - if EffectiveResources.authorized?(controller, action.to_sym, @resource)
-            - if resource.action_post_path(action, check: true).present?
-              = link_to action.titleize, send(resource.action_post_path(action), @resource), class: 'btn btn-primary',
-                data: { confirm: "Really #{action} #{@resource}?", method: :post }
+    .col-xs-4.text-right
+      - resource.member_post_actions.each do |action|
+        - if EffectiveResources.authorized?(controller, action, @resource) && (path = resource.action_path(action, @resource)).present?
+          = link_to action.to_s.titleize, path, class: 'btn btn-sm btn-primary', data: { confirm: "Really #{action} #{@resource}?", method: :post }
 
-        - if EffectiveResources.authorized?(controller, :destroy, @resource)
-          - if resource.destroy_path(check: true).present?
-            = link_to 'Delete', send(resource.destroy_path, @resource), class: 'btn btn-danger',
-              data: { confirm: "Really delete #{@resource}?", method: :delete }
+      - if EffectiveResources.authorized?(controller, :destroy, @resource) && (path = resource.action_path(:destroy, @resource)).present?
+        = link_to 'Delete', path, class: 'btn btn-sm btn-danger', data: { confirm: "Really delete #{@resource}?", method: :delete }
 
   = render 'form', resource.name.to_sym => @resource
