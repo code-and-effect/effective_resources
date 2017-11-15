@@ -40,24 +40,24 @@ module Effective
       def sql_type(name)
         name = name.to_s.split('.').first
 
-        if belongs_to_polymorphic(name)
-          :belongs_to_polymorphic
-        elsif belongs_to(name)
+        if belongs_to(name)
           :belongs_to
-        elsif has_and_belongs_to_many(name)
-          :has_and_belongs_to_many
+        elsif (column = column(name))
+          column.type
         elsif has_many(name)
           :has_many
         elsif has_one(name)
           :has_one
+        elsif belongs_to_polymorphic(name)
+          :belongs_to_polymorphic
+        elsif has_and_belongs_to_many(name)
+          :has_and_belongs_to_many
         elsif name == 'id' && defined?(EffectiveObfuscation) && klass.respond_to?(:deobfuscate)
           :effective_obfuscation
         elsif name == 'roles' && defined?(EffectiveRoles) && klass.respond_to?(:with_role)
           :effective_roles
         elsif (name.include?('_address') || name.include?('_addresses')) && defined?(EffectiveAddresses) && (klass.new rescue nil).respond_to?(:effective_addresses)
           :effective_addresses
-        elsif (column = column(name))
-          column.type
         elsif name.ends_with?('_id')
           :integer
         else

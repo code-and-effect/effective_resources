@@ -61,7 +61,7 @@ module Effective
         define_method(action) do
           self.resource ||= resource_scope.find(params[:id])
 
-          EffectiveResources.authorized?(self, action, resource)
+          EffectiveResources.authorize!(self, action, resource)
 
           @page_title ||= "#{action.to_s.titleize} #{resource}"
 
@@ -81,7 +81,7 @@ module Effective
 
           self.resources ||= resource_scope.all
 
-          EffectiveResources.authorized?(self, action, resource_klass)
+          EffectiveResources.authorize!(self, action, resource_klass)
 
           @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
 
@@ -121,7 +121,7 @@ module Effective
 
     def index
       @page_title ||= resource_plural_name.titleize
-      EffectiveResources.authorized?(self, :index, resource_klass)
+      EffectiveDatatables.authorize!(self, :index, resource_klass)
 
       self.resources ||= resource_scope.all
 
@@ -140,7 +140,7 @@ module Effective
       )
 
       @page_title ||= "New #{resource_name.titleize}"
-      EffectiveResources.authorized?(self, :new, resource)
+      EffectiveResources.authorize!(self, :new, resource)
 
       run_callbacks(:resource_render)
     end
@@ -149,10 +149,10 @@ module Effective
       self.resource ||= resource_scope.new
 
       @page_title ||= "New #{resource_name.titleize}"
-      EffectiveResources.authorized?(self, :create, resource)
+      EffectiveResources.authorize!(self, :create, resource)
 
-      action = resource_commit_action[:action]
-      EffectiveResources.authorized?(self, action, resource) unless action == :save
+      action = commit_action[:action]
+      EffectiveResources.authorize!(self, action, resource) unless action == :save
 
       resource.assign_attributes(send(resource_params_method_name))
       resource.created_by ||= current_user if resource.respond_to?(:created_by=)
@@ -170,7 +170,7 @@ module Effective
       self.resource ||= resource_scope.find(params[:id])
 
       @page_title ||= resource.to_s
-      EffectiveResources.authorized?(self, :show, resource)
+      EffectiveResources.authorize!(self, :show, resource)
 
       run_callbacks(:resource_render)
     end
@@ -179,7 +179,7 @@ module Effective
       self.resource ||= resource_scope.find(params[:id])
 
       @page_title ||= "Edit #{resource}"
-      EffectiveResources.authorized?(self, :edit, resource)
+      EffectiveResources.authorize!(self, :edit, resource)
 
       run_callbacks(:resource_render)
     end
@@ -188,10 +188,10 @@ module Effective
       self.resource ||= resource_scope.find(params[:id])
 
       @page_title = "Edit #{resource}"
-      EffectiveResources.authorized?(self, :update, resource)
+      EffectiveResources.authorize!(self, :update, resource)
 
-      action = resource_commit_action[:action]
-      EffectiveResources.authorized?(self, action, resource) unless action == :save
+      action = commit_action[:action]
+      EffectiveResources.authorize!(self, action, resource) unless action == :save
 
       resource.assign_attributes(send(resource_params_method_name))
 
@@ -208,7 +208,7 @@ module Effective
       self.resource = resource_scope.find(params[:id])
 
       @page_title ||= "Destroy #{resource}"
-      EffectiveResources.authorized?(self, :destroy, resource)
+      EffectiveResources.authorize!(self, :destroy, resource)
 
       if resource.destroy
         flash[:success] ||= flash_success(resource, :delete)
@@ -220,7 +220,7 @@ module Effective
       if referer_redirect_path && !request.referer.to_s.include?("/#{resource.to_param}/")
         redirect_to(referer_redirect_path)
       else
-        redirect_to(resource_index_path)
+        redirect_to(resource_redirect_path)
       end
     end
 
@@ -316,17 +316,15 @@ module Effective
     end
 
     def resource_redirect_path
-      if resource_commit_action[:redirect].respond_to?(:call)
-        return instance_exec(&resource_commit_action[:redirect])
-      end
+      return instance_exec(&commit_action[:redirect]) if commit_action[:redirect].respond_to?(:call)
 
-      commit_action_redirect = case resource_commit_action[:redirect]
+      commit_action_redirect = case commit_action[:redirect]
         when :index ; resource_index_path
         when :edit  ; resource_edit_path
         when :show  ; resource_show_path
         when :back  ; referer_redirect_path
         when nil    ; nil
-        else        ; resource_member_action_path(resource_commit_action[:action])
+        else        ; resource_member_action_path(commit_action[:action])
       end
 
       return commit_action_redirect if commit_action_redirect.present?
@@ -350,27 +348,27 @@ module Effective
     end
 
     def resource_index_path
-      send(effective_resource.index_path) if effective_resource.index_path(check: true)
+      effective_resource.action_path(:index)
     end
 
     def resource_new_path
-      send(effective_resource.new_path) if effective_resource.new_path(check: true)
+      effective_resource.action_path(:new)
     end
 
     def resource_edit_path
-      send(effective_resource.edit_path, resource) if effective_resource.edit_path(check: true)
+      effective_resource.action_path(:edit, resource)
     end
 
     def resource_show_path
-      send(effective_resource.show_path, resource) if effective_resource.show_path(check: true)
+      effective_resource.action_path(:show, resource)
     end
 
     def resource_destroy_path
-      send(effective_resource.destroy_path, resource) if effective_resource.destroy_path(check: true)
+      effective_resource.action_path(:destroy, resource)
     end
 
     def resource_member_action_path(action)
-      send(effective_resource.action_path(action), resource) if effective_resource.action_path(action, check: true)
+      effective_resource.action_path(action.to_sym, resource)
     end
 
     def resource # @thing
@@ -415,7 +413,7 @@ module Effective
       (action.to_s + (action.to_s.end_with?('e') ? 'd' : 'ed'))
     end
 
-    def resource_commit_action
+    def commit_action
       self.class.member_actions[params[:commit].to_s] || self.class.member_actions['Save'] || raise("expected member_actions['Save'] to be present")
     end
 

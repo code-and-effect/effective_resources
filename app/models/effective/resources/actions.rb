@@ -2,30 +2,59 @@ module Effective
   module Resources
     module Actions
 
-      # This was written for the Edit actions fallback templates
-
-      def controller_routes
-        @controller_routes ||= (
-          path = controller_path
+      # This was written for the Edit actions fallback templates and Datatables
+      # Effective::Resource.new('admin/posts').routes[:index]
+      def routes
+        @_routes ||= (
+          matches = [[namespace, plural_name].compact.join('/'), [namespace, name].compact.join('/')]
 
           Rails.application.routes.routes.select do |route|
-            (route.defaults[:controller] == path) && route.defaults[:action].present?
+            matches.any? { |match| match == route.defaults[:controller] }
+          end.inject({}) do |h, route|
+            h[route.defaults[:action].to_sym] = route; h
           end
         )
       end
 
-      def controller_actions
-        controller_routes.map { |route| route.defaults[:action] }
+      # Effective::Resource.new('admin/posts').action_path_helper(:edit) => 'edit_admin_posts_path'
+      # This will return empty for create, update and destroy
+      def action_path_helper(action)
+        return unless routes[action]
+        return (routes[action].name + '_path') if routes[action].name.present?
+      end
+
+      # Effective::Resource.new('admin/posts').action_path(:edit, Post.last) => '/admin/posts/3/edit'
+      # Will work for any action. Returns the real path
+      def action_path(action, resource = nil, opts = {})
+        return unless routes[action]
+
+        # edge case: Effective::Resource.new('admin/comments').action_path(:new, @post)
+        if resource.present? && !resource.kind_of?(klass)
+          if (bt = belongs_to(resource)).present? && instance.respond_to?("#{bt.name}=")
+            return routes[action].format(klass.new(bt.name => resource)).presence
+          end
+        end
+
+        routes[action].format(resource || instance).presence
+      end
+
+      def actions
+        routes.keys
+      end
+
+      # GET actions
+      def collection_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_get_route?(route) && !is_member_route?(route) }.compact - crud_actions
       end
 
       # GET actions
       def member_actions
-        controller_routes.map { |route| route.defaults[:action] if is_get_member?(route) }.compact - crud_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_get_route?(route) && is_member_route?(route) }.compact - crud_actions
       end
 
       # POST/PUT/PATCH actions
       def member_post_actions
-        controller_routes.map { |route| route.defaults[:action] if is_post_member?(route) }.compact - crud_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_post_route?(route) && is_member_route?(route) }.compact - crud_actions
       end
 
       # Same as controller_path in the view
@@ -36,15 +65,19 @@ module Effective
       private
 
       def crud_actions
-        %w(index new create show edit update destroy)
+        %i(index new create show edit update destroy)
       end
 
-      def is_get_member?(route)
-        route.verb.to_s.include?('GET') && route.path.required_names == ['id']
+      def is_member_route?(route)
+        (route.path.required_names || []).include?('id')
       end
 
-      def is_post_member?(route)
-        ['POST', 'PUT', 'PATCH'].any? { |verb| route.verb == verb } && route.path.required_names == ['id']
+      def is_get_route?(route)
+        route.verb.to_s.include?('GET')
+      end
+
+      def is_post_route?(route)
+        ['POST', 'PUT', 'PATCH'].any? { |verb| route.verb == verb }
       end
 
     end

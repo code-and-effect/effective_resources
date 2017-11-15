@@ -14,19 +14,25 @@ module EffectiveResourcesHelper
 
         opts
       end
-
     else
       {}.tap do |actions|
         actions['Save'] = { class: 'btn btn-primary', data: { disable_with: 'Saving...' }}
-        actions['Continue'] = { class: 'btn btn-default', data: { disable_with: 'Saving...' }} if resource.index_path(check: true)
-        actions['Add New'] = { class: 'btn btn-default', data: { disable_with: 'Saving...' }} if resource.new_path(check: true)
+
+        if resource.action_path(:index) && EffectiveResources.authorized?(controller, :index, resource.klass)
+          actions['Continue'] = { class: 'btn btn-default', data: { disable_with: 'Saving...' }}
+        end
+
+        if resource.action_path(:new) && EffectiveResources.authorized?(controller, :new, resource.klass)
+          actions['Add New'] = { class: 'btn btn-default', data: { disable_with: 'Saving...' }}
+        end
+
       end
     end
 
     wrapper_options = { class: 'form-actions' }.merge(options.delete(:wrapper_html) || {})
 
     content_tag(:div, wrapper_options) do
-      buttons = actions.group_by { |(_, args)| args[:class] }.flat_map do |_, action|
+      buttons = actions.group_by { |_, args| args[:class] }.flat_map do |_, action|
         action.map { |action| form.button(:submit, *action) } + ['']
       end
 
@@ -39,7 +45,7 @@ module EffectiveResourcesHelper
         buttons = [capture(&block), ''] + buttons
       end
 
-      result = buttons.join('&nbsp;').html_safe
+      buttons.join('&nbsp;').html_safe
     end
   end
 
