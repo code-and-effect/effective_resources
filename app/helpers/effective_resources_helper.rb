@@ -110,11 +110,7 @@ module EffectiveResourcesHelper
 
   def glyphicon_to(icon, path, options = {})
     content_tag(:a, options.merge(href: path)) do
-      if icon.to_s.start_with?('glyphicon-')
-        content_tag(:span, '', class: "glyphicon #{icon}")
-      else
-        content_tag(:span, '', class: "glyphicon glyphicon-#{icon}")
-      end
+      glyphicon_tag(icon)
     end
   end
   alias_method :bootstrap_icon_to, :glyphicon_to

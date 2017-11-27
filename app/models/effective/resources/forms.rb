@@ -56,7 +56,9 @@ module Effective
         if res.max_id > max_id
           { as: :string }
         else
-          if res.klass.unscoped.respond_to?(:datatables_filter)
+          if res.klass.unscoped.respond_to?(:datatables_scope)
+            { collection: res.klass.datatables_scope.map { |obj| [obj.to_s, obj.to_param] } }
+          elsif res.klass.unscoped.respond_to?(:datatables_filter)
             { collection: res.klass.datatables_filter.map { |obj| [obj.to_s, obj.to_param] } }
           elsif res.klass.unscoped.respond_to?(:sorted)
             { collection: res.klass.sorted.map { |obj| [obj.to_s, obj.to_param] } }

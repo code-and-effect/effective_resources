@@ -13,16 +13,22 @@ module Effective
         end
       end
 
-      define_callbacks :resource_render
+      define_callbacks :resource_render, :resource_save, :resource_error
     end
 
     module ClassMethods
 
       # https://github.com/rails/rails/blob/v5.1.4/actionpack/lib/abstract_controller/callbacks.rb
       def before_render(*names, &blk)
-        _insert_callbacks(names, blk) do |name, options|
-          set_callback(:resource_render, :before, name, options)
-        end
+        _insert_callbacks(names, blk) { |name, options| set_callback(:resource_render, :before, name, options) }
+      end
+
+      def after_save(*names, &blk)
+        _insert_callbacks(names, blk) { |name, options| set_callback(:resource_save, :after, name, options) }
+      end
+
+      def after_error(*names, &blk)
+        _insert_callbacks(names, blk) { |name, options| set_callback(:resource_error, :after, name, options) }
       end
 
       # Add the following to your controller for a simple member action
@@ -304,6 +310,7 @@ module Effective
       resource_klass.transaction do
         begin
           resource.public_send("#{action}!") || raise("failed to #{action} #{resource}")
+          run_callbacks(:resource_save)
           return true
         rescue => e
           flash.delete(:success)
@@ -312,6 +319,7 @@ module Effective
         end
       end
 
+      run_callbacks(:resource_error)
       false
     end
 
