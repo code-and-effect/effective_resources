@@ -76,7 +76,55 @@ Implements the 7 RESTful actions: `index`, `new`, `create`, `show`, `edit`, `upd
 - Does the right thing with member and collection actions
 - Intelligently redirects based on commit message
 
-## Helpers
+## Bootstrap3 Helpers
+
+### nav_link_to
+
+Use `nav_link_to` and `nav_dropdown` to create bootstrap3 menus.
+
+The helper automatically assigns the `active` class based on the request path.
+
+```haml
+%nav.navbar.navbar-default
+  .container
+    .navbar-header
+      = link_to(image_tag('logo.png', alt: 'Logo'), '/', class: 'navbar-brand')
+      %button.navbar-toggle.collapsed{data: {toggle: 'collapse', target: '.navbar-collapse', 'aria-expanded': false}}
+        %span.icon-bar
+        %span.icon-bar
+        %span.icon-bar
+    .collapse.navbar-collapse
+      %ul.nav.navbar-nav.navbar-right
+        - if current_user.present?
+          - if can?(:index, Things)
+            = nav_link_to 'Things', things_path
+
+          = nav_dropdown 'Settings' do
+            = nav_link_to 'Account Settings', user_settings_path
+            %li.divider
+            = nav_link_to 'Sign Out', destroy_user_session_path, method: :delete
+        - else
+          = nav_link_to 'Sign In', new_user_session_path
+```
+
+### tabs
+
+Use `tabs do` and `tabs` to create bootstrap3 tabs.
+
+The helper inserts both the tablist and the tabpanel, and assigns the `active` class.
+
+```haml
+= tabs do
+  = tab 'Imports' do
+    %p Imports
+
+  = tab 'Exports' do
+    %p Exports
+```
+
+You can also call `tabs(active: 'Exports') do` to set the active tab.
+
+## Simple Form Helpers
 
 ### simple_form_submit
 
