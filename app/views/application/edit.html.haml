@@ -13,4 +13,4 @@
       - if EffectiveResources.authorized?(controller, :destroy, @resource) && (path = resource.action_path(:destroy, @resource)).present?
         = link_to 'Delete', path, class: 'btn btn-sm btn-danger', data: { confirm: "Really delete #{@resource}?", method: :delete }
 
-  = render 'form', resource.name.to_sym => @resource
+  = render_resource_form(resource, controller, @resource)

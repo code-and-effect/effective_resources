@@ -58,6 +58,20 @@ module EffectiveResourcesHelper
     end
   end
 
+  # When called from /admin/things/new.html.haml this will render 'admin/things/form', or 'things/form', or 'thing/form'
+  # With the namespace set
+  def render_resource_form(resource, controller, instance)
+    if lookup_context.template_exists?('form', controller._prefixes, :partial)
+      render 'form', :namespace => resource.namespace.to_sym, resource.name.to_sym => instance
+    elsif lookup_context.template_exists?('form', [resource.plural_name], :partial)
+      render "#{resource.plural_name}/form", :namespace => resource.namespace.to_sym, resource.name.to_sym => instance
+    elsif lookup_context.template_exists?('form', [resource.name], :partial)
+      render "#{resource.name}/form", :namespace => resource.namespace.to_sym, resource.name.to_sym => instance
+    else
+      render 'form', resource.name.to_sym => instance
+    end
+  end
+
   def number_to_duration(duration)
     duration = duration.to_i
     value = duration.abs

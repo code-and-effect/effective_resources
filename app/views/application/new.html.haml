@@ -1,6 +1,9 @@
 - resource = (@_effective_resource || Effective::Resource.new(controller_path))
+- @resource = instance_variable_get('@' + resource.name) if resource.name
 
-%h1= @page_title
+- if @resource
+  .row
+    .col-xs-8
+      %h1= @page_title
 
-- if resource.name.present? && instance_variable_get('@' + resource.name)
-  = render 'form', resource.name.to_sym => instance_variable_get('@' + resource.name)
+  = render_resource_form(resource, controller, @resource)
