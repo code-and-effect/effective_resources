@@ -52,7 +52,7 @@ module EffectiveBootstrap3Helper
   end
 
   def tab(label, &block)
-    controls = label.to_s.downcase.to_param
+    controls = label.to_s.parameterize.gsub('_', '-')
     active = (@_tab_active == :first || @_tab_active == label)
 
     @_tab_active = nil if @_tab_active == :first

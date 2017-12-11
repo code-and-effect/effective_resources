@@ -59,16 +59,17 @@ module EffectiveResourcesHelper
   end
 
   # When called from /admin/things/new.html.haml this will render 'admin/things/form', or 'things/form', or 'thing/form'
-  # With the namespace set
-  def render_resource_form(resource, controller, instance)
+  def render_resource_form(resource)
+    atts = {:namespace => (resource.namespace.to_sym if resource.namespace.present?), resource.name.to_sym => instance_variable_get('@' + resource.name)}.compact
+
     if lookup_context.template_exists?('form', controller._prefixes, :partial)
-      render 'form', :namespace => resource.namespace.to_sym, resource.name.to_sym => instance
-    elsif lookup_context.template_exists?('form', [resource.plural_name], :partial)
-      render "#{resource.plural_name}/form", :namespace => resource.namespace.to_sym, resource.name.to_sym => instance
-    elsif lookup_context.template_exists?('form', [resource.name], :partial)
-      render "#{resource.name}/form", :namespace => resource.namespace.to_sym, resource.name.to_sym => instance
+      render 'form', atts
+    elsif lookup_context.template_exists?('form', resource.plural_name, :partial)
+      render "#{resource.plural_name}/form", atts
+    elsif lookup_context.template_exists?('form', resource.name, :partial)
+      render "#{resource.name}/form", atts
     else
-      render 'form', resource.name.to_sym => instance
+      render 'form', atts  # Will raise the regular error
     end
   end
 
