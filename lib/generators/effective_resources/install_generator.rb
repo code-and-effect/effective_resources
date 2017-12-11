@@ -9,6 +9,12 @@ module EffectiveResources
         template ('../' * 3) + 'config/effective_resources.rb', 'config/initializers/effective_resources.rb'
       end
 
+      def copy_application_templates
+        [:edit, :index, :new, :show].each do |file|
+          template ('../' * 3) + "app/views/application/#{file}.html.haml", "app/views/application/#{file}.html.haml"
+        end
+      end
+
     end
   end
 end
