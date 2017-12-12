@@ -5,7 +5,11 @@ module Effective
     included do
       class << self
         def member_actions
-          @_effective_member_actions ||= {
+          @_effective_member_actions ||= {}
+        end
+
+        def _default_member_actions
+          {
             'Save' => { action: :save, data: { disable_with: 'Saving...' }},
             'Continue' => { action: :save, data: { disable_with: 'Saving...' }},
             'Add New' => { action: :save, data: { disable_with: 'Saving...' }}
@@ -93,6 +97,11 @@ module Effective
 
           collection_post_action(action) unless request.get?
         end
+      end
+
+      # Applies the default actions
+      def default_actions(args = {})
+        default_member_actions.each { |k, v| member_actions[k] = (args || {}).merge(v) }
       end
 
       # page_title 'My Title', only: [:new]
@@ -279,21 +288,32 @@ module Effective
       render json: { status: 200, message: "Successfully #{action_verb(action)} #{successes} / #{resources.length} selected #{resource_plural_name}" }
     end
 
+
+
+ # The block must implement a comparison between a and b and return an integer
+ # less than 0 when b follows a, 0 when a and b are equivalent, or an integer greater than 0 when a follows b.
+
     # Here we look at all available (class level) member actions, see which ones apply to the current resource
     # This feeds into the helper simple_form_submit(f)
     # Returns a Hash of {'Save': {data-disable-with: 'Saving...'}, 'Approve': {data-disable-with: 'Approve'}}
     def member_actions_for(obj)
-      self.class.member_actions.select do |commit, args|
+      actions = (self.class.member_actions.presence || self.class._default_member_actions)
+
+      actions.select do |commit, args|
+        args[:class] = args[:class].to_s
+
         (args.key?(:if) ? obj.instance_exec(&args[:if]) : true) &&
         (args.key?(:unless) ? !obj.instance_exec(&args[:unless]) : true)
       end.sort do |(commit_x, x), (commit_y, y)|
-        danger = (x[:class].to_s.index('danger') || -1) <=> (y[:class].to_s.index('danger') || -1)
+        # Sort to front
+        primary = (y[:class].include?('primary') ? 1 : 0) - (x[:class].include?('primary') ? 1 : 0)
+        primary = nil if primary == 0
+
+        # Sort to back
+        danger = (x[:class].include?('danger') ? 1 : 0) - (y[:class].include?('danger') ? 1 : 0)
         danger = nil if danger == 0
 
-        save_action = (x[:action] == :save ? 0 : -1) <=> (y[:action] == :save ? 0 : -1)
-        save_action = nil if save_action == 0
-
-        danger || save_action || 0
+        primary || danger || actions.keys.index(commit_x) <=> actions.keys.index(commit_y)
       end.inject({}) do |h, (commit, args)|
         h[commit] = args.except(:action, :if, :unless, :redirect); h
       end
@@ -422,7 +442,7 @@ module Effective
     end
 
     def commit_action
-      self.class.member_actions[params[:commit].to_s] || self.class.member_actions['Save'] || raise("expected member_actions['Save'] to be present")
+      self.class.member_actions[params[:commit].to_s] || { action: :save }
     end
 
     # Returns an ActiveRecord relation based on the computed value of `resource_scope` dsl method
