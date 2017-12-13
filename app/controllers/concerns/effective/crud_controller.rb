@@ -109,7 +109,9 @@ module Effective
         raise 'expected a label or block' unless (label || block_given?)
 
         instance_exec do
-          before_action(opts) { @page_title ||= (block_given? ? instance_exec(&block) : label) }
+          before_action(opts) do
+            @page_title ||= (block_given? ? instance_exec(&block) : label)
+          end
         end
       end
 

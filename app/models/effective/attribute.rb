@@ -112,7 +112,8 @@ module Effective
       when :phone
         digits = value.to_s.gsub(/\D/, '').chars
         digits = (digits.first == '1' ? digits[1..10] : digits[0..9]) # Throw away a leading 1
-        digits += ('0' * (10 - digits.length)).chars
+
+        return nil unless digits.length == 10
 
         "(#{digits[0..2].join}) #{digits[3..5].join}-#{digits[6..10].join}"
       when :integer
