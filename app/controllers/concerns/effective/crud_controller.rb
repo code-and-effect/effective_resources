@@ -290,11 +290,6 @@ module Effective
       render json: { status: 200, message: "Successfully #{action_verb(action)} #{successes} / #{resources.length} selected #{resource_plural_name}" }
     end
 
-
-
- # The block must implement a comparison between a and b and return an integer
- # less than 0 when b follows a, 0 when a and b are equivalent, or an integer greater than 0 when a follows b.
-
     # Here we look at all available (class level) member actions, see which ones apply to the current resource
     # This feeds into the helper simple_form_submit(f)
     # Returns a Hash of {'Save': {data-disable-with: 'Saving...'}, 'Approve': {data-disable-with: 'Approve'}}
@@ -324,7 +319,7 @@ module Effective
     protected
 
     # This calls the appropriate member action, probably save!, on the resource.
-    def save_resource(resource, action = :save)
+    def save_resource(resource, action = :save, &block)
       raise "expected @#{resource_name} to respond to #{action}!" unless resource.respond_to?("#{action}!")
 
       resource.current_user ||= current_user if resource.respond_to?(:current_user=)
@@ -332,6 +327,7 @@ module Effective
       resource_klass.transaction do
         begin
           resource.public_send("#{action}!") || raise("failed to #{action} #{resource}")
+          yield if block_given?
           run_callbacks(:resource_save)
           return true
         rescue => e
