@@ -233,12 +233,7 @@ module Effective
         flash[:danger] ||= flash_danger(resource, :delete)
       end
 
-      # Make sure we didn't come from a member action that we no longer exist at
-      if referer_redirect_path && !request.referer.to_s.include?("/#{resource.to_param}/")
-        redirect_to(referer_redirect_path)
-      else
-        redirect_to(resource_redirect_path)
-      end
+      redirect_to(resource_redirect_path)
     end
 
     # No attributes are assigned or saved. We purely call action! on the resource.
@@ -368,6 +363,8 @@ module Effective
     end
 
     def referer_redirect_path
+      return if (resource && resource.destroyed? && request.referer.to_s.include?("/#{resource.to_param}"))
+
       if request.referer.present? && (Rails.application.routes.recognize_path(URI(request.referer.to_s).path) rescue false)
         request.referer.to_s
       end
