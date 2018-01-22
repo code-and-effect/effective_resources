@@ -26,8 +26,8 @@ module Effective
             .order(order_by_associated_conditions(association, sort: sort, direction: direction, limit: limit))
         when :belongs_to_polymorphic
           relation
-            .order("#{sql_column.sub('_id', '_type')} #{sql_direction}")
-            .order("#{sql_column} #{sql_direction}")
+            .order("#{sql_column}_type #{sql_direction}")
+            .order("#{sql_column}_id #{sql_direction}")
         when :has_and_belongs_to_many, :has_many, :has_one
           relation
             .order(order_by_associated_conditions(association, sort: sort, direction: direction, limit: limit))
@@ -77,10 +77,10 @@ module Effective
           (type, id) = term.split('_')
 
           if type.present? && id.present?
-            relation.where("#{sql_column} = ?", id).where("#{sql_column.sub('_id', '_type')} = ?", type)
+            relation.where("#{sql_column}_id = ?", id).where("#{sql_column}_type = ?", type)
           else
             id ||= Effective::Attribute.new(:integer).parse(term)
-            relation.where("#{sql_column} = ? OR #{sql_column.sub('_id', '_type')} = ?", id, (type || term))
+            relation.where("#{sql_column}_id = ? OR #{sql_column}_type = ?", id, (type || term))
           end
         when :effective_addresses
           relation.where(id: Effective::Resource.new(association).search_any(value, fuzzy: fuzzy).pluck(:addressable_id))

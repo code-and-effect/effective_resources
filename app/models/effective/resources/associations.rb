@@ -39,9 +39,9 @@ module Effective
       def belongs_to(name)
         if name.kind_of?(String) || name.kind_of?(Symbol)
           name = (name.to_s.end_with?('_id') ? name.to_s[0...-3] : name).to_sym
-          belong_tos.find { |ass| ass.name == name }
+          belong_tos.find { |ass| ass.name == name && !ass.options[:polymorphic] }
         else
-          belong_tos.find { |ass| ass.klass == name.class }
+          belong_tos.find { |ass| ass.klass == name.class && !ass.options[:polymorphic] }
         end
       end
 
