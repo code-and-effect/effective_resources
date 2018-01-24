@@ -58,7 +58,13 @@ class PostsController < ApplicationController
 
   # The permitted parameters for this post.  Other recognized method names are posts_params and permitted_params
   def post_params
-    params.require(:post).permit(:id, :title, :body)
+    params.require(:post).permit(:id, :author_id, :category, :title, :body)
+  end
+
+  # On #create or #update, if you click 'Add New', the new resource form will be rendered with these attributes preopulated
+  # Makes it super quick to Add New items if only one or two of the fields are changing.
+  def add_new_post_params
+    permitted_params.slice(:author_id, :category)
   end
 
 end

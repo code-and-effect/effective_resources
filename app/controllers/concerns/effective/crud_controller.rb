@@ -175,6 +175,11 @@ module Effective
       resource.created_by ||= current_user if resource.respond_to?(:created_by=)
 
       if save_resource(resource, action)
+        if add_new_resource_action?
+          render_add_new_resource! and return
+        end
+
+        # Normal redirect
         flash[:success] ||= flash_success(resource, action)
         redirect_to(resource_redirect_path)
       else
@@ -213,6 +218,11 @@ module Effective
       resource.assign_attributes(send(resource_params_method_name))
 
       if save_resource(resource, action)
+        if add_new_resource_action?
+          render_add_new_resource! and return
+        end
+
+        # Normal save
         flash[:success] ||= flash_success(resource, action)
         redirect_to(resource_redirect_path)
       else
@@ -362,6 +372,21 @@ module Effective
       end.presence || root_path
     end
 
+    def add_new_resource_action?
+      (add_new_resource_params_method_name.present? && resource_redirect_path == resource_new_path)
+    end
+
+    def render_add_new_resource!
+      attributes = send(add_new_resource_params_method_name).except(:id, :created_at, :updated_at)
+      self.resource = resource_scope.new(attributes)
+
+      @page_title = "New #{resource_name.titleize}"
+      flash.now[:success] ||= flash_success(resource) + ". Adding another #{resource_name.titleize} based on previous."
+
+      render(:new)
+      true
+    end
+
     def referer_redirect_path
       return if (resource && resource.destroyed? && request.referer.to_s.include?("/#{resource.to_param}"))
 
@@ -474,6 +499,11 @@ module Effective
 
     def resource_params_method_name
       ["#{resource_name}_params", "#{resource_plural_name}_params", 'permitted_params'].find { |name| respond_to?(name, true) } || 'params'
+    end
+
+    def add_new_resource_params_method_name
+      method_name = resource_params_method_name
+      "add_new_#{method_name}" if respond_to?("add_new_#{method_name}", true)
     end
 
   end
