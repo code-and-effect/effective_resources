@@ -36,23 +36,25 @@ module EffectiveBootstrap3Helper
   #     %p Exports
 
   # If you pass active 'label' it will make that tab active. Otherwise first.
-  def tabs(active: nil, &block)
+  def tabs(active: nil, panel: {}, list: {}, content: {}, &block)
     raise 'expected a block' unless block_given?
 
     @_tab_mode = :panel
     @_tab_active = (active || :first)
 
-    content_tag(:div, role: 'tabpanel') do
-      content_tag(:ul, class: 'nav nav-tabs', role: 'tablist') { yield } # Yield to tab the first time
-    end + content_tag(:div, class: 'tab-content') do
+    content_tag(:div, {role: 'tabpanel'}.merge(panel)) do
+      content_tag(:ul, {class: 'nav nav-tabs', role: 'tablist'}.merge(list)) { yield } # Yield to tab the first time
+    end + content_tag(:div, {class: 'tab-content'}.merge(content)) do
       @_tab_mode = :content
       @_tab_active = (active || :first)
       yield # Yield tot ab the second time
     end
   end
 
-  def tab(label, &block)
-    controls = label.to_s.parameterize.gsub('_', '-')
+  def tab(label, controls = nil, &block)
+    controls ||= label.to_s.parameterize.gsub('_', '-')
+    controls = controls[1..-1] if controls[0] == '#'
+
     active = (@_tab_active == :first || @_tab_active == label)
 
     @_tab_active = nil if @_tab_active == :first

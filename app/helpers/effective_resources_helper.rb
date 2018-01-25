@@ -115,11 +115,11 @@ module EffectiveResourcesHelper
     glyphicon_to('remove', path, {title: 'Remove'}.merge(options))
   end
 
-  def glyphicon_tag(icon)
+  def glyphicon_tag(icon, options = {})
     if icon.to_s.start_with?('glyphicon-')
-      content_tag(:span, '', class: "glyphicon #{icon}")
+      content_tag(:span, '', {class: "glyphicon #{icon}"}.merge(options))
     else
-      content_tag(:span, '', class: "glyphicon glyphicon-#{icon}")
+      content_tag(:span, '', {class: "glyphicon glyphicon-#{icon}"}.merge(options))
     end
   end
 
