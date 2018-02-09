@@ -1,28 +1,42 @@
-module EffectiveBootstrap3Helper
+# Boostrap4 Helpers
 
-  # An effective Bootstrap3 menu DSL
+module EffectiveBootstrapHelper
+  # Nav links and dropdowns
   # Automatically puts in the 'active' class based on request path
 
-  # %ul.nav.navbar-nav.navbar-right
+  # %ul.navbar-nav
   #   = nav_link_to 'Sign In', new_user_session_path
   #   = nav_dropdown 'Settings' do
   #     = nav_link_to 'Account Settings', user_settings_path
-  #     %li.divider
+  #     = nav_dropdown_divider
   #     = nav_link_to 'Sign In', new_user_session_path, method: :delete
-  def bs3_nav_link_to(label, path, opts = {})
-    content_tag(:li, class: ('active' if request.fullpath.include?(path))) do
-      link_to(label, path, opts)
+  def nav_link_to(label, path, opts = {})
+    if @_nav_mode == :dropdown  # We insert dropdown-items
+      return link_to(label, path, merge_class_key(opts, 'dropdown-item'))
+    end
+
+    # Regular nav link item
+    content_tag(:li, class: (request.fullpath.include?(path) ? 'nav-item active' : 'nav-item')) do
+      link_to(label, path, merge_class_key(opts, 'nav-link'))
     end
   end
 
-  def bs3_nav_dropdown(label, link_class: [], list_class: [], &block)
+  def nav_dropdown(label, right: false, link_class: [], list_class: [], &block)
     raise 'expected a block' unless block_given?
 
-    content_tag(:li, class: 'dropdown') do
-      content_tag(:a, class: 'dropdown-toggle', href: '#', 'data-toggle': 'dropdown', role: 'button', 'aria-haspopup': 'true', 'aria-expanded': 'false') do
-        label.html_safe + content_tag(:span, '', class: 'caret')
-      end + content_tag(:ul, class: 'dropdown-menu') { yield }
+    id = "dropdown-#{''.object_id}"
+
+    content_tag(:li, class: 'nav-item dropdown') do
+      content_tag(:a, class: 'nav-link dropdown-toggle', href: '#', id: id, role: 'button', 'data-toggle': 'dropdown', 'aria-haspopup': true, 'aria-expanded': false) do
+        label.html_safe
+      end + content_tag(:div, class: (right ? 'dropdown-menu dropdown-menu-right' : 'dropdown-menu'), 'aria-labelledby': id) do
+        @_nav_mode = :dropdown; yield; @_nav_mode = nil
+      end
     end
+  end
+
+  def nav_divider
+    content_tag(:div, '', class: 'dropdown-divider')
   end
 
   # An effective Bootstrap3 tabpanel DSL
@@ -36,7 +50,7 @@ module EffectiveBootstrap3Helper
   #     %p Exports
 
   # If you pass active 'label' it will make that tab active. Otherwise first.
-  def bs3_tabs(active: nil, panel: {}, list: {}, content: {}, &block)
+  def tabs(active: nil, panel: {}, list: {}, content: {}, &block)
     raise 'expected a block' unless block_given?
 
     @_tab_mode = :panel
@@ -51,7 +65,7 @@ module EffectiveBootstrap3Helper
     end
   end
 
-  def bs3_tab(label, controls = nil, &block)
+  def tab(label, controls = nil, &block)
     controls ||= label.to_s.parameterize.gsub('_', '-')
     controls = controls[1..-1] if controls[0] == '#'
 
@@ -69,6 +83,16 @@ module EffectiveBootstrap3Helper
       content_tag(:div, id: controls, class: "tab-pane#{' active' if active}", role: 'tabpanel') do
         yield
       end
+    end
+  end
+
+  def merge_class_key(hash, value)
+    return { :class => value } unless hash.kind_of?(Hash)
+
+    if hash[:class].present?
+      hash.merge!(:class => "#{hash[:class]} #{value}")
+    else
+      hash.merge!(:class => value)
     end
   end
 
