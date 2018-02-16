@@ -86,33 +86,35 @@ module EffectiveResourcesHelper
   end
 
   ### Icon Helpers for actions_column or elsewhere
-  def show_icon_to(path, options = {})
-    glyphicon_to('eye-open', path, {title: 'Show'}.merge(options))
-  end
+  unless defined?(EffectiveBootstrap)
+    def show_icon_to(path, options = {})
+      glyphicon_to('eye-open', path, {title: 'Show'}.merge(options))
+    end
 
-  def edit_icon_to(path, options = {})
-    glyphicon_to('edit', path, {title: 'Edit'}.merge(options))
-  end
+    def edit_icon_to(path, options = {})
+      glyphicon_to('edit', path, {title: 'Edit'}.merge(options))
+    end
 
-  def destroy_icon_to(path, options = {})
-    defaults = {title: 'Destroy', data: {method: :delete, confirm: 'Delete this item?'}}
-    glyphicon_to('trash', path, defaults.merge(options))
-  end
+    def destroy_icon_to(path, options = {})
+      defaults = {title: 'Destroy', data: {method: :delete, confirm: 'Delete this item?'}}
+      glyphicon_to('trash', path, defaults.merge(options))
+    end
 
-  def settings_icon_to(path, options = {})
-    glyphicon_to('cog', path, {title: 'Settings'}.merge(options))
-  end
+    def settings_icon_to(path, options = {})
+      glyphicon_to('cog', path, {title: 'Settings'}.merge(options))
+    end
 
-  def ok_icon_to(path, options = {})
-    glyphicon_to('ok', path, {title: 'OK'}.merge(options))
-  end
+    def ok_icon_to(path, options = {})
+      glyphicon_to('ok', path, {title: 'OK'}.merge(options))
+    end
 
-  def approve_icon_to(path, options = {})
-    glyphicon_to('ok', path, {title: 'Approve'}.merge(options))
-  end
+    def approve_icon_to(path, options = {})
+      glyphicon_to('ok', path, {title: 'Approve'}.merge(options))
+    end
 
-  def remove_icon_to(path, options = {})
-    glyphicon_to('remove', path, {title: 'Remove'}.merge(options))
+    def remove_icon_to(path, options = {})
+      glyphicon_to('remove', path, {title: 'Remove'}.merge(options))
+    end
   end
 
   def glyphicon_tag(icon, options = {})
