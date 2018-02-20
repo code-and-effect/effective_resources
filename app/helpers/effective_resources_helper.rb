@@ -37,7 +37,7 @@ module EffectiveResourcesHelper
       end
 
       # I think this is a bug. I can't override default button class when passing my own class: variable. it merges them.
-      if (btn_class = SimpleForm.button_class).present?
+      if defined?(SimpleForm) && (btn_class = SimpleForm.button_class).present?
         buttons = buttons.map { |button| button.sub(btn_class, '') }
       end
 
@@ -85,56 +85,7 @@ module EffectiveResourcesHelper
     ].compact.join
   end
 
-  ### Icon Helpers for actions_column or elsewhere
-  unless defined?(EffectiveBootstrap)
-    def show_icon_to(path, options = {})
-      glyphicon_to('eye-open', path, {title: 'Show'}.merge(options))
-    end
-
-    def edit_icon_to(path, options = {})
-      glyphicon_to('edit', path, {title: 'Edit'}.merge(options))
-    end
-
-    def destroy_icon_to(path, options = {})
-      defaults = {title: 'Destroy', data: {method: :delete, confirm: 'Delete this item?'}}
-      glyphicon_to('trash', path, defaults.merge(options))
-    end
-
-    def settings_icon_to(path, options = {})
-      glyphicon_to('cog', path, {title: 'Settings'}.merge(options))
-    end
-
-    def ok_icon_to(path, options = {})
-      glyphicon_to('ok', path, {title: 'OK'}.merge(options))
-    end
-
-    def approve_icon_to(path, options = {})
-      glyphicon_to('ok', path, {title: 'Approve'}.merge(options))
-    end
-
-    def remove_icon_to(path, options = {})
-      glyphicon_to('remove', path, {title: 'Remove'}.merge(options))
-    end
-  end
-
-  def glyphicon_tag(icon, options = {})
-    if icon.to_s.start_with?('glyphicon-')
-      content_tag(:span, '', {class: "glyphicon #{icon}"}.merge(options))
-    else
-      content_tag(:span, '', {class: "glyphicon glyphicon-#{icon}"}.merge(options))
-    end
-  end
-
-  def glyphicon_to(icon, path, options = {})
-    content_tag(:a, options.merge(href: path)) do
-      glyphicon_tag(icon)
-    end
-  end
-  alias_method :bootstrap_icon_to, :glyphicon_to
-  alias_method :glyph_icon_to, :glyphicon_to
-
   ### Tableize attributes
-
   # This is used by effective_orders, effective_logging, effective_trash and effective_mergery
   def tableize_hash(obj, table: 'table', th: true, sub_table: 'table', sub_th: true, flatten: true)
     case obj
