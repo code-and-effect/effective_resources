@@ -22,31 +22,31 @@ module Effective
         case sql_type
         when :belongs_to
           relation
-            .order("#{is_null(sql_column)} ASC")
+            .order(Arel.sql("#{is_null(sql_column)} ASC"))
             .order(order_by_associated_conditions(association, sort: sort, direction: direction, limit: limit))
         when :belongs_to_polymorphic
           relation
-            .order("#{sql_column}_type #{sql_direction}")
-            .order("#{sql_column}_id #{sql_direction}")
+            .order(Arel.sql("#{sql_column}_type #{sql_direction}"))
+            .order(Arel.sql("#{sql_column}_id #{sql_direction}"))
         when :has_and_belongs_to_many, :has_many, :has_one
           relation
             .order(order_by_associated_conditions(association, sort: sort, direction: direction, limit: limit))
-            .order("#{sql_column(klass.primary_key)} #{sql_direction}")
+            .order(Arel.sql("#{sql_column(klass.primary_key)} #{sql_direction}"))
         when :effective_addresses
           relation
             .order(order_by_associated_conditions(associated(:addresses), sort: sort, direction: direction, limit: limit))
-            .order("#{sql_column(klass.primary_key)} #{sql_direction}")
+            .order(Arel.sql("#{sql_column(klass.primary_key)} #{sql_direction}"))
         when :effective_roles
-          relation.order("#{sql_column(:roles_mask)} #{sql_direction}")
+          relation.order(Arel.sql("#{sql_column(:roles_mask)} #{sql_direction}"))
         when :string, :text
           relation
-            .order(("ISNULL(#{sql_column}), " if mysql?).to_s + "#{sql_column}='' ASC, #{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?).to_s)
+            .order(Arel.sql(("ISNULL(#{sql_column}), " if mysql?).to_s + "#{sql_column}='' ASC, #{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?).to_s))
           when :time
             relation
-              .order(("ISNULL(#{sql_column}), " if mysql?).to_s + "EXTRACT(hour from #{sql_column}) #{sql_direction}, EXTRACT(minute from #{sql_column}) #{sql_direction}" + (" NULLS LAST" if postgres?).to_s)
+              .order(Arel.sql(("ISNULL(#{sql_column}), " if mysql?).to_s + "EXTRACT(hour from #{sql_column}) #{sql_direction}, EXTRACT(minute from #{sql_column}) #{sql_direction}" + (" NULLS LAST" if postgres?).to_s))
         else
           relation
-            .order(("ISNULL(#{sql_column}), " if mysql?).to_s + "#{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?).to_s)
+            .order(Arel.sql(("ISNULL(#{sql_column}), " if mysql?).to_s + "#{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?).to_s))
         end
       end
 

@@ -43,7 +43,7 @@ module Effective
         when :text        ; :text
         when :time        ; :time
         when FalseClass   ; :boolean
-        when Fixnum       ; :integer
+        when (defined?(Integer) ? Integer : Fixnum) ; :integer
         when Float        ; :decimal
         when NilClass     ; :nil
         when String       ; :string
