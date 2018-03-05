@@ -1,9 +1,9 @@
 - resource = (@_effective_resource || Effective::Resource.new(controller_path))
 
 .row
-  .col-xs-8
+  .col-8
     %h1= @page_title
-  .col-xs-4.text-right
+  .col-4.text-right
     - if EffectiveResources.authorized?(controller, :new, resource.klass) && (path = resource.action_path(:new)).present?
       = link_to "New #{resource.human_name.titleize}", path, class: 'btn btn-primary'
 

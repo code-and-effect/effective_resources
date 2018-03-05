@@ -1,17 +1,51 @@
 module EffectiveResourcesHelper
 
+  def effective_submit(form, options = {}, &block) # effective_bootstrap
+    resource = (@_effective_resource || Effective::Resource.new(controller_path))
+
+    # Apply btn-primary to the first item, only if the class isn't already present
+    actions = if controller.respond_to?(:member_actions_for)
+      controller.member_actions_for(form.object).transform_values.with_index do |opts, index|
+        opts[:class] = "btn #{index == 0 ? 'btn-primary' : 'btn-secondary'}" if opts[:class].blank?
+        opts
+      end
+    else
+      {}.tap do |actions|
+        actions['Save'] = { class: 'btn btn-primary' }
+
+        if resource.action_path(:index) && EffectiveResources.authorized?(controller, :index, resource.klass)
+          actions['Continue'] = { class: 'btn btn-secondary' }
+        end
+
+        if resource.action_path(:new) && EffectiveResources.authorized?(controller, :new, resource.klass)
+          actions['Add New'] = { class: 'btn btn-secondary' }
+        end
+      end
+    end
+
+    wrapper = (form.layout == :horizontal) ? { class: 'form-group row form-actions' } : { class: 'form-group form-actions' }
+
+    content_tag(:div, wrapper) do
+      buttons = actions.group_by { |_, opts| opts[:class] }.flat_map do |_, grouped|
+        grouped.map { |name, opts| form.save(name, opts) } + ['']
+      end
+
+      if block_given?
+        buttons = [capture(&block), ''] + buttons
+      end
+
+      buttons.join('&nbsp;').html_safe
+    end
+  end
+
+  # effective_form_inputs
   def simple_form_submit(form, options = {}, &block)
     resource = (@_effective_resource || Effective::Resource.new(controller_path))
 
     # Apply btn-primary to the first item, only if the class isn't already present
     actions = if controller.respond_to?(:member_actions_for)
       controller.member_actions_for(form.object).transform_values.with_index do |opts, index|
-        if opts[:class].present?
-          opts
-        else
-          opts[:class] = "btn #{index == 0 ? 'btn-primary' : 'btn-default'}"
-        end
-
+        opts[:class] = "btn #{index == 0 ? 'btn-primary' : 'btn-default'}" if opts[:class].blank?
         opts
       end
     else

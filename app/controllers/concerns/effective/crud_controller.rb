@@ -9,11 +9,15 @@ module Effective
         end
 
         def _default_member_actions
-          {
-            'Save' => { action: :save, data: { disable_with: 'Saving...' }},
-            'Continue' => { action: :save, data: { disable_with: 'Saving...' }},
-            'Add New' => { action: :save, data: { disable_with: 'Saving...' }}
-          }
+          if defined?(EffectiveBootstrap)
+            { 'Save': { action: :save }, 'Continue': { action: :save }, 'Add New': { action: :save } }
+          else
+            {
+              'Save' => { action: :save, data: { disable_with: 'Saving...' }},
+              'Continue' => { action: :save, data: { disable_with: 'Saving...' }},
+              'Add New' => { action: :save, data: { disable_with: 'Saving...' }}
+            }
+          end
         end
       end
 
