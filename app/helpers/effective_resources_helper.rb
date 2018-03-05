@@ -23,7 +23,7 @@ module EffectiveResourcesHelper
       end
     end
 
-    wrapper = (form.layout == :horizontal) ? { class: 'form-group row form-actions' } : { class: 'form-group form-actions' }
+    wrapper = (form.layout == :horizontal) ? { class: 'form-group form-actions row' } : { class: 'form-group form-actions' }
 
     content_tag(:div, wrapper) do
       buttons = actions.group_by { |_, opts| opts[:class] }.flat_map do |_, grouped|
@@ -34,7 +34,7 @@ module EffectiveResourcesHelper
         buttons = [capture(&block), ''] + buttons
       end
 
-      buttons.join('&nbsp;').html_safe
+      ([icon('spinner'), '', ''] + buttons).join('&nbsp;').html_safe
     end
   end
 
