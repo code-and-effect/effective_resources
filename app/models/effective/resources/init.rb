@@ -41,7 +41,7 @@ module Effective
           klass = class_name.safe_constantize
 
           if klass.present?
-            @namespaces = names[0...index]
+            @namespaces ||= names[0...index]
             @model_klass = klass
             return klass
           end

@@ -23,18 +23,23 @@ module EffectiveResourcesHelper
       end
     end
 
+    # Group by class and render
+    buttons = actions.group_by { |_, opts| opts[:class] }.flat_map do |_, btns|
+      btns.map { |name, opts| form.save(name, opts) }
+    end.join.html_safe
+
+    given = block_given? ? capture(&block) : ''
+
+    effective_save(form) do
+      given + buttons
+    end
+  end
+
+  def effective_save(form, label = 'Save', &block) # effective_bootstrap
     wrapper = (form.layout == :horizontal) ? { class: 'form-group form-actions row' } : { class: 'form-group form-actions' }
 
     content_tag(:div, wrapper) do
-      buttons = actions.group_by { |_, opts| opts[:class] }.flat_map do |_, grouped|
-        grouped.map { |name, opts| form.save(name, opts) } + ['']
-      end
-
-      if block_given?
-        buttons = [capture(&block), ''] + buttons
-      end
-
-      ([icon('spinner'), '', ''] + buttons).join('&nbsp;').html_safe
+      icon('spinner') + (block_given? ? yield(form) : form.save(label, class: 'btn btn-primary'))
     end
   end
 

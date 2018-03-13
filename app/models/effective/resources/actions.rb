@@ -8,12 +8,22 @@ module Effective
         @_routes ||= (
           matches = [[namespace, plural_name].compact.join('/'), [namespace, name].compact.join('/')]
 
-          Rails.application.routes.routes.select do |route|
+          routes_engine.routes.routes.select do |route|
             matches.any? { |match| match == route.defaults[:controller] }
           end.inject({}) do |h, route|
             h[route.defaults[:action].to_sym] = route; h
           end
         )
+      end
+
+      # Effective::Resource.new('effective/order', namespace: :admin)
+      def routes_engine
+        case class_name
+        when 'Effective::Order'
+          EffectiveOrders::Engine
+        else
+          Rails.application
+        end
       end
 
       # Effective::Resource.new('admin/posts').action_path_helper(:edit) => 'edit_admin_posts_path'
