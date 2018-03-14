@@ -28,18 +28,17 @@ module EffectiveResourcesHelper
       btns.map { |name, opts| form.save(name, opts) }
     end.join.html_safe
 
-    given = block_given? ? capture(&block) : ''
-
     effective_save(form) do
-      given + buttons
+      (block_given? ? capture(&block) : ''.html_safe) + buttons
     end
+
   end
 
   def effective_save(form, label = 'Save', &block) # effective_bootstrap
     wrapper = (form.layout == :horizontal) ? { class: 'form-group form-actions row' } : { class: 'form-group form-actions' }
 
     content_tag(:div, wrapper) do
-      icon('spinner') + (block_given? ? yield(form) : form.save(label, class: 'btn btn-primary'))
+      icon('spinner') + (block_given? ? capture(&block) : form.save(label, class: 'btn btn-primary'))
     end
   end
 

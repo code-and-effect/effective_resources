@@ -158,6 +158,23 @@ Call `simple_form_save(f)` like follows:
 
 to render just the `Save` button, with appropriate data-disable, title, etc.
 
+### Effective Form with
+
+```ruby
+
+= effective_form_with(model: user, url: user_settings_path) do |f|
+  = effective_submit(f)
+  = effective_save(f)
+
+  = effective_save(f) do
+    = f.save 'Save'
+    = f.save 'Another'
+
+  = effective_save(f, 'Save It')
+
+  = effective_submit(f) do
+    = f.save 'Will be appended'
+
 ## License
 
 MIT License.  Copyright [Code and Effect Inc.](http://www.codeandeffect.com/)
