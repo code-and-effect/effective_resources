@@ -42,6 +42,12 @@ module EffectiveResourcesHelper
     end
   end
 
+  def effective_save_button(form, label = 'Save', &block)
+    content_tag(:div, class: 'form-actions') do
+      icon('spinner') + (block_given? ? capture(&block) : form.save(label, class: 'btn btn-primary'))
+    end
+  end
+
   # effective_form_inputs
   def simple_form_submit(form, options = {}, &block)
     resource = (@_effective_resource || Effective::Resource.new(controller_path))
