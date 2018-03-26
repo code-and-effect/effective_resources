@@ -4,11 +4,8 @@ module EffectiveResourcesHelper
     resource = (@_effective_resource || Effective::Resource.new(controller_path))
 
     # Apply btn-primary to the first item, only if the class isn't already present
-    actions = if controller.respond_to?(:member_actions_for)
-      controller.member_actions_for(form.object).transform_values.with_index do |opts, index|
-        opts[:class] = "btn #{index == 0 ? 'btn-primary' : 'btn-secondary'}" if opts[:class].blank?
-        opts
-      end
+    actions = if controller.respond_to?(:submits_for)
+      controller.submits_for(form.object)
     else
       {}.tap do |actions|
         actions['Save'] = { class: 'btn btn-primary' }
@@ -53,11 +50,8 @@ module EffectiveResourcesHelper
     resource = (@_effective_resource || Effective::Resource.new(controller_path))
 
     # Apply btn-primary to the first item, only if the class isn't already present
-    actions = if controller.respond_to?(:member_actions_for)
-      controller.member_actions_for(form.object).transform_values.with_index do |opts, index|
-        opts[:class] = "btn #{index == 0 ? 'btn-primary' : 'btn-default'}" if opts[:class].blank?
-        opts
-      end
+    actions = if controller.respond_to?(:submits_for)
+      controller.submits_for(form.object)
     else
       {}.tap do |actions|
         actions['Save'] = { class: 'btn btn-primary', data: { disable_with: 'Saving...' }}
@@ -69,7 +63,6 @@ module EffectiveResourcesHelper
         if resource.action_path(:new) && EffectiveResources.authorized?(controller, :new, resource.klass)
           actions['Add New'] = { class: 'btn btn-default', data: { disable_with: 'Saving...' }}
         end
-
       end
     end
 

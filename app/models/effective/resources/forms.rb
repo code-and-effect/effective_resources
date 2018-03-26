@@ -2,6 +2,30 @@ module Effective
   module Resources
     module Forms
 
+      # Used by effective_form_submit
+      # The actions we would use to commit. For link_to
+      # { 'Save': { action: :save }, 'Continue': { action: :save }, 'Add New': { action: :save }, 'Approve': { action: :approve } }
+      # Saves a list of commit actions...
+      def submits
+        {}.tap do |submits|
+          if (actions.find(:create) || actions.find(:update))
+            submits['Save'] = { action: :save, class: 'btn btn-primary' }
+          end
+
+          member_post_actions.each do |action|
+            submits[action.to_s.titleize] = { action: action, default: true, class: 'btn btn-primary' }
+          end
+
+          if actions.find(:index)
+            submits['Continue'] = { action: :save }
+          end
+
+          if actions.find(:new)
+            submits['Add New'] = { action: :save }
+          end
+        end
+      end
+
       # Used by datatables
       def search_form_field(name, type = nil)
         case (type || sql_type(name))

@@ -5,21 +5,10 @@ module Effective
     included do
       class << self
 
-        def member_actions
-          @_effective_member_actions ||= {}
+        def submits
+          @_effective_submits ||= Effective::Resource.new(controller_path).submits
         end
 
-        def _default_member_actions
-          if defined?(EffectiveBootstrap)
-            { 'Save': { action: :save }, 'Continue': { action: :save }, 'Add New': { action: :save } }
-          else
-            {
-              'Save' => { action: :save, data: { disable_with: 'Saving...' }},
-              'Continue' => { action: :save, data: { disable_with: 'Saving...' }},
-              'Add New' => { action: :save, data: { disable_with: 'Saving...' }}
-            }
-          end
-        end
       end
 
       define_actions_from_routes
@@ -31,7 +20,6 @@ module Effective
       # Automatically respond to any action defined via the routes file
       def define_actions_from_routes
         resource = Effective::Resource.new(controller_path)
-
         resource.member_actions.each { |action| member_action(action) }
         resource.collection_actions.each { |action| collection_action(action) }
       end
@@ -49,73 +37,44 @@ module Effective
         _insert_callbacks(names, blk) { |name, options| set_callback(:resource_error, :after, name, options) }
       end
 
-      # Add the following to your controller for a simple member action
-      # member_action :print
+      # This controls the form submit options of effective_submit
+      # It also controls the redirect path for any actions
       #
-      # Add to your permissions:  can :print, Thing
+      # Effective::Resource will populate this with all member_post_actions
+      # And you can control the details with this DSL:
       #
-      # If you want to POST and do an action based on this:
-      # Make sure your model responds to approve!
-      # member_action :approve
-      # If you want it to automatically show up in your forms
-      # member_action :approve, 'Save and Approve', if: -> { approved? }
-      # member_action :approve, 'Save and Approve', unless: -> { !approved? }, redirect: :show
+      # submit :approve, 'Save and Approve', unless: -> { approved? }, redirect: :show
+      #
+      # submit :toggle, 'Blacklist', if: -> { sync? }, class: 'btn btn-primary'
+      # submit :toggle, 'Whitelist', if: -> { !sync? }, class: 'btn btn-primary'
 
-      def member_action(action, commit = nil, args = {})
-        if commit.present?
-          raise 'expected args to be a Hash or false' unless args.kind_of?(Hash) || args == false
+      def submit(action, commit = nil, args = {})
+        raise 'expected args to be a Hash or false' unless args.kind_of?(Hash) || args == false
 
-          if args == false
-            member_actions.delete(commit); return
-          end
-
-          if args.key?(:if) && args[:if].respond_to?(:call) == false
-            raise "expected if: to be callable. Try member_action :approve, 'Save and Approve', if: -> { submitted? }"
-          end
-
-          if args.key?(:unless) && args[:unless].respond_to?(:call) == false
-            raise "expected unless: to be callable. Try member_action :approve, 'Save and Approve', unless: -> { declined? }"
-          end
-
-          redirect = args.delete(:redirect_to) || args.delete(:redirect) # Remove redirect_to keyword. use redirect.
-
-          member_actions[commit] = (args || {}).merge(action: action, redirect: redirect)
+        if commit == false
+          submits.delete_if { |commit, args| args[:action] == action }; return
         end
 
-        define_method(action) do
-          self.resource ||= resource_scope.find(params[:id])
-
-          EffectiveResources.authorize!(self, action, resource)
-
-          @page_title ||= "#{action.to_s.titleize} #{resource}"
-
-          member_post_action(action) unless request.get?
+        if args == false
+          submits.delete(commit); return
         end
-      end
 
-      def collection_action(action)
-        define_method(action) do
-          if params[:ids].present?
-            self.resources ||= resource_scope.where(id: params[:ids])
-          end
-
-          if effective_resource.scope?(action)
-            self.resources ||= resource_scope.public_send(action)
-          end
-
-          self.resources ||= resource_scope.all
-
-          EffectiveResources.authorize!(self, action, resource_klass)
-
-          @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
-
-          collection_post_action(action) unless request.get?
+        if commit # Overwrite the default member action when given a custom commit
+          submits.delete_if { |commit, args| args[:default] && args[:action] == action }
         end
-      end
 
-      # Applies the default actions
-      def default_actions(args = {})
-        default_member_actions.each { |k, v| member_actions[k] = (args || {}).merge(v) }
+        if args.key?(:if) && args[:if].respond_to?(:call) == false
+          raise "expected if: to be callable. Try submit :approve, 'Save and Approve', if: -> { finished? }"
+        end
+
+        if args.key?(:unless) && args[:unless].respond_to?(:call) == false
+          raise "expected unless: to be callable. Try submit :approve, 'Save and Approve', unless: -> { declined? }"
+        end
+
+        redirect = args.delete(:redirect_to) || args.delete(:redirect) # Remove redirect_to keyword. use redirect.
+        args.merge!(action: action, redirect: redirect)
+
+        (submits[commit] ||= {}).merge!(args)
       end
 
       # page_title 'My Title', only: [:new]
@@ -148,6 +107,43 @@ module Effective
         end
       end
 
+      # Defines a function to handle a GET and POST request on this URL
+      # Just add a member action to your routes, you shouldn't need to call this directly
+      def member_action(action)
+        define_method(action) do
+          self.resource ||= resource_scope.find(params[:id])
+
+          EffectiveResources.authorize!(self, action, resource)
+
+          @page_title ||= "#{action.to_s.titleize} #{resource}"
+
+          member_post_action(action) unless request.get?
+        end
+      end
+
+      # Defines a function to handle a GET and POST request on this URL
+      # Handles bulk_ actions
+      # Just add a member action to your routes, you shouldn't need to call this directly
+      # You shouldn't need to call this directly
+      def collection_action(action)
+        define_method(action) do
+          if params[:ids].present?
+            self.resources ||= resource_scope.where(id: params[:ids])
+          end
+
+          if effective_resource.scope?(action)
+            self.resources ||= resource_scope.public_send(action)
+          end
+
+          self.resources ||= resource_scope.all
+
+          EffectiveResources.authorize!(self, action, resource_klass)
+
+          @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
+
+          collection_post_action(action) unless request.get?
+        end
+      end
     end
 
     def index
@@ -312,14 +308,15 @@ module Effective
     # Here we look at all available (class level) member actions, see which ones apply to the current resource
     # This feeds into the helper simple_form_submit(f)
     # Returns a Hash of {'Save': {data-disable-with: 'Saving...'}, 'Approve': {data-disable-with: 'Approve'}}
-    def member_actions_for(obj)
-      actions = (self.class.member_actions.presence || self.class._default_member_actions)
-
-      actions.select do |commit, args|
+    def submits_for(obj)
+      (actions = self.class.submits).select do |commit, args|
         args[:class] = args[:class].to_s
 
+        action = (args[:action] == :save ? (obj.new_record? ? :create : :update) : args[:action])
+
         (args.key?(:if) ? obj.instance_exec(&args[:if]) : true) &&
-        (args.key?(:unless) ? !obj.instance_exec(&args[:unless]) : true)
+        (args.key?(:unless) ? !obj.instance_exec(&args[:unless]) : true) &&
+        EffectiveResources.authorized?(self, action, obj)
       end.sort do |(commit_x, x), (commit_y, y)|
         # Sort to front
         primary = (y[:class].include?('primary') ? 1 : 0) - (x[:class].include?('primary') ? 1 : 0)
@@ -331,7 +328,10 @@ module Effective
 
         primary || danger || actions.keys.index(commit_x) <=> actions.keys.index(commit_y)
       end.inject({}) do |h, (commit, args)|
-        h[commit] = args.except(:action, :if, :unless, :redirect); h
+        h[commit] = args.except(:action, :default, :if, :unless, :redirect); h
+      end.transform_values.with_index do |opts, index|
+        opts[:class] = "btn #{index == 0 ? 'btn-primary' : 'btn-secondary'}" if opts[:class].blank?
+        opts
       end
     end
 
@@ -476,7 +476,7 @@ module Effective
     end
 
     def commit_action
-      self.class.member_actions[params[:commit].to_s] || { action: :save }
+      self.class.submits[params[:commit].to_s] || { action: :save }
     end
 
     # Returns an ActiveRecord relation based on the computed value of `resource_scope` dsl method
