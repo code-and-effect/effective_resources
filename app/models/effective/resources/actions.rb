@@ -54,17 +54,30 @@ module Effective
 
       # GET actions
       def collection_actions
-        routes.values.map { |route| route.defaults[:action].to_sym if is_get_route?(route) && !is_member_route?(route) }.compact - crud_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_collection_route?(route) }.compact - crud_actions
+      end
+
+      def collection_get_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_collection_route?(route) && is_get_route?(route) }.compact - crud_actions
+      end
+
+      def collection_post_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_collection_route?(route) && is_post_route?(route) }.compact - crud_actions
+      end
+
+      # All actions
+      def member_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_member_route?(route) }.compact - crud_actions
       end
 
       # GET actions
-      def member_actions
-        routes.values.map { |route| route.defaults[:action].to_sym if is_get_route?(route) && is_member_route?(route) }.compact - crud_actions
+      def member_get_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_member_route?(route) && is_get_route?(route) }.compact - crud_actions
       end
 
       # POST/PUT/PATCH actions
       def member_post_actions
-        routes.values.map { |route| route.defaults[:action].to_sym if is_post_route?(route) && is_member_route?(route) }.compact - crud_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_member_route?(route) && is_post_route?(route) }.compact - crud_actions
       end
 
       # Same as controller_path in the view
@@ -80,6 +93,10 @@ module Effective
 
       def is_member_route?(route)
         (route.path.required_names || []).include?('id')
+      end
+
+      def is_collection_route?(route)
+        (route.path.required_names || []).include?('id') == false
       end
 
       def is_get_route?(route)

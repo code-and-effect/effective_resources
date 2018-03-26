@@ -4,6 +4,7 @@ module Effective
 
     included do
       class << self
+
         def member_actions
           @_effective_member_actions ||= {}
         end
@@ -21,10 +22,19 @@ module Effective
         end
       end
 
+      define_actions_from_routes
       define_callbacks :resource_render, :resource_save, :resource_error
     end
 
     module ClassMethods
+
+      # Automatically respond to any action defined via the routes file
+      def define_actions_from_routes
+        resource = Effective::Resource.new(controller_path)
+
+        resource.member_actions.each { |action| member_action(action) }
+        resource.collection_actions.each { |action| collection_action(action) }
+      end
 
       # https://github.com/rails/rails/blob/v5.1.4/actionpack/lib/abstract_controller/callbacks.rb
       def before_render(*names, &blk)
