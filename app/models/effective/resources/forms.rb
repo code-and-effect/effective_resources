@@ -7,7 +7,7 @@ module Effective
       # { 'Save': { action: :save }, 'Continue': { action: :save }, 'Add New': { action: :save }, 'Approve': { action: :approve } }
       # Saves a list of commit actions...
       def submits
-        {}.tap do |submits|
+        @submits ||= {}.tap do |submits|
           if (actions.find(:create) || actions.find(:update))
             submits['Save'] = { action: :save, class: 'btn btn-primary' }
           end
@@ -23,6 +23,36 @@ module Effective
           if actions.find(:new)
             submits['Add New'] = { action: :save }
           end
+        end
+      end
+
+      # Here we look at all available (class level) member actions, see which ones apply to the current resource
+      # This feeds into the helper simple_form_submit(f)
+      # Returns a Hash of {'Save': {data-disable-with: 'Saving...'}, 'Approve': {data-disable-with: 'Approve'}}
+      def submits_for(obj, controller:)
+        submits.select do |commit, args|
+          args[:class] = args[:class].to_s
+
+          action = (args[:action] == :save ? (obj.new_record? ? :create : :update) : args[:action])
+
+          (args.key?(:if) ? obj.instance_exec(&args[:if]) : true) &&
+          (args.key?(:unless) ? !obj.instance_exec(&args[:unless]) : true) &&
+          EffectiveResources.authorized?(controller, action, obj)
+        end.sort do |(commit_x, x), (commit_y, y)|
+          # Sort to front
+          primary = (y[:class].include?('primary') ? 1 : 0) - (x[:class].include?('primary') ? 1 : 0)
+          primary = nil if primary == 0
+
+          # Sort to back
+          danger = (x[:class].include?('danger') ? 1 : 0) - (y[:class].include?('danger') ? 1 : 0)
+          danger = nil if danger == 0
+
+          primary || danger || submits.keys.index(commit_x) <=> submits.keys.index(commit_y)
+        end.inject({}) do |h, (commit, args)|
+          h[commit] = args.except(:action, :default, :if, :unless, :redirect); h
+        end.transform_values.with_index do |opts, index|
+          opts[:class] = "btn #{index == 0 ? 'btn-primary' : 'btn-secondary'}" if opts[:class].blank?
+          opts
         end
       end
 

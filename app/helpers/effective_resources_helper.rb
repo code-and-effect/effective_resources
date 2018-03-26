@@ -1,24 +1,8 @@
 module EffectiveResourcesHelper
 
   def effective_submit(form, options = {}, &block) # effective_bootstrap
-    resource = (@_effective_resource || Effective::Resource.new(controller_path))
-
-    # Apply btn-primary to the first item, only if the class isn't already present
-    actions = if controller.respond_to?(:submits_for)
-      controller.submits_for(form.object)
-    else
-      {}.tap do |actions|
-        actions['Save'] = { class: 'btn btn-primary' }
-
-        if resource.action_path(:index) && EffectiveResources.authorized?(controller, :index, resource.klass)
-          actions['Continue'] = { class: 'btn btn-secondary' }
-        end
-
-        if resource.action_path(:new) && EffectiveResources.authorized?(controller, :new, resource.klass)
-          actions['Add New'] = { class: 'btn btn-secondary' }
-        end
-      end
-    end
+    resource = (controller.class.respond_to?(:effective_resource) ? controller.class.effective_resource : Effective::Resource.new(controller_path))
+    actions = resource.submits_for(form.object, controller: controller)
 
     # Group by class and render
     buttons = actions.group_by { |_, opts| opts[:class] }.flat_map do |_, btns|
@@ -28,7 +12,6 @@ module EffectiveResourcesHelper
     effective_save(form) do
       (block_given? ? capture(&block) : ''.html_safe) + buttons
     end
-
   end
 
   def effective_save(form, label = 'Save', &block) # effective_bootstrap
@@ -47,24 +30,8 @@ module EffectiveResourcesHelper
 
   # effective_form_inputs
   def simple_form_submit(form, options = {}, &block)
-    resource = (@_effective_resource || Effective::Resource.new(controller_path))
-
-    # Apply btn-primary to the first item, only if the class isn't already present
-    actions = if controller.respond_to?(:submits_for)
-      controller.submits_for(form.object)
-    else
-      {}.tap do |actions|
-        actions['Save'] = { class: 'btn btn-primary', data: { disable_with: 'Saving...' }}
-
-        if resource.action_path(:index) && EffectiveResources.authorized?(controller, :index, resource.klass)
-          actions['Continue'] = { class: 'btn btn-default', data: { disable_with: 'Saving...' }}
-        end
-
-        if resource.action_path(:new) && EffectiveResources.authorized?(controller, :new, resource.klass)
-          actions['Add New'] = { class: 'btn btn-default', data: { disable_with: 'Saving...' }}
-        end
-      end
-    end
+    resource = (controller.class.respond_to?(:effective_resource) ? controller.class.effective_resource : Effective::Resource.new(controller_path))
+    actions = resource.submits_for(form.object, controller: controller)
 
     wrapper_options = { class: 'form-actions' }.merge(options.delete(:wrapper_html) || {})
 
