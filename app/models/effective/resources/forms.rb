@@ -8,20 +8,20 @@ module Effective
       # Saves a list of commit actions...
       def submits
         @submits ||= {}.tap do |submits|
-          if (actions.find(:create) || actions.find(:update))
+          if (actions.find { |a| a == :create } || actions.find { |a| a == :update })
             submits['Save'] = { action: :save, class: 'btn btn-primary' }
           end
 
-          member_post_actions.each do |action|
+          member_post_actions.each do |action| # default true means it will be overwritten by dsl methods
             submits[action.to_s.titleize] = { action: action, default: true, class: 'btn btn-primary' }
           end
 
-          if actions.find(:index)
-            submits['Continue'] = { action: :save }
+          if actions.find { |a| a == :index }
+            submits['Continue'] = { action: :save, redirect: :index }
           end
 
-          if actions.find(:new)
-            submits['Add New'] = { action: :save }
+          if actions.find { |a| a == :new }
+            submits['Add New'] = { action: :save, redirect: :new }
           end
         end
       end

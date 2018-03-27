@@ -341,6 +341,7 @@ module Effective
         when :index ; resource_index_path
         when :edit  ; resource_edit_path
         when :show  ; resource_show_path
+        when :new   ; resource_new_path
         when :back  ; referer_redirect_path
         when nil    ; nil
         else        ; resource_member_action_path(commit_action[:action])
