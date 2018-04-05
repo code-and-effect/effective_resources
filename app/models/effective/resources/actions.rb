@@ -38,6 +38,10 @@ module Effective
       def action_path(action, resource = nil, opts = {})
         return unless routes[action]
 
+        if resource.kind_of?(Hash)
+          opts = resource; resource = nil
+        end
+
         # edge case: Effective::Resource.new('admin/comments').action_path(:new, @post)
         if resource.present? && !resource.kind_of?(klass)
           if (bt = belongs_to(resource)).present? && instance.respond_to?("#{bt.name}=")
@@ -45,7 +49,15 @@ module Effective
           end
         end
 
-        routes[action].format(resource || instance).presence
+        path = routes[action].format(resource || instance).presence
+
+        if path.present? && opts.present?
+          uri = URI.parse(path)
+          uri.query = URI.encode_www_form(opts)
+          path = uri.to_s
+        end
+
+        path
       end
 
       def actions
