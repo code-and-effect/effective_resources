@@ -166,8 +166,21 @@ module Effective
       self.resource ||= resource_scope.new
 
       self.resource.assign_attributes(
-        params.to_unsafe_h.except(:controller, :action).select { |k, v| resource.respond_to?("#{k}=") }
+        params.to_unsafe_h.except(:controller, :action, :id).select { |k, v| resource.respond_to?("#{k}=") }
       )
+
+      if params[:duplicate_id]
+        duplicate = resource_scope.find(params[:duplicate_id])
+        EffectiveResources.authorize!(self, :show, duplicate)
+
+        self.resource = duplicate_resource(duplicate)
+        raise "expected duplicate_resource to return an unsaved new #{resource_klass} resource" unless resource.kind_of?(resource_klass) && resource.new_record?
+
+        if (message = flash[:success].to_s).present?
+          flash.delete(:success)
+          flash.now[:success] = "#{message.chomp('.')}. Adding another #{resource_name.titleize} based on previous."
+        end
+      end
 
       @page_title ||= "New #{resource_name.titleize}"
       EffectiveResources.authorize!(self, :new, resource)
@@ -188,11 +201,6 @@ module Effective
       resource.created_by ||= current_user if resource.respond_to?(:created_by=)
 
       if save_resource(resource, action)
-        if add_new_resource_action?
-          render_add_new_resource! and return
-        end
-
-        # Normal redirect
         flash[:success] ||= flash_success(resource, action)
         redirect_to(resource_redirect_path)
       else
@@ -231,11 +239,6 @@ module Effective
       resource.assign_attributes(send(resource_params_method_name))
 
       if save_resource(resource, action)
-        if add_new_resource_action?
-          render_add_new_resource! and return
-        end
-
-        # Normal save
         flash[:success] ||= flash_success(resource, action)
         redirect_to(resource_redirect_path)
       else
@@ -308,7 +311,6 @@ module Effective
       render json: { status: 200, message: "Successfully #{action_verb(action)} #{successes} / #{resources.length} selected #{resource_plural_name}" }
     end
 
-
     protected
 
     # This calls the appropriate member action, probably save!, on the resource.
@@ -324,6 +326,8 @@ module Effective
           run_callbacks(:resource_save)
           return true
         rescue => e
+          resource.restore_attributes(['status', 'state'])
+
           flash.delete(:success)
           flash.now[:danger] = flash_danger(resource, action, e: e)
           raise ActiveRecord::Rollback
@@ -334,54 +338,51 @@ module Effective
       false
     end
 
-    def resource_redirect_path
-      return instance_exec(&commit_action[:redirect]) if commit_action[:redirect].respond_to?(:call)
+    # Should return a new resource based on the passed one
+    def duplicate_resource(resource)
+      resource.dup
+    end
 
-      commit_action_redirect = case commit_action[:redirect]
-        when :index ; resource_index_path
-        when :edit  ; resource_edit_path
-        when :show  ; resource_show_path
-        when :new   ; resource_new_path
-        when :back  ; referer_redirect_path
-        when nil    ; nil
-        else        ; resource_member_action_path(commit_action[:action])
+    def resource_redirect_path
+      redirect = commit_action[:redirect].respond_to?(:call) ? instance_exec(&commit_action[:redirect]) : commit_action[:redirect]
+
+      commit_action_redirect = case redirect
+        when :index     ; resource_index_path
+        when :edit      ; resource_edit_path
+        when :show      ; resource_show_path
+        when :new       ; resource_new_path
+        when :duplicate ; resource_duplicate_path
+        when :back      ; referer_redirect_path
+        when :save      ; [resource_edit_path, resource_show_path].compact.first
+        when Symbol     ; resource_action_path(commit_action[:action])
+        when String     ; redirect
+        else            ; nil
       end
 
       return commit_action_redirect if commit_action_redirect.present?
 
       case params[:commit].to_s
       when 'Save'
-        [resource_edit_path, resource_show_path, resource_index_path].compact.first
+        [resource_edit_path, resource_show_path, resource_index_path]
       when 'Save and Add New', 'Add New'
-        [resource_new_path, resource_index_path].compact.first
+        [resource_new_path, resource_index_path]
+      when 'Duplicate'
+        [resource_duplicate_path, resource_index_path]
       when 'Continue', 'Save and Continue'
-        resource_index_path
+        [resource_index_path]
       else
-        [referer_redirect_path, resource_index_path].compact.first
-      end.presence || root_path
-    end
-
-    def add_new_resource_action?
-      (add_new_resource_params_method_name.present? && resource_redirect_path == resource_new_path)
-    end
-
-    def render_add_new_resource!
-      attributes = send(add_new_resource_params_method_name).except(:id, :created_at, :updated_at)
-      self.resource = resource_scope.new(attributes)
-
-      @page_title = "New #{resource_name.titleize}"
-      flash.now[:success] ||= flash_success(resource) + ". Adding another #{resource_name.titleize} based on previous."
-
-      render(:new)
-      true
+        [referer_redirect_path, resource_edit_path, resource_show_path, resource_index_path]
+      end.compact.first.presence || root_path
     end
 
     def referer_redirect_path
-      return if (resource && resource.destroyed? && request.referer.to_s.include?("/#{resource.to_param}"))
+      url = request.referer.to_s
 
-      if request.referer.present? && (Rails.application.routes.recognize_path(URI(request.referer.to_s).path) rescue false)
-        request.referer.to_s
-      end
+      return if (resource && resource.destroyed? && url.include?("/#{resource.to_param}"))
+      return if url.include?('duplicate_id=')
+      return unless (Rails.application.routes.recognize_path(URI(url).path) rescue false)
+
+      url
     end
 
     def resource_index_path
@@ -390,6 +391,10 @@ module Effective
 
     def resource_new_path
       effective_resource.action_path(:new)
+    end
+
+    def resource_duplicate_path
+      effective_resource.action_path(:new, duplicate_id: resource.id)
     end
 
     def resource_edit_path
@@ -404,7 +409,7 @@ module Effective
       effective_resource.action_path(:destroy, resource)
     end
 
-    def resource_member_action_path(action)
+    def resource_action_path(action)
       effective_resource.action_path(action.to_sym, resource)
     end
 
@@ -488,11 +493,6 @@ module Effective
 
     def resource_params_method_name
       ["#{resource_name}_params", "#{resource_plural_name}_params", 'permitted_params'].find { |name| respond_to?(name, true) } || 'params'
-    end
-
-    def add_new_resource_params_method_name
-      method_name = resource_params_method_name
-      "add_new_#{method_name}" if respond_to?("add_new_#{method_name}", true)
     end
 
   end
