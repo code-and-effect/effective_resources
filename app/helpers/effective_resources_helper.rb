@@ -3,11 +3,7 @@ module EffectiveResourcesHelper
   def effective_submit(form, options = {}, &block) # effective_bootstrap
     resource = (controller.class.respond_to?(:effective_resource) ? controller.class.effective_resource : Effective::Resource.new(controller_path))
     actions = resource.submits_for(form.object, controller: controller)
-
-    # Group by class and render
-    buttons = actions.group_by { |_, opts| opts[:class] }.flat_map do |_, btns|
-      btns.map { |name, opts| form.save(name, opts) }
-    end.join.html_safe
+    buttons = actions.map { |name, opts| form.save(name, opts) }.join.html_safe
 
     form.submit('', options) do
       (block_given? ? capture(&block) : ''.html_safe) + buttons
@@ -19,23 +15,17 @@ module EffectiveResourcesHelper
     resource = (controller.class.respond_to?(:effective_resource) ? controller.class.effective_resource : Effective::Resource.new(controller_path))
     actions = resource.submits_for(form.object, controller: controller)
 
+    buttons = actions.map { |action| form.button(:submit, *action) }
+
+    # I think this is a bug. I can't override default button class when passing my own class: variable. it merges them.
+    if defined?(SimpleForm) && (btn_class = SimpleForm.button_class).present?
+      buttons = buttons.map { |button| button.sub(btn_class, '') }
+    end
+
     wrapper_options = { class: 'form-actions' }.merge(options.delete(:wrapper_html) || {})
 
     content_tag(:div, wrapper_options) do
-      buttons = actions.group_by { |_, args| args[:class] }.flat_map do |_, action|
-        action.map { |action| form.button(:submit, *action) } + ['']
-      end
-
-      # I think this is a bug. I can't override default button class when passing my own class: variable. it merges them.
-      if defined?(SimpleForm) && (btn_class = SimpleForm.button_class).present?
-        buttons = buttons.map { |button| button.sub(btn_class, '') }
-      end
-
-      if block_given?
-        buttons = [capture(&block), ''] + buttons
-      end
-
-      buttons.join('&nbsp;').html_safe
+      (block_given? ? capture(&block) : ''.html_safe) + buttons.join('&nbsp;').html_safe
     end
   end
 

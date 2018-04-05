@@ -9,7 +9,7 @@ module Effective
       def submits
         @submits ||= {}.tap do |submits|
           if (actions.find { |a| a == :create } || actions.find { |a| a == :update })
-            submits['Save'] = { action: :save, class: 'btn btn-primary' }
+            submits['Save'] = { action: :save, default: true, class: 'btn btn-primary' }
           end
 
           member_post_actions.each do |action| # default true means it will be overwritten by dsl methods
@@ -17,11 +17,11 @@ module Effective
           end
 
           if actions.find { |a| a == :index }
-            submits['Continue'] = { action: :save, redirect: :index }
+            submits['Continue'] = { action: :save, default: true, redirect: :index }
           end
 
           if actions.find { |a| a == :new }
-            submits['Add New'] = { action: :save, redirect: :new }
+            submits['Add New'] = { action: :save, default: true, redirect: :new }
           end
         end
       end
@@ -38,21 +38,10 @@ module Effective
           (args.key?(:if) ? obj.instance_exec(&args[:if]) : true) &&
           (args.key?(:unless) ? !obj.instance_exec(&args[:unless]) : true) &&
           EffectiveResources.authorized?(controller, action, obj)
-        end.sort do |(commit_x, x), (commit_y, y)|
-          # Sort to front
-          primary = (y[:class].include?('primary') ? 1 : 0) - (x[:class].include?('primary') ? 1 : 0)
-          primary = nil if primary == 0
-
-          # Sort to back
-          danger = (x[:class].include?('danger') ? 1 : 0) - (y[:class].include?('danger') ? 1 : 0)
-          danger = nil if danger == 0
-
-          primary || danger || submits.keys.index(commit_x) <=> submits.keys.index(commit_y)
-        end.inject({}) do |h, (commit, args)|
-          h[commit] = args.except(:action, :default, :if, :unless, :redirect); h
         end.transform_values.with_index do |opts, index|
           opts[:class] = "btn #{index == 0 ? 'btn-primary' : 'btn-secondary'}" if opts[:class].blank?
-          opts
+
+          opts.except(:action, :default, :if, :unless, :redirect)
         end
       end
 
