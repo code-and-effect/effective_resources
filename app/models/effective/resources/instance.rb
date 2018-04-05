@@ -9,40 +9,44 @@ module Effective
         @instance || klass.new
       end
 
-      def instance_attributes
+      # called by effective_trash as defaults, and effective_logging sometimes with true or false
+      def instance_attributes(include_associated: true)
         return {} unless instance.present?
 
         attributes = { attributes: instance.attributes }
 
         # Collect to_s representations of all belongs_to associations
-        belong_tos.each do |association|
-          attributes[association.name] = instance.send(association.name).to_s
-        end
-
-        nested_resources.each do |association|
-          attributes[association.name] ||= {}
-
-          Array(instance.send(association.name)).each_with_index do |child, index|
-            resource = Effective::Resource.new(child)
-            attributes[association.name][index] = resource.instance_attributes
+        if include_associated
+          belong_tos.each do |association|
+            attributes[association.name] = instance.send(association.name).to_s
           end
-        end
 
-        has_ones.each do |association|
-          attributes[association.name] = instance.send(association.name).to_s
-        end
+          nested_resources.each do |association|
+            attributes[association.name] ||= {}
 
-        has_manys.each do |association|
-          attributes[association.name] = instance.send(association.name).map { |obj| obj.to_s }
-        end
+            Array(instance.send(association.name)).each_with_index do |child, index|
+              resource = Effective::Resource.new(child)
+              attributes[association.name][index] = resource.instance_attributes
+            end
+          end
 
-        has_and_belongs_to_manys.each do |association|
-          attributes[association.name] = instance.send(association.name).map { |obj| obj.to_s }
+          has_ones.each do |association|
+            attributes[association.name] = instance.send(association.name).to_s
+          end
+
+          has_manys.each do |association|
+            attributes[association.name] = instance.send(association.name).map { |obj| obj.to_s }
+          end
+
+          has_and_belongs_to_manys.each do |association|
+            attributes[association.name] = instance.send(association.name).map { |obj| obj.to_s }
+          end
         end
 
         attributes.delete_if { |_, value| value.blank? }
       end
 
+      # used by effective_logging
       def instance_changes
         return {} unless (instance.present? && instance.changes.present?)
 
