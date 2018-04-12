@@ -39,7 +39,15 @@ module Effective
           (args.key?(:unless) ? !obj.instance_exec(&args[:unless]) : true) &&
           EffectiveResources.authorized?(controller, action, obj)
         end.transform_values.with_index do |opts, index|
-          opts[:class] = "btn #{index == 0 ? 'btn-primary' : 'btn-secondary'}" if opts[:class].blank?
+          if opts[:class].blank?
+            if index == 0
+              opts[:class] = 'btn btn-primary'
+            elsif defined?(EffectiveBootstrap)
+              opts[:class] = 'btn btn-secondary'
+            else
+              opts[:class] = 'btn btn-default'
+            end
+          end
 
           opts.except(:action, :default, :if, :unless, :redirect)
         end
