@@ -4,7 +4,6 @@ module Effective
 
     included do
       class << self
-
         def effective_resource
           @_effective_resource ||= Effective::Resource.new(controller_path)
         end
@@ -200,12 +199,18 @@ module Effective
       resource.assign_attributes(send(resource_params_method_name))
       resource.created_by ||= current_user if resource.respond_to?(:created_by=)
 
-      if save_resource(resource, action)
-        flash[:success] ||= flash_success(resource, action)
-        redirect_to(resource_redirect_path)
-      else
-        flash.now[:danger] ||= flash_danger(resource, action)
-        render :new
+      respond_to do |format|
+        if save_resource(resource, action)
+          flash[:success] ||= flash_success(resource, action)
+
+          format.html { redirect_to(resource_redirect_path) }
+          format.js { } # create.js.erb
+        else
+          flash.now[:danger] ||= flash_danger(resource, action)
+
+          format.html { render :new }
+          format.js {} # create.js.erb
+        end
       end
     end
 
@@ -238,12 +243,18 @@ module Effective
 
       resource.assign_attributes(send(resource_params_method_name))
 
-      if save_resource(resource, action)
-        flash[:success] ||= flash_success(resource, action)
-        redirect_to(resource_redirect_path)
-      else
-        flash.now[:danger] ||= flash_danger(resource, action)
-        render :edit
+      respond_to do |format|
+        if save_resource(resource, action)
+          flash[:success] ||= flash_success(resource, action)
+
+          format.html { redirect_to(resource_redirect_path) }
+          format.js { } # update.js.erb
+        else
+          flash.now[:danger] ||= flash_danger(resource, action)
+
+          format.html { render :edit }
+          format.js {} # update.js.erb
+        end
       end
     end
 
