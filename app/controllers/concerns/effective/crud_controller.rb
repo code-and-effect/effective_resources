@@ -191,10 +191,10 @@ module Effective
       self.resource ||= resource_scope.new
 
       @page_title ||= "New #{resource_name.titleize}"
-      EffectiveResources.authorize!(self, :create, resource)
 
       action = commit_action[:action]
       EffectiveResources.authorize!(self, action, resource) unless action == :save
+      EffectiveResources.authorize!(self, :create, resource) if action == :save
 
       resource.assign_attributes(send(resource_params_method_name))
       resource.created_by ||= current_user if resource.respond_to?(:created_by=)
@@ -236,10 +236,10 @@ module Effective
       self.resource ||= resource_scope.find(params[:id])
 
       @page_title = "Edit #{resource}"
-      EffectiveResources.authorize!(self, :update, resource)
 
       action = commit_action[:action]
       EffectiveResources.authorize!(self, action, resource) unless action == :save
+      EffectiveResources.authorize!(self, :update, resource) if action == :save
 
       resource.assign_attributes(send(resource_params_method_name))
 
@@ -248,7 +248,7 @@ module Effective
           flash[:success] ||= flash_success(resource, action)
 
           format.html { redirect_to(resource_redirect_path) }
-          format.js { } # update.js.erb
+          format.js { reload_resource } # update.js.erb
         else
           flash.now[:danger] ||= flash_danger(resource, action)
 
@@ -332,7 +332,10 @@ module Effective
 
       resource_klass.transaction do
         begin
-          resource.public_send("#{action}!") || raise("failed to #{action} #{resource}")
+          if resource.public_send("#{action}!") == false
+            raise("failed to #{action} #{resource}")
+          end
+
           yield if block_given?
           run_callbacks(:resource_save)
           return true
@@ -347,6 +350,10 @@ module Effective
 
       run_callbacks(:resource_error)
       false
+    end
+
+    def reload_resource
+      self.resource = resource_scope.find(params[:id])
     end
 
     # Should return a new resource based on the passed one
