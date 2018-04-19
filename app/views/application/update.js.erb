@@ -3,7 +3,3 @@
 
 EffectiveBootstrap.remote_form_payload = $("<%= j render_resource_form(resource) %>");
 EffectiveBootstrap.remote_form_flash = <%= raw flash.to_json %>;
-
-<% if flash[:success].blank? %>
-  EffectiveBootstrap.remote_form_flash_payload = $("<%= j render('flash') %>");
-<% end %>
