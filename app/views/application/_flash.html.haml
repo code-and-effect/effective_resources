@@ -1,0 +1,6 @@
+- flash.each do |key, value|
+  %div{class: "alert alert-dismissible alert-#{key} fade show", role: 'alert'}
+    %button.close{type: 'button', 'aria-label': 'Close', 'data-dismiss': 'alert'}
+      %span{'aria-hidden': true} &times;
+      %span.sr-only Close
+    = value.to_s.html_safe
