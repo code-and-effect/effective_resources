@@ -204,7 +204,7 @@ module Effective
           flash[:success] ||= flash_success(resource, action)
 
           format.html { redirect_to(resource_redirect_path) }
-          format.js { } # create.js.erb
+          format.js {} # create.js.erb
         else
           flash.now[:danger] ||= flash_danger(resource, action)
 
@@ -264,13 +264,19 @@ module Effective
       @page_title ||= "Destroy #{resource}"
       EffectiveResources.authorize!(self, :destroy, resource)
 
-      if resource.destroy
-        flash[:success] ||= flash_success(resource, :delete)
-      else
-        flash[:danger] ||= flash_danger(resource, :delete)
-      end
+      respond_to do |format|
+        if save_resource(resource, :destroy)
+          flash[:success] ||= flash_success(resource, :delete)
 
-      redirect_to(resource_redirect_path)
+          format.html { redirect_to(resource_redirect_path) }
+          format.js {} # delete.js.erb
+        else
+          flash.now[:danger] ||= flash_danger(resource, :delete)
+
+          format.html { redirect_to(resource_redirect_path) }
+          format.js {} # delete.js.erb
+        end
+      end
     end
 
     # No attributes are assigned or saved. We purely call action! on the resource.
