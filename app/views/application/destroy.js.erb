@@ -1,5 +1,5 @@
 <% resource = (@_effective_resource || Effective::Resource.new(controller_path)) %>
 <% @resource = instance_variable_get('@' + resource.name) if resource.name %>
 
-EffectiveBootstrap.remote_form_payload = $("<%= j render_resource_form(resource) %>");
-EffectiveBootstrap.remote_form_flash = <%= raw flash.to_json %>;
+EffectiveForm.remote_form_payload = $("<%= j render_resource_form(resource) %>");
+EffectiveForm.remote_form_flash = <%= raw flash.to_json %>;

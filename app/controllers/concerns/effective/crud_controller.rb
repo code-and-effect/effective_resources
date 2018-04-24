@@ -95,6 +95,8 @@ module Effective
       # resource_scope do
       #   { user_id: current_user.id }
       # end
+      # Nested controllers? sure
+      # resource_scope -> { User.find(params[:user_id]).things }
 
       # Return value should be:
       # a Relation: Thing.where(user: current_user)
@@ -269,12 +271,12 @@ module Effective
           flash[:success] ||= flash_success(resource, :delete)
 
           format.html { redirect_to(resource_redirect_path) }
-          format.js {} # delete.js.erb
+          format.js {} # destroy.js.erb
         else
-          flash.now[:danger] ||= flash_danger(resource, :delete)
+          flash[:danger] ||= flash_danger(resource, :delete)
 
           format.html { redirect_to(resource_redirect_path) }
-          format.js {} # delete.js.erb
+          format.js {} # destroy.js.erb
         end
       end
     end
