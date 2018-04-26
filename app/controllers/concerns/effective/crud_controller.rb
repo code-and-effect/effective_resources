@@ -317,7 +317,7 @@ module Effective
 
       successes = 0
 
-      resource_klass.transaction do
+      ActiveRecord::Base.transaction do
         successes = resources.select do |resource|
           begin
             resource.public_send("#{action}!") if EffectiveResources.authorized?(self, action, resource)
@@ -338,7 +338,7 @@ module Effective
 
       resource.current_user ||= current_user if resource.respond_to?(:current_user=)
 
-      resource_klass.transaction do
+      ActiveRecord::Base.transaction do
         begin
           if resource.public_send("#{action}!") == false
             raise("failed to #{action} #{resource}")
@@ -348,7 +348,7 @@ module Effective
           run_callbacks(:resource_save)
           return true
         rescue => e
-          resource.restore_attributes(['status', 'state'])
+          resource.restore_attributes(['status', 'state']) if resource.respond_to?(:restore_attributes)
 
           flash.delete(:success)
           flash.now[:danger] = flash_danger(resource, action, e: e)
@@ -361,7 +361,7 @@ module Effective
     end
 
     def reload_resource
-      self.resource = resource_scope.find(params[:id])
+      self.resource.reload if resource.respond_to?(:reload)
     end
 
     # Should return a new resource based on the passed one
@@ -404,7 +404,7 @@ module Effective
     def referer_redirect_path
       url = request.referer.to_s
 
-      return if (resource && resource.destroyed? && url.include?("/#{resource.to_param}"))
+      return if (resource && resource.respond_to?(:destroyed?) && resource.destroyed? && url.include?("/#{resource.to_param}"))
       return if url.include?('duplicate_id=')
       return unless (Rails.application.routes.recognize_path(URI(url).path) rescue false)
 
