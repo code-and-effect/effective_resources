@@ -61,10 +61,9 @@ class PostsController < ApplicationController
     params.require(:post).permit(:id, :author_id, :category, :title, :body)
   end
 
-  # On #create or #update, if you click 'Add New', the new resource form will be rendered with these attributes preopulated
-  # Makes it super quick to Add New items if only one or two of the fields are changing.
-  def add_new_post_params
-    permitted_params.slice(:author_id, :category)
+  # Pass /things/new?duplicate_id=3
+  def duplicate_resource(resource)
+    resource_klass.new(resource.attributes.slice('job_site', 'address'))
   end
 
 end

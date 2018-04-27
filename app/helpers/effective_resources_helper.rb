@@ -39,8 +39,8 @@ module EffectiveResourcesHelper
   end
 
   # When called from /admin/things/new.html.haml this will render 'admin/things/form', or 'things/form', or 'thing/form'
-  def render_resource_form(resource)
-    atts = {:namespace => (resource.namespace.to_sym if resource.namespace.present?), resource.name.to_sym => instance_variable_get('@' + resource.name)}.compact
+  def render_resource_form(resource, atts = {})
+    atts = {:namespace => (resource.namespace.to_sym if resource.namespace.present?), resource.name.to_sym => instance_variable_get('@' + resource.name)}.compact.merge(atts)
 
     if lookup_context.template_exists?('form', controller._prefixes, :partial)
       render 'form', atts

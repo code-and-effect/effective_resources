@@ -49,6 +49,7 @@ module Effective
       #
       # submit :toggle, 'Blacklist', if: -> { sync? }, class: 'btn btn-primary'
       # submit :toggle, 'Whitelist', if: -> { !sync? }, class: 'btn btn-primary'
+      # submit :save, 'Save', success: -> { "#{self} was saved okay!" }
 
       def submit(action, commit = nil, args = {})
         raise 'expected args to be a Hash or false' unless args.kind_of?(Hash) || args == false
@@ -203,12 +204,24 @@ module Effective
 
       respond_to do |format|
         if save_resource(resource, action)
-          flash[:success] ||= flash_success(resource, action)
+          format.html do
+            flash[:success] ||= resource_flash(:success, resource, action)
+            redirect_to(resource_redirect_path)
+          end
 
-          format.html { redirect_to(resource_redirect_path) }
-          format.js {} # create.js.erb
+          format.js do
+            if commit_action[:redirect].present?
+              flash[:success] ||= resource_flash(:success, resource, action)
+              redirect_to(resource_redirect_path)
+            else
+              flash.now[:success] ||= resource_flash(:success, resource, action)
+              reload_resource
+              # create.js.erb
+            end
+          end
         else
-          flash.now[:danger] ||= flash_danger(resource, action)
+          flash.delete(:success)
+          flash.now[:danger] ||= resource_flash(:danger, resource, action)
 
           format.html { render :new }
           format.js {} # create.js.erb
@@ -247,15 +260,27 @@ module Effective
 
       respond_to do |format|
         if save_resource(resource, action)
-          flash[:success] ||= flash_success(resource, action)
+          format.html do
+            flash[:success] ||= resource_flash(:success, resource, action)
+            redirect_to(resource_redirect_path)
+          end
 
-          format.html { redirect_to(resource_redirect_path) }
-          format.js { reload_resource } # update.js.erb
+          format.js do
+            if commit_action[:redirect].present?
+              flash[:success] ||= resource_flash(:success, resource, action)
+              redirect_to(resource_redirect_path)
+            else
+              flash.now[:success] ||= resource_flash(:success, resource, action)
+              reload_resource
+              # update.js.erb
+            end
+          end
         else
-          flash.now[:danger] ||= flash_danger(resource, action)
+          flash.delete(:success)
+          flash.now[:danger] ||= resource_flash(:danger, resource, action)
 
           format.html { render :edit }
-          format.js {} # update.js.erb
+          format.js { } # update.js.erb
         end
       end
     end
@@ -263,20 +288,38 @@ module Effective
     def destroy
       self.resource = resource_scope.find(params[:id])
 
+      action = :destroy
       @page_title ||= "Destroy #{resource}"
-      EffectiveResources.authorize!(self, :destroy, resource)
+      EffectiveResources.authorize!(self, action, resource)
 
       respond_to do |format|
-        if save_resource(resource, :destroy)
-          flash[:success] ||= flash_success(resource, :delete)
+        if save_resource(resource, action)
+          format.html do
+            flash[:success] ||= resource_flash(:success, resource, action)
+            redirect_to(resource_redirect_path)
+          end
 
-          format.html { redirect_to(resource_redirect_path) }
-          format.js {} # destroy.js.erb
+          format.js do
+            if commit_action[:redirect].present?
+              flash[:success] ||= resource_flash(:success, resource, action)
+              redirect_to(resource_redirect_path)
+            else
+              flash.now[:success] ||= resource_flash(:success, resource, action)
+              # delete.js.erb
+            end
+          end
         else
-          flash[:danger] ||= flash_danger(resource, :delete)
+          flash.delete(:success)
 
-          format.html { redirect_to(resource_redirect_path) }
-          format.js {} # destroy.js.erb
+          format.html do
+            flash[:danger] ||= resource_flash(:danger, resource, action)
+            redirect_to(resource_redirect_path)
+          end
+
+          format.js do
+            flash.now[:danger] ||= resource_flash(:danger, resource, action)
+            # destroy.js.erb
+          end
         end
       end
     end
@@ -286,10 +329,10 @@ module Effective
       raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
 
       if save_resource(resource, action)
-        flash[:success] ||= flash_success(resource, action)
+        flash[:success] ||= resource_flash(:success, resource, action)
         redirect_to(referer_redirect_path || resource_redirect_path)
       else
-        flash.now[:danger] ||= flash_danger(resource, action)
+        flash.now[:danger] ||= resource_flash(:danger, resource, action)
 
         if resource_edit_path && (referer_redirect_path || '').end_with?(resource_edit_path)
           @page_title ||= "Edit #{resource}"
@@ -367,6 +410,18 @@ module Effective
     # Should return a new resource based on the passed one
     def duplicate_resource(resource)
       resource.dup
+    end
+
+    def resource_flash(status, resource, action)
+      message = commit_action[status].respond_to?(:call) ? instance_exec(&commit_action[status]) : commit_action[status]
+      return message if message.present?
+
+      message || case status
+      when :success then flash_success(resource, action)
+      when :danger then flash_danger(resource, action)
+      else
+        raise "unknown resource flash status: #{status}"
+      end
     end
 
     def resource_redirect_path
@@ -482,7 +537,9 @@ module Effective
     end
 
     def commit_action
-      self.class.submits[params[:commit].to_s] || { action: :save }
+      self.class.submits[params[:commit].to_s] ||
+      self.class.submits.find { |_, v| v[:action] == :save }&.last ||
+      { action: :save }
     end
 
     # Returns an ActiveRecord relation based on the computed value of `resource_scope` dsl method
