@@ -210,7 +210,7 @@ module Effective
           end
 
           format.js do
-            if commit_action[:redirect].present?
+            if specific_redirect_path?
               flash[:success] ||= resource_flash(:success, resource, action)
               redirect_to(resource_redirect_path)
             else
@@ -266,7 +266,7 @@ module Effective
           end
 
           format.js do
-            if commit_action[:redirect].present?
+            if specific_redirect_path?
               flash[:success] ||= resource_flash(:success, resource, action)
               redirect_to(resource_redirect_path)
             else
@@ -300,7 +300,7 @@ module Effective
           end
 
           format.js do
-            if commit_action[:redirect].present?
+            if specific_redirect_path?
               flash[:success] ||= resource_flash(:success, resource, action)
               redirect_to(resource_redirect_path)
             else
@@ -540,6 +540,10 @@ module Effective
       self.class.submits[params[:commit].to_s] ||
       self.class.submits.find { |_, v| v[:action] == :save }&.last ||
       { action: :save }
+    end
+
+    def specific_redirect_path?
+      (commit_action[:redirect].respond_to?(:call) ? instance_exec(&commit_action[:redirect]) : commit_action[:redirect]).present?
     end
 
     # Returns an ActiveRecord relation based on the computed value of `resource_scope` dsl method
