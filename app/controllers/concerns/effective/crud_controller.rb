@@ -391,7 +391,9 @@ module Effective
           run_callbacks(:resource_save)
           return true
         rescue => e
-          resource.restore_attributes(['status', 'state']) if resource.respond_to?(:restore_attributes)
+          if resource.respond_to?(:restore_attributes) && resource.persisted?
+            resource.restore_attributes(['status', 'state'])
+          end
 
           flash.delete(:success)
           flash.now[:danger] = flash_danger(resource, action, e: e)
