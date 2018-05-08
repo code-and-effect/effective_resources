@@ -339,7 +339,7 @@ module Effective
           end
 
           format.js do
-            if specific_redirect_path?(action: action)
+            if specific_redirect_path?(action)
               flash[:success] ||= resource_flash(:success, resource, action)
               redirect_to(resource_redirect_path)
             else
