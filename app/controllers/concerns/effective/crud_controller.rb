@@ -324,29 +324,52 @@ module Effective
       end
     end
 
-    # No attributes are assigned or saved. We purely call action! on the resource.
     def member_post_action(action)
       raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
 
-      if save_resource(resource, action)
-        flash[:success] ||= resource_flash(:success, resource, action)
-        redirect_to(referer_redirect_path || resource_redirect_path)
-      else
-        flash.now[:danger] ||= resource_flash(:danger, resource, action)
+      # TODO: This is a recent change. Used to not assign attributes. Is this breaking?
+      valid_params = (send(resource_params_method_name) rescue {})
+      resource.assign_attributes(valid_params)
 
-        if resource_edit_path && (referer_redirect_path || '').end_with?(resource_edit_path)
-          @page_title ||= "Edit #{resource}"
-          render :edit
-        elsif resource_new_path && (referer_redirect_path || '').end_with?(resource_new_path)
-          @page_title ||= "New #{resource_name.titleize}"
-          render :new
-        elsif resource_show_path && (referer_redirect_path || '').end_with?(resource_show_path)
-          @page_title ||= resource_name.titleize
-          render :show
+      respond_to do |format|
+        if save_resource(resource, action)
+          format.html do
+            flash[:success] ||= resource_flash(:success, resource, action)
+            redirect_to(resource_redirect_path)
+          end
+
+          format.js do
+            if specific_redirect_path?(action: action)
+              flash[:success] ||= resource_flash(:success, resource, action)
+              redirect_to(resource_redirect_path)
+            else
+              flash.now[:success] ||= resource_flash(:success, resource, action)
+              reload_resource
+              # action.js.erb
+            end
+          end
         else
-          @page_title ||= resource.to_s
-          flash[:danger] = flash.now[:danger]
-          redirect_to(referer_redirect_path || resource_redirect_path)
+          flash.delete(:success)
+          flash.now[:danger] ||= resource_flash(:danger, resource, action)
+
+          format.html do
+            if resource_edit_path && (referer_redirect_path || '').end_with?(resource_edit_path)
+              @page_title ||= "Edit #{resource}"
+              render :edit
+            elsif resource_new_path && (referer_redirect_path || '').end_with?(resource_new_path)
+              @page_title ||= "New #{resource_name.titleize}"
+              render :new
+            elsif resource_show_path && (referer_redirect_path || '').end_with?(resource_show_path)
+              @page_title ||= resource_name.titleize
+              render :show
+            else
+              @page_title ||= resource.to_s
+              flash[:danger] = flash.now[:danger]
+              redirect_to(referer_redirect_path || resource_redirect_path)
+            end
+          end
+
+          format.js {} # action.js.erb
         end
       end
     end
@@ -544,8 +567,15 @@ module Effective
       { action: :save }
     end
 
-    def specific_redirect_path?
-      (commit_action[:redirect].respond_to?(:call) ? instance_exec(&commit_action[:redirect]) : commit_action[:redirect]).present?
+    def submit_action(action)
+      self.class.submits[action.to_s] ||
+      self.class.submits.find { |_, v| v[:action] == action }&.last ||
+      { action: action }
+    end
+
+    def specific_redirect_path?(action = nil)
+      submit = (action.nil? ? commit_action : submit_action(action))
+      (submit[:redirect].respond_to?(:call) ? instance_exec(&submit[:redirect]) : submit[:redirect]).present?
     end
 
     # Returns an ActiveRecord relation based on the computed value of `resource_scope` dsl method
