@@ -173,6 +173,16 @@ to render just the `Save` button, with appropriate data-disable, title, etc.
 
   = effective_submit(f) do
     = f.save 'Will be appended'
+```
+
+### acts_as_tokened
+
+Quickly adds rails 5 `has_secure_token` to your model, along with some `Post.find()` enhancements to work with tokens instead of IDs.
+
+This prevents enumeration of this resource.
+
+Make sure to create a string `token` field on your model, then just declare `acts_as_tokened`.  There are no options.
+
 
 ## License
 
