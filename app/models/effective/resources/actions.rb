@@ -49,7 +49,10 @@ module Effective
           end
         end
 
-        path = routes[action].format(resource || instance).presence
+        # This generates the correct route when an object is overriding to_param
+        formattable = (resource || instance).attributes.symbolize_keys.merge(id: (resource || instance).to_param)
+
+        path = routes[action].format(formattable).presence
 
         if path.present? && opts.present?
           uri = URI.parse(path)
@@ -118,7 +121,6 @@ module Effective
       def is_post_route?(route)
         ['POST', 'PUT', 'PATCH'].any? { |verb| route.verb == verb }
       end
-
     end
   end
 end
