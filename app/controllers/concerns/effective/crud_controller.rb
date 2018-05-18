@@ -338,7 +338,7 @@ module Effective
             else
               flash.now[:success] ||= resource_flash(:success, resource, action)
               reload_resource
-              render_member_action_view(action)
+              render_member_action(action)
             end
           end
         else
@@ -362,13 +362,13 @@ module Effective
             end
           end
 
-          format.js { render_member_action_view(action) }
+          format.js { render_member_action(action) }
         end
       end
     end
 
     # Which member javascript view to render: #{action}.js or effective_resources member_action.js
-    def render_member_action_view(action)
+    def render_member_action(action)
       view = lookup_context.template_exists?(action, _prefixes) ? action : :member_action
       render(view, locals: { action: action })
     end
