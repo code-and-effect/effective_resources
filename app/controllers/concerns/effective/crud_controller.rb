@@ -305,7 +305,7 @@ module Effective
               redirect_to(resource_redirect_path)
             else
               flash.now[:success] ||= resource_flash(:success, resource, action)
-              # delete.js.erb
+              # destroy.js.erb
             end
           end
         else
@@ -327,7 +327,6 @@ module Effective
     def member_post_action(action)
       raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
 
-      # TODO: This is a recent change. Used to not assign attributes. Is this breaking?
       valid_params = (send(resource_params_method_name) rescue {})
       resource.assign_attributes(valid_params)
 
@@ -345,7 +344,7 @@ module Effective
             else
               flash.now[:success] ||= resource_flash(:success, resource, action)
               reload_resource
-              # action.js.erb
+              render member_action_view(action)
             end
           end
         else
@@ -369,9 +368,14 @@ module Effective
             end
           end
 
-          format.js {} # action.js.erb
+          format.js { render member_action_view(action) }
         end
       end
+    end
+
+    # Which member javascript view to render: #{action}.js or effective_resources member_action.js
+    def member_action_view(action)
+      @member_action = (lookup_context.template_exists?(action, _prefixes) ? action : :member_action)
     end
 
     # No attributes are assigned or saved. We purely call action! on the resource

@@ -40,9 +40,14 @@ module EffectiveResourcesHelper
 
   # When called from /admin/things/new.html.haml this will render 'admin/things/form', or 'things/form', or 'thing/form'
   def render_resource_form(resource, atts = {})
+    raise 'expected attributes to be a Hash. Try passing action: action if rendering custom action' unless atts.kind_of?(Hash)
+
+    action = atts.delete(:action)
     atts = {:namespace => (resource.namespace.to_sym if resource.namespace.present?), resource.name.to_sym => instance_variable_get('@' + resource.name)}.compact.merge(atts)
 
-    if lookup_context.template_exists?('form', controller._prefixes, :partial)
+    if lookup_context.template_exists?("form_#{action}", controller._prefixes, :partial)
+      render "form_#{action}", atts
+    elsif lookup_context.template_exists?('form', controller._prefixes, :partial)
       render 'form', atts
     elsif lookup_context.template_exists?('form', resource.plural_name, :partial)
       render "#{resource.plural_name}/form", atts

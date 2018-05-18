@@ -15,7 +15,7 @@ module ActsAsTokened
   end
 
   included do
-    has_secure_token
+    has_secure_token  # Will always be 24-digits long
 
     extend FinderMethods
   end
