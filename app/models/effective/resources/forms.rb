@@ -28,7 +28,7 @@ module Effective
 
       # Here we look at all available (class level) member actions, see which ones apply to the current resource
       # This feeds into the helper simple_form_submit(f)
-      # Returns a Hash of {'Save': {data-disable-with: 'Saving...'}, 'Approve': {data-disable-with: 'Approve'}}
+      # Returns a Hash of {'Save': {class: 'btn btn-primary'}, 'Approve': {class: 'btn btn-secondary'}}
       def submits_for(obj, controller:)
         submits.select do |commit, args|
           args[:class] = args[:class].to_s

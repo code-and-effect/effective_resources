@@ -199,11 +199,10 @@ module Effective
       EffectiveResources.authorize!(self, action, resource) unless action == :save
       EffectiveResources.authorize!(self, :create, resource) if action == :save
 
-      resource.assign_attributes(send(resource_params_method_name))
       resource.created_by ||= current_user if resource.respond_to?(:created_by=)
 
       respond_to do |format|
-        if save_resource(resource, action)
+        if save_resource(resource, action, send(resource_params_method_name))
           format.html do
             flash[:success] ||= resource_flash(:success, resource, action)
             redirect_to(resource_redirect_path)
@@ -256,10 +255,8 @@ module Effective
       EffectiveResources.authorize!(self, action, resource) unless action == :save
       EffectiveResources.authorize!(self, :update, resource) if action == :save
 
-      resource.assign_attributes(send(resource_params_method_name))
-
       respond_to do |format|
-        if save_resource(resource, action)
+        if save_resource(resource, action, send(resource_params_method_name))
           format.html do
             flash[:success] ||= resource_flash(:success, resource, action)
             redirect_to(resource_redirect_path)
@@ -327,11 +324,8 @@ module Effective
     def member_post_action(action)
       raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
 
-      valid_params = (send(resource_params_method_name) rescue {})
-      resource.assign_attributes(valid_params)
-
       respond_to do |format|
-        if save_resource(resource, action)
+        if save_resource(resource, action, (send(resource_params_method_name) rescue {}))
           format.html do
             flash[:success] ||= resource_flash(:success, resource, action)
             redirect_to(resource_redirect_path)
@@ -344,7 +338,7 @@ module Effective
             else
               flash.now[:success] ||= resource_flash(:success, resource, action)
               reload_resource
-              render member_action_view(action)
+              render_member_action_view(action)
             end
           end
         else
@@ -368,14 +362,15 @@ module Effective
             end
           end
 
-          format.js { render member_action_view(action) }
+          format.js { render_member_action_view(action) }
         end
       end
     end
 
     # Which member javascript view to render: #{action}.js or effective_resources member_action.js
-    def member_action_view(action)
-      @member_action = (lookup_context.template_exists?(action, _prefixes) ? action : :member_action)
+    def render_member_action_view(action)
+      view = lookup_context.template_exists?(action, _prefixes) ? action : :member_action
+      render(view, locals: { action: action })
     end
 
     # No attributes are assigned or saved. We purely call action! on the resource
@@ -403,13 +398,15 @@ module Effective
     protected
 
     # This calls the appropriate member action, probably save!, on the resource.
-    def save_resource(resource, action = :save, &block)
+    def save_resource(resource, action = :save, to_assign = {}, &block)
       raise "expected @#{resource_name} to respond to #{action}!" unless resource.respond_to?("#{action}!")
 
       resource.current_user ||= current_user if resource.respond_to?(:current_user=)
 
       ActiveRecord::Base.transaction do
         begin
+          resource.assign_attributes(to_assign) if to_assign.present?
+
           if resource.public_send("#{action}!") == false
             raise("failed to #{action} #{resource}")
           end
