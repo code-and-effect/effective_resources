@@ -82,11 +82,12 @@ module Effective
 
       # page_title 'My Title', only: [:new]
       def page_title(label = nil, opts = {}, &block)
+        opts = label if label.kind_of?(Hash)
         raise 'expected a label or block' unless (label || block_given?)
 
         instance_exec do
           before_action(opts) do
-            @page_title ||= (block_given? ? instance_exec(&block) : label)
+            @page_title ||= (block_given? ? instance_exec(&block) : label).to_s
           end
         end
       end
@@ -328,13 +329,13 @@ module Effective
         if save_resource(resource, action, (send(resource_params_method_name) rescue {}))
           format.html do
             flash[:success] ||= resource_flash(:success, resource, action)
-            redirect_to(resource_redirect_path)
+            redirect_to(resource_redirect_path(action))
           end
 
           format.js do
             if specific_redirect_path?(action)
               flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path)
+              redirect_to(resource_redirect_path(action))
             else
               flash.now[:success] ||= resource_flash(:success, resource, action)
               reload_resource
@@ -358,7 +359,7 @@ module Effective
             else
               @page_title ||= resource.to_s
               flash[:danger] = flash.now[:danger]
-              redirect_to(referer_redirect_path || resource_redirect_path)
+              redirect_to(referer_redirect_path || resource_redirect_path(action))
             end
           end
 
@@ -439,7 +440,8 @@ module Effective
     end
 
     def resource_flash(status, resource, action)
-      message = commit_action[status].respond_to?(:call) ? instance_exec(&commit_action[status]) : commit_action[status]
+      submit = commit_action(action)
+      message = submit[status].respond_to?(:call) ? instance_exec(&submit[status]) : submit[status]
       return message if message.present?
 
       message || case status
@@ -450,8 +452,9 @@ module Effective
       end
     end
 
-    def resource_redirect_path
-      redirect = commit_action[:redirect].respond_to?(:call) ? instance_exec(&commit_action[:redirect]) : commit_action[:redirect]
+    def resource_redirect_path(action = nil)
+      submit = commit_action(action)
+      redirect = submit[:redirect].respond_to?(:call) ? instance_exec(&submit[:redirect]) : submit[:redirect]
 
       commit_action_redirect = case redirect
         when :index     ; resource_index_path
@@ -461,7 +464,7 @@ module Effective
         when :duplicate ; resource_duplicate_path
         when :back      ; referer_redirect_path
         when :save      ; [resource_edit_path, resource_show_path].compact.first
-        when Symbol     ; resource_action_path(commit_action[:action])
+        when Symbol     ; resource_action_path(submit[:action])
         when String     ; redirect
         else            ; nil
       end
@@ -562,20 +565,17 @@ module Effective
       (action.to_s + (action.to_s.end_with?('e') ? 'd' : 'ed'))
     end
 
-    def commit_action
+    # Based on the incoming params[:commit] or passed action
+    def commit_action(action = nil)
       self.class.submits[params[:commit].to_s] ||
-      self.class.submits.find { |_, v| v[:action] == :save }&.last ||
-      { action: :save }
-    end
-
-    def submit_action(action)
       self.class.submits[action.to_s] ||
       self.class.submits.find { |_, v| v[:action] == action }&.last ||
-      { action: action }
+      self.class.submits.find { |_, v| v[:action] == :save }&.last ||
+      { action: (action || :save) }
     end
 
     def specific_redirect_path?(action = nil)
-      submit = (action.nil? ? commit_action : submit_action(action))
+      submit = commit_action(action)
       (submit[:redirect].respond_to?(:call) ? instance_exec(&submit[:redirect]) : submit[:redirect]).present?
     end
 

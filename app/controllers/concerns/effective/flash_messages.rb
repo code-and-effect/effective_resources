@@ -6,10 +6,11 @@ module Effective
     def flash_success(resource, action = nil, name: nil)
       raise 'expected an ActiveRecord resource' unless (name || resource.class.respond_to?(:model_name))
 
-      action ||= :save
       name ||= resource.class.model_name.human
 
-      "#{name.to_s.titleize} was successfully #{action}#{(action.to_s == 'submit' ? 't' : '')}#{(action.to_s.end_with?('e') ? 'd' : 'ed')}"
+      action = (action || :save).to_s.gsub('_', ' ')
+
+      "#{name.to_s.titleize} was successfully #{action}#{(action == 'submit' ? 't' : '')}#{(action.end_with?('e') ? 'd' : 'ed')}"
     end
 
     # flash.now[:danger] = flash_danger(@post)
@@ -17,6 +18,7 @@ module Effective
       raise 'expected an ActiveRecord resource' unless resource.respond_to?(:errors) && (name || resource.class.respond_to?(:model_name))
 
       action ||= resource.respond_to?(:new_record?) ? (resource.new_record? ? :create : :update) : :save
+      action = action.to_s.gsub('_', ' ')
       name ||= resource.class.model_name.human
       messages = flash_errors(resource, e: e)
 
