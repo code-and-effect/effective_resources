@@ -294,13 +294,13 @@ module Effective
         if save_resource(resource, action)
           format.html do
             flash[:success] ||= resource_flash(:success, resource, action)
-            redirect_to(resource_redirect_path)
+            redirect_to(resource_redirect_path(action))
           end
 
           format.js do
             if specific_redirect_path?
               flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path)
+              redirect_to(esource_redirect_path(action))
             else
               flash.now[:success] ||= resource_flash(:success, resource, action)
               # destroy.js.erb
@@ -310,8 +310,8 @@ module Effective
           flash.delete(:success)
 
           format.html do
-            flash[:danger] ||= resource_flash(:danger, resource, action)
-            redirect_to(resource_redirect_path)
+            flash[:danger] = (flash.now[:danger].presence || resource_flash(:danger, resource, action))
+            redirect_to(resource_redirect_path(action))
           end
 
           format.js do
@@ -470,6 +470,10 @@ module Effective
       end
 
       return commit_action_redirect if commit_action_redirect.present?
+
+      if action == :destroy
+        return [referer_redirect_path, resource_index_path, root_path].compact.first
+      end
 
       case params[:commit].to_s
       when 'Save'
