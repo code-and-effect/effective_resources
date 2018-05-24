@@ -20,6 +20,7 @@ module EffectiveResources
     initializer 'effective_resources.active_record' do |app|
       ActiveSupport.on_load :active_record do
         ActiveRecord::Base.extend(ActsAsTokened::ActiveRecord)
+        ActiveRecord::Base.extend(ActsAsSlugged::ActiveRecord)
       end
     end
 

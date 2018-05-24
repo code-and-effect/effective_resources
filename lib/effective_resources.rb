@@ -26,5 +26,4 @@ module EffectiveResources
   def self.authorize!(controller, action, resource)
     raise Effective::AccessDenied.new('Access Denied', action, resource) unless authorized?(controller, action, resource)
   end
-
 end
