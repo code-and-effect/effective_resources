@@ -39,25 +39,30 @@ module EffectiveResourcesHelper
   end
 
   # resource: resource is an
-  # show: true, edit: true, destroy: truet, rest: true
-  def render_resource_actions(resource, atts = {}, &block)
-    effective_resource = (atts.delete(:resource) || atts.delete(:effective_resource))
+  # show: true, edit: true, destroy: true
+  def render_resource_actions(resource, effective_resource: nil, namespace: nil, partial: nil, **atts, &block)
+    effective_resource ||= atts.delete(:resource)
     effective_resource ||= controller.class.effective_resource if controller.class.respond_to?(:effective_resource)
     effective_resource ||= Effective::Resource.new(controller_path)
     raise 'Expected resource: value to be an Effective::Resource instance' unless effective_resource.kind_of?(Effective::Resource)
 
-    namespace = atts.delete(:namespace) || (effective_resource.namespace.to_sym if effective_resource.namespace.present?)
+    namespace ||= effective_resource.namespace&.to_sym
+
+    partial = case partial
+    when String
+      partial
+    when Symbol
+      ['effective/resource/actions', partial.to_s].join('_')
+    else
+      'effective/resource/actions'
+    end
 
     actions = effective_resource.resource_actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys
     actions = actions.uniq.select { |action| EffectiveResources.authorized?(controller, action, resource) }
 
     locals = { resource: resource, effective_resource: effective_resource, namespace: namespace, actions: actions }
 
-    if block_given?
-      render('effective/resource/actions', locals) { yield }
-    else
-      render('effective/resource/actions', locals)
-    end
+    block_given? ? render(partial, locals) { yield } : render(partial, locals)
   end
 
   # When called from /admin/things/new.html.haml this will render 'admin/things/form', or 'things/form', or 'thing/form'
