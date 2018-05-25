@@ -1,0 +1,16 @@
+= dropdown(variation: :dropleft) do
+  - if actions.index(:edit)
+    = dropdown_link_to 'Edit', effective_resource.action_path(:edit, resource), title: "Edit #{resource}"
+
+  - if actions.index(:show)
+    = dropdown_link_to 'View', effective_resource.action_path(:show, resource), title: resource.to_s
+
+  - (actions - [:edit, :show, :destroy]).each do |action|
+    = dropdown_link_to action.to_s.titleize, effective_resource.action_path(action, resource),
+      title: "#{action} #{resource}", data: { method: :post, confirm: "Really #{action} #{resource}?"}
+
+  = yield
+
+  - if actions.index(:destroy)
+    = dropdown_link_to "Delete #{resource}", effective_resource.action_path(:destroy, resource),
+      title: "Delete #{resource}", data: { method: :delete, confirm: "Really delete #{resource}?" }

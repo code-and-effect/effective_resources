@@ -67,6 +67,12 @@ module Effective
         routes.keys
       end
 
+      # Used by render_resource_actions helper
+      # All the actions we can actually make a link to
+      def resource_actions
+        (routes.keys & [:show, :edit, :destroy]) + member_actions
+      end
+
       # GET actions
       def collection_actions
         routes.values.map { |route| route.defaults[:action].to_sym if is_collection_route?(route) }.compact - crud_actions

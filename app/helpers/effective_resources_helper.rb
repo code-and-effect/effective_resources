@@ -38,6 +38,28 @@ module EffectiveResourcesHelper
     end
   end
 
+  # resource: resource is an
+  # show: true, edit: true, destroy: truet, rest: true
+  def render_resource_actions(resource, atts = {}, &block)
+    effective_resource = (atts.delete(:resource) || atts.delete(:effective_resource))
+    effective_resource ||= controller.class.effective_resource if controller.class.respond_to?(:effective_resource)
+    effective_resource ||= Effective::Resource.new(controller_path)
+    raise 'Expected resource: value to be an Effective::Resource instance' unless effective_resource.kind_of?(Effective::Resource)
+
+    namespace = atts.delete(:namespace) || (effective_resource.namespace.to_sym if effective_resource.namespace.present?)
+
+    actions = effective_resource.resource_actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys
+    actions = actions.uniq.select { |action| EffectiveResources.authorized?(controller, action, resource) }
+
+    locals = { resource: resource, effective_resource: effective_resource, namespace: namespace, actions: actions }
+
+    if block_given?
+      render('effective/resource/actions', locals) { yield }
+    else
+      render('effective/resource/actions', locals)
+    end
+  end
+
   # When called from /admin/things/new.html.haml this will render 'admin/things/form', or 'things/form', or 'thing/form'
   def render_resource_form(resource, atts = {})
     raise 'expected attributes to be a Hash. Try passing action: action if rendering custom action' unless atts.kind_of?(Hash)
