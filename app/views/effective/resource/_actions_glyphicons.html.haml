@@ -1,0 +1,8 @@
+- if actions.index(:edit)
+  = edit_icon_to effective_resource.action_path(:edit, resource)
+
+- if actions.index(:show)
+  = show_icon_to effective_resource.action_path(:show, resource)
+
+- if actions.index(:destroy)
+  = destroy_icon_to effective_resource.action_path(:destroy, resource), data: { method: :delete, confirm: "Really delete #{resource}?" }
