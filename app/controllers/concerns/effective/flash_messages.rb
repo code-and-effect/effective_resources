@@ -6,11 +6,9 @@ module Effective
     def flash_success(resource, action = nil, name: nil)
       raise 'expected an ActiveRecord resource' unless (name || resource.class.respond_to?(:model_name))
 
-      name ||= resource.class.model_name.human
+      name ||= resource.class.model_name.human.downcase
 
-      action = (action || :save).to_s.gsub('_', ' ')
-
-      "#{name.to_s.titleize} was successfully #{action}#{(action == 'submit' ? 't' : '')}#{(action.end_with?('e') ? 'd' : 'ed')}"
+      "Successfully #{action_verb(action)} #{name}"
     end
 
     # flash.now[:danger] = flash_danger(@post)
@@ -19,10 +17,11 @@ module Effective
 
       action ||= resource.respond_to?(:new_record?) ? (resource.new_record? ? :create : :update) : :save
       action = action.to_s.gsub('_', ' ')
-      name ||= resource.class.model_name.human
+
+      name ||= resource.class.model_name.human.downcase
       messages = flash_errors(resource, e: e)
 
-      ["Unable to #{action} #{name.to_s.downcase}", (": #{messages}." if messages)].compact.join.html_safe
+      ["Unable to #{action} #{name}", (": #{messages}." if messages)].compact.join.html_safe
     end
 
     # flash.now[:danger] = "Unable to accept: #{flash_errors(@post)}"
@@ -45,5 +44,17 @@ module Effective
 
       messages.to_sentence.presence
     end
+
+    def action_verb(action)
+      action = action.to_s.gsub('_', ' ')
+      word = action.split(' ').first
+
+      if word.end_with?('e')
+        action.sub(word, word + 'd')
+      else
+        action.sub(word, word + 'ed')
+      end
+    end
+
   end
 end

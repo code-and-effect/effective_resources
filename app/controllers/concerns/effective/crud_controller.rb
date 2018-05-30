@@ -204,24 +204,22 @@ module Effective
 
       respond_to do |format|
         if save_resource(resource, action, send(resource_params_method_name))
+          request.format = :html if specific_redirect_path?
+
           format.html do
             flash[:success] ||= resource_flash(:success, resource, action)
             redirect_to(resource_redirect_path)
           end
 
           format.js do
-            if specific_redirect_path?
-              flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path)
-            else
-              flash.now[:success] ||= resource_flash(:success, resource, action)
-              reload_resource
-              # create.js.erb
-            end
+            flash.now[:success] ||= resource_flash(:success, resource, action)
+            reload_resource # create.js.erb
           end
         else
           flash.delete(:success)
           flash.now[:danger] ||= resource_flash(:danger, resource, action)
+
+          run_callbacks(:resource_render)
 
           format.html { render :new }
           format.js {} # create.js.erb
@@ -258,24 +256,22 @@ module Effective
 
       respond_to do |format|
         if save_resource(resource, action, send(resource_params_method_name))
+          request.format = :html if specific_redirect_path?
+
           format.html do
             flash[:success] ||= resource_flash(:success, resource, action)
             redirect_to(resource_redirect_path)
           end
 
           format.js do
-            if specific_redirect_path?
-              flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path)
-            else
-              flash.now[:success] ||= resource_flash(:success, resource, action)
-              reload_resource
-              # update.js.erb
-            end
+            flash.now[:success] ||= resource_flash(:success, resource, action)
+            reload_resource # update.js.erb
           end
         else
           flash.delete(:success)
           flash.now[:danger] ||= resource_flash(:danger, resource, action)
+
+          run_callbacks(:resource_render)
 
           format.html { render :edit }
           format.js { } # update.js.erb
@@ -292,19 +288,16 @@ module Effective
 
       respond_to do |format|
         if save_resource(resource, action)
+          request.format = :html if specific_redirect_path?
+
           format.html do
             flash[:success] ||= resource_flash(:success, resource, action)
             redirect_to(resource_redirect_path(action))
           end
 
           format.js do
-            if specific_redirect_path?
-              flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(esource_redirect_path(action))
-            else
-              flash.now[:success] ||= resource_flash(:success, resource, action)
-              # destroy.js.erb
-            end
+            flash.now[:success] ||= resource_flash(:success, resource, action)
+            # destroy.js.erb
           end
         else
           flash.delete(:success)
@@ -327,24 +320,23 @@ module Effective
 
       respond_to do |format|
         if save_resource(resource, action, (send(resource_params_method_name) rescue {}))
+          request.format = :html if specific_redirect_path?
+
           format.html do
             flash[:success] ||= resource_flash(:success, resource, action)
             redirect_to(resource_redirect_path(action))
           end
 
           format.js do
-            if specific_redirect_path?(action)
-              flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path(action))
-            else
-              flash.now[:success] ||= resource_flash(:success, resource, action)
-              reload_resource
-              render_member_action(action)
-            end
+            flash.now[:success] ||= resource_flash(:success, resource, action)
+            reload_resource
+            render_member_action(action)
           end
         else
           flash.delete(:success)
           flash.now[:danger] ||= resource_flash(:danger, resource, action)
+
+          run_callbacks(:resource_render)
 
           format.html do
             if resource_edit_path && (referer_redirect_path || '').end_with?(resource_edit_path)
@@ -563,10 +555,6 @@ module Effective
 
     def resource_plural_name # 'things'
       effective_resource.plural_name
-    end
-
-    def action_verb(action)
-      (action.to_s + (action.to_s.end_with?('e') ? 'd' : 'ed'))
     end
 
     # Based on the incoming params[:commit] or passed action
