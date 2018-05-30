@@ -405,6 +405,7 @@ module Effective
           end
 
           yield if block_given?
+
           run_callbacks(:resource_save)
           return true
         rescue => e
@@ -434,9 +435,9 @@ module Effective
     def resource_flash(status, resource, action)
       submit = commit_action(action)
       message = submit[status].respond_to?(:call) ? instance_exec(&submit[status]) : submit[status]
-      return message if message.present?
+      return if message.present?
 
-      message || case status
+      case status
       when :success then flash_success(resource, action)
       when :danger then flash_danger(resource, action)
       else
