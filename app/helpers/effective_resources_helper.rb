@@ -46,7 +46,7 @@ module EffectiveResourcesHelper
     effective_resource ||= Effective::Resource.new(controller_path)
     raise 'Expected resource: value to be an Effective::Resource instance' unless effective_resource.kind_of?(Effective::Resource)
 
-    namespace ||= effective_resource.namespace&.to_sym
+    namespace ||= effective_resource.namespace.to_sym if effective_resource.namespace
 
     partial = case partial
     when String

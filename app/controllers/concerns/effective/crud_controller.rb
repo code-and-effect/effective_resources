@@ -154,12 +154,13 @@ module Effective
 
     def index
       @page_title ||= resource_plural_name.titleize
-      EffectiveDatatables.authorize!(self, :index, resource_klass)
+      EffectiveResources.authorize!(self, :index, resource_klass)
 
       self.resources ||= resource_scope.all
 
       if resource_datatable_class
-        @datatable ||= resource_datatable_class.new(self, resource_datatable_attributes)
+        @datatable ||= resource_datatable_class.new(resource_datatable_attributes)
+        @datatable.view = view_context
       end
 
       run_callbacks(:resource_render)
@@ -562,8 +563,8 @@ module Effective
     def commit_action(action = nil)
       self.class.submits[params[:commit].to_s] ||
       self.class.submits[action.to_s] ||
-      self.class.submits.find { |_, v| v[:action] == action }&.last ||
-      self.class.submits.find { |_, v| v[:action] == :save }&.last ||
+      self.class.submits.find { |_, v| v[:action] == action }.try(:last) ||
+      self.class.submits.find { |_, v| v[:action] == :save }.try(:last) ||
       { action: (action || :save) }
     end
 
