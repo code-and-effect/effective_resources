@@ -123,7 +123,7 @@ module Effective
 
           @page_title ||= "#{action.to_s.titleize} #{resource}"
 
-          member_post_action(action) unless request.get?
+          request.get? ? run_callbacks(:resource_render) : member_post_action(action)
         end
       end
 
@@ -147,7 +147,7 @@ module Effective
 
           @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
 
-          collection_post_action(action) unless request.get?
+          request.get? ? run_callbacks(:resource_render) : collection_post_action(action)
         end
       end
     end
