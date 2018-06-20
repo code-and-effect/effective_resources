@@ -117,6 +117,8 @@ module Effective
       # Just add a member action to your routes, you shouldn't need to call this directly
       def member_action(action)
         define_method(action) do
+          Rails.logger.info 'Processed by Effective::CrudController#member_action'
+
           self.resource ||= resource_scope.find(params[:id])
 
           EffectiveResources.authorize!(self, action, resource)
@@ -133,6 +135,8 @@ module Effective
       # You shouldn't need to call this directly
       def collection_action(action)
         define_method(action) do
+          Rails.logger.info 'Processed by Effective::CrudController#collection_action'
+
           if params[:ids].present?
             self.resources ||= resource_scope.where(id: params[:ids])
           end
@@ -153,6 +157,8 @@ module Effective
     end
 
     def index
+      Rails.logger.info '  Processed by Effective::CrudController#index'
+
       @page_title ||= resource_plural_name.titleize
       EffectiveResources.authorize!(self, :index, resource_klass)
 
@@ -167,6 +173,8 @@ module Effective
     end
 
     def new
+      Rails.logger.info '  Processed by Effective::CrudController#new'
+
       self.resource ||= resource_scope.new
 
       self.resource.assign_attributes(
@@ -193,6 +201,8 @@ module Effective
     end
 
     def create
+      Rails.logger.info '  Processed by Effective::CrudController#create'
+
       self.resource ||= resource_scope.new
 
       @page_title ||= "New #{resource_name.titleize}"
@@ -229,6 +239,8 @@ module Effective
     end
 
     def show
+      Rails.logger.info '  Processed by Effective::CrudController#show'
+
       self.resource ||= resource_scope.find(params[:id])
 
       @page_title ||= resource.to_s
@@ -238,6 +250,8 @@ module Effective
     end
 
     def edit
+      Rails.logger.info '  Processed by Effective::CrudController#edit'
+
       self.resource ||= resource_scope.find(params[:id])
 
       @page_title ||= "Edit #{resource}"
@@ -247,6 +261,8 @@ module Effective
     end
 
     def update
+      Rails.logger.info '  Processed by Effective::CrudController#update'
+
       self.resource ||= resource_scope.find(params[:id])
 
       @page_title = "Edit #{resource}"
@@ -281,6 +297,8 @@ module Effective
     end
 
     def destroy
+      Rails.logger.info '  Processed by Effective::CrudController#destroy'
+
       self.resource = resource_scope.find(params[:id])
 
       action = :destroy
@@ -436,7 +454,7 @@ module Effective
     def resource_flash(status, resource, action)
       submit = commit_action(action)
       message = submit[status].respond_to?(:call) ? instance_exec(&submit[status]) : submit[status]
-      return if message.present?
+      return message if message.present?
 
       case status
       when :success then flash_success(resource, action)
