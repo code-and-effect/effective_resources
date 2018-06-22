@@ -271,7 +271,7 @@ module Effective
           keys = relation.pluck(association.foreign_key)
         end
 
-        keys.uniq.compact.map { |value| "#{key}=#{value} DESC" }.join(',')
+        Arel.sql(keys.uniq.compact.map { |value| "#{key}=#{value} DESC" }.join(','))
       end
 
     end
