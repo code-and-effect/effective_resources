@@ -47,10 +47,12 @@ module Effective
 
     def action_verb(action)
       action = action.to_s.gsub('_', ' ')
-      word = action.split(' ').first
+      word = action.split(' ').first.to_s
 
       if word.end_with?('e')
         action.sub(word, word + 'd')
+      elsif ['a', 'i', 'o', 'u', 'y'].include?(word[-1])
+        action
       else
         action.sub(word, word + 'ed')
       end
