@@ -175,6 +175,13 @@ to render just the `Save` button, with appropriate data-disable, title, etc.
     = f.save 'Will be appended'
 ```
 
+### Remote Delete will automatically fade out the closest match
+
+```
+= link_to 'Delete', post_path(post), remote: true,
+  data: { confirm: "Really delete #{post}?", method: :delete, closest: '.post' }
+```
+
 ### acts_as_tokened
 
 Quickly adds rails 5 `has_secure_token` to your model, along with some `Post.find()` enhancements to work with tokens instead of IDs.
