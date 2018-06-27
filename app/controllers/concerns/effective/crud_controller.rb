@@ -157,7 +157,7 @@ module Effective
     end
 
     def index
-      Rails.logger.info '  Processed by Effective::CrudController#index'
+      Rails.logger.info 'Processed by Effective::CrudController#index'
 
       @page_title ||= resource_plural_name.titleize
       EffectiveResources.authorize!(self, :index, resource_klass)
@@ -173,7 +173,7 @@ module Effective
     end
 
     def new
-      Rails.logger.info '  Processed by Effective::CrudController#new'
+      Rails.logger.info 'Processed by Effective::CrudController#new'
 
       self.resource ||= resource_scope.new
 
@@ -201,7 +201,7 @@ module Effective
     end
 
     def create
-      Rails.logger.info '  Processed by Effective::CrudController#create'
+      Rails.logger.info 'Processed by Effective::CrudController#create'
 
       self.resource ||= resource_scope.new
 
@@ -239,7 +239,7 @@ module Effective
     end
 
     def show
-      Rails.logger.info '  Processed by Effective::CrudController#show'
+      Rails.logger.info 'Processed by Effective::CrudController#show'
 
       self.resource ||= resource_scope.find(params[:id])
 
@@ -250,7 +250,7 @@ module Effective
     end
 
     def edit
-      Rails.logger.info '  Processed by Effective::CrudController#edit'
+      Rails.logger.info 'Processed by Effective::CrudController#edit'
 
       self.resource ||= resource_scope.find(params[:id])
 
@@ -261,7 +261,7 @@ module Effective
     end
 
     def update
-      Rails.logger.info '  Processed by Effective::CrudController#update'
+      Rails.logger.info 'Processed by Effective::CrudController#update'
 
       self.resource ||= resource_scope.find(params[:id])
 
@@ -297,7 +297,7 @@ module Effective
     end
 
     def destroy
-      Rails.logger.info '  Processed by Effective::CrudController#destroy'
+      Rails.logger.info 'Processed by Effective::CrudController#destroy'
 
       self.resource = resource_scope.find(params[:id])
 
@@ -307,7 +307,7 @@ module Effective
 
       respond_to do |format|
         if save_resource(resource, action)
-          request.format = :html if specific_redirect_path?
+          request.format = :html if specific_redirect_path?(action)
 
           format.html do
             flash[:success] ||= resource_flash(:success, resource, action)
@@ -339,7 +339,7 @@ module Effective
 
       respond_to do |format|
         if save_resource(resource, action, (send(resource_params_method_name) rescue {}))
-          request.format = :html if specific_redirect_path?
+          request.format = :html if specific_redirect_path?(action)
 
           format.html do
             flash[:success] ||= resource_flash(:success, resource, action)
@@ -579,11 +579,15 @@ module Effective
 
     # Based on the incoming params[:commit] or passed action
     def commit_action(action = nil)
-      self.class.submits[params[:commit].to_s] ||
-      self.class.submits[action.to_s] ||
-      self.class.submits.find { |_, v| v[:action] == action }.try(:last) ||
-      self.class.submits.find { |_, v| v[:action] == :save }.try(:last) ||
-      { action: (action || :save) }
+      if action.present?
+        self.class.submits[action.to_s] ||
+        self.class.submits.find { |_, v| v[:action] == action }.try(:last) ||
+        { action: action }
+      else # Get the current commit
+        self.class.submits[params[:commit].to_s] ||
+        self.class.submits.find { |_, v| v[:action] == :save }.try(:last) ||
+        { action: :save }
+      end
     end
 
     def specific_redirect_path?(action = nil)
