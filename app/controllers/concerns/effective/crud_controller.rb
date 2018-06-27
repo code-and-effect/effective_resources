@@ -320,16 +320,13 @@ module Effective
           end
         else
           flash.delete(:success)
+          request.format = :html  # Don't run destroy.js.erb
 
           format.html do
             flash[:danger] = (flash.now[:danger].presence || resource_flash(:danger, resource, action))
             redirect_to(resource_redirect_path(action))
           end
 
-          format.js do
-            flash.now[:danger] ||= resource_flash(:danger, resource, action)
-            # destroy.js.erb
-          end
         end
       end
     end
