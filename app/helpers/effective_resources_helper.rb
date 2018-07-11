@@ -55,14 +55,14 @@ module EffectiveResourcesHelper
       ['effective/resource/actions', partial.to_s].join('_')
     else
       'effective/resource/actions'
-    end
+    end + '.html'.freeze
 
     actions = effective_resource.resource_actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys
     actions = actions.uniq.select { |action| EffectiveResources.authorized?(controller, action, resource) }
 
     locals = { resource: resource, effective_resource: effective_resource, namespace: namespace, actions: actions }
 
-    block_given? ? render(partial, locals) { yield } : render(partial, locals)
+    block_given? ? render((partial), locals) { yield } : render((partial), locals)
   end
 
   # When called from /admin/things/new.html.haml this will render 'admin/things/form', or 'things/form', or 'thing/form'
