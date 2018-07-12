@@ -50,9 +50,11 @@ module Effective
         end
 
         # This generates the correct route when an object is overriding to_param
-        formattable = (resource || instance).attributes.symbolize_keys.merge(id: (resource || instance).to_param)
+        if (resource || instance).respond_to?(:attributes)
+          formattable = (resource || instance).attributes.symbolize_keys.merge(id: (resource || instance).to_param)
+        end
 
-        path = routes[action].format(formattable).presence
+        path = routes[action].format(formattable || {}).presence
 
         if path.present? && opts.present?
           uri = URI.parse(path)
