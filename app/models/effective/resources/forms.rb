@@ -12,7 +12,7 @@ module Effective
             submits['Save'] = { action: :save, default: true, class: 'btn btn-primary' }
           end
 
-          member_post_actions.each do |action| # default true means it will be overwritten by dsl methods
+          (member_post_actions - crud_actions).each do |action| # default true means it will be overwritten by dsl methods
             submits[action.to_s.titleize] = { action: action, default: true, class: 'btn btn-primary' }
           end
 

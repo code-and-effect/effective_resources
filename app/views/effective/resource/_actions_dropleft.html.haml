@@ -1,16 +1,28 @@
 = dropdown(variation: :dropleft) do
   - if actions.index(:edit)
-    = dropdown_link_to 'Edit', effective_resource.action_path(:edit, resource), title: "Edit #{resource}"
+    - if EffectiveResources.authorized?(controller, :edit, resource)
+      = dropdown_link_to 'Edit', effective_resource.action_path(:edit, resource), title: "Edit #{resource}"
 
   - if actions.index(:show)
-    = dropdown_link_to 'View', effective_resource.action_path(:show, resource), title: resource.to_s
+    - if EffectiveResources.authorized?(controller, :show, resource)
+      = dropdown_link_to 'View', effective_resource.action_path(:show, resource), title: resource.to_s
 
-  - (actions - [:edit, :show, :destroy]).each do |action|
-    = dropdown_link_to action.to_s.titleize, effective_resource.action_path(action, resource),
-      title: "#{action} #{resource}", data: { method: :post, confirm: "#{action.to_s.titleize} #{resource}?"}
+  - (actions - effective_resource.crud_actions).each do |action|
+    - if effective_resource.member_post_actions.include?(action)
+      - if EffectiveResources.authorized?(controller, action, resource)
+        = dropdown_link_to action.to_s.titleize, effective_resource.action_path(action, resource),
+          title: "#{action} #{resource}", data: { method: :post, confirm: "#{action.to_s.titleize} #{resource}?"}
+
+    - elsif effective_resource.member_get_actions.include?(action)
+      - if EffectiveResources.authorized?(controller, action, resource)
+        = dropdown_link_to action.to_s.titleize, effective_resource.action_path(action, resource), title: "#{action.to_s.titleize} #{resource}"
+    - else
+      - if EffectiveResources.authorized?(controller, action, effective_resource.klass)
+        = dropdown_link_to action.to_s.titleize, effective_resource.action_path(action), title: action.to_s.titleize
 
   = yield if block_given?
 
   - if actions.index(:destroy)
-    = dropdown_link_to 'Delete', effective_resource.action_path(:destroy, resource),
-      title: "Delete #{resource}", data: { method: :delete, confirm: "Delete #{resource}?" }
+    - if EffectiveResources.authorized?(controller, :destroy, resource)
+      = dropdown_link_to 'Delete', effective_resource.action_path(:destroy, resource),
+        title: "Delete #{resource}", data: { method: :delete, confirm: "Delete #{resource}?" }

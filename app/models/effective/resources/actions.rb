@@ -69,43 +69,36 @@ module Effective
         routes.keys
       end
 
-      # Used by render_resource_actions helper
-      # All the actions we can actually make a link to but not submits
-      def resource_member_actions
-        (routes.keys & [:show, :edit, :destroy]) + member_get_actions
-      end
-
-      # Used by render_resource_actions helper for the index screens or new record
-      def resource_collection_actions
-        (routes.keys & [:new]) + collection_get_actions
+      def crud_actions
+        actions & %i(index new create show edit update destroy)
       end
 
       # GET actions
       def collection_actions
-        routes.values.map { |route| route.defaults[:action].to_sym if is_collection_route?(route) }.compact - crud_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_collection_route?(route) }.compact
       end
 
       def collection_get_actions
-        routes.values.map { |route| route.defaults[:action].to_sym if is_collection_route?(route) && is_get_route?(route) }.compact - crud_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_collection_route?(route) && is_get_route?(route) }.compact
       end
 
       def collection_post_actions
-        routes.values.map { |route| route.defaults[:action].to_sym if is_collection_route?(route) && is_post_route?(route) }.compact - crud_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_collection_route?(route) && is_post_route?(route) }.compact
       end
 
       # All actions
       def member_actions
-        routes.values.map { |route| route.defaults[:action].to_sym if is_member_route?(route) }.compact - crud_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_member_route?(route) }.compact
       end
 
       # GET actions
       def member_get_actions
-        routes.values.map { |route| route.defaults[:action].to_sym if is_member_route?(route) && is_get_route?(route) }.compact - crud_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_member_route?(route) && is_get_route?(route) }.compact
       end
 
       # POST/PUT/PATCH actions
       def member_post_actions
-        routes.values.map { |route| route.defaults[:action].to_sym if is_member_route?(route) && is_post_route?(route) }.compact - crud_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_member_route?(route) && is_post_route?(route) }.compact
       end
 
       # Same as controller_path in the view
@@ -114,10 +107,6 @@ module Effective
       end
 
       private
-
-      def crud_actions
-        %i(index new create show edit update destroy)
-      end
 
       def is_member_route?(route)
         (route.path.required_names || []).include?('id')

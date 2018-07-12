@@ -65,12 +65,11 @@ module EffectiveResourcesHelper
       'effective/resource/actions'.freeze
     end + '.html'.freeze
 
-    actions = (instance ? resource.resource_member_actions : resource.resource_collection_actions)
+    actions = (instance ? resource.member_get_actions : resource.collection_get_actions)
     actions = (actions & resource.crud_actions) if atts.delete(:crud)
-    raise "unknown action for #{resource.name}: #{(atts.keys - actions).join(' ')}." if (atts.keys - actions).present?
 
+    raise "unknown action for #{resource.name}: #{(atts.keys - actions).join(' ')}." if (atts.keys - actions).present?
     actions = (actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys).uniq
-    actions.select! { |action| EffectiveResources.authorized?(controller, action, (Array(instance).first || resource.klass)) }
 
     locals = { resource: instance, effective_resource: resource, namespace: namespace, actions: actions }.compact.merge(locals)
 

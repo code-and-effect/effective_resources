@@ -22,8 +22,8 @@ module Effective
       # Automatically respond to any action defined via the routes file
       def define_actions_from_routes
         resource = Effective::Resource.new(controller_path)
-        resource.member_actions.each { |action| member_action(action) }
-        resource.collection_actions.each { |action| collection_action(action) }
+        (resource.member_actions - resource.crud_actions).each { |action| member_action(action) }
+        (resource.collection_actions - resource.crud_actions).each { |action| collection_action(action) }
       end
 
       # https://github.com/rails/rails/blob/v5.1.4/actionpack/lib/abstract_controller/callbacks.rb
