@@ -38,13 +38,15 @@ module EffectiveResourcesHelper
     end
   end
 
-  # resource: resource is an
-  # show: true, edit: true, destroy: true
   def render_resource_crud_actions(resource, instance = nil, atts = {}, &block)
     (atts = instance; instance = nil) if instance.kind_of?(Hash) && atts.blank?
     render_resource_actions(resource, instance, atts.merge(crud: true), &block)
   end
 
+  # resource is an Effective::Resource
+  # instance is an ActiveRecord thing
+  # atts are crud: true|false, locals: {}, namespace:, partial:
+  # anything else are actions, edit: true, show: false, destroy: false and member GET actions
   def render_resource_actions(resource, instance = nil, atts = {}, &block)
     (atts = instance; instance = nil) if instance.kind_of?(Hash) && atts.blank?
     raise 'expected first argument to be an Effective::Resource' unless resource.kind_of?(Effective::Resource)

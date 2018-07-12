@@ -72,7 +72,7 @@ module Effective
       # Used by render_resource_actions helper
       # All the actions we can actually make a link to
       def resource_actions
-        (routes.keys & [:show, :edit, :destroy]) + member_actions
+        (routes.keys & [:show, :edit, :destroy]) + member_get_actions
       end
 
       def resource_crud_actions
