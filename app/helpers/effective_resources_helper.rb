@@ -38,17 +38,18 @@ module EffectiveResourcesHelper
     end
   end
 
+  # Renders the effective/resource view partial for this resource
   # resource is an Effective::Resource
-  # instance is an ActiveRecord thing
-  # atts are crud: true|false, locals: {}, namespace:, partial:
-  # anything else are actions, edit: true, show: false, destroy: false and member GET actions
+  # instance is an ActiveRecord thing, an Array of ActiveRecord things, or nil
+  # Atts are everything else. Interesting ones include:
+
+  # partial: :dropleft|:glyphicons|string
+  # locals: {} render locals
+  # you can also pass all action names and true/false such as edit: true, show: false
   def render_resource_actions(resource, instance = nil, atts = {}, &block)
     (atts = instance; instance = nil) if instance.kind_of?(Hash) && atts.blank?
     raise 'expected first argument to be an Effective::Resource' unless resource.kind_of?(Effective::Resource)
     raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
-
-    instance = instance || instance_variable_get('@' + resource.name) || resource.instance
-    raise "unable to find resource instance.  Either pass the instance as the second argument, or assign @#{resource.name}" unless instance
 
     locals = atts.delete(:locals) || {}
     namespace = atts.delete(:namespace) || (resource.namespace.to_sym if resource.namespace)
@@ -59,32 +60,22 @@ module EffectiveResourcesHelper
     when String
       partial
     when Symbol
-      ['effective/resource/actions', partial.to_s].join('_')
+      ['effective/resource/actions'.freeze, partial.to_s].join('_')
     else
-      'effective/resource/actions'
+      'effective/resource/actions'.freeze
     end + '.html'.freeze
 
-    actions = if (instance.respond_to?(:new_record?) && instance.new_record?) # Index screens...
-      resource.resource_collection_actions
-    else
-      resource.resource_member_actions
-    end
-
+    actions = (instance ? resource.resource_member_actions : resource.resource_collection_actions)
     actions = (actions & resource.crud_actions) if atts.delete(:crud)
     raise "unknown action for #{resource.name}: #{(atts.keys - actions).join(' ')}." if (atts.keys - actions).present?
 
     actions = (actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys).uniq
-
-    if instance.kind_of?(Array)
-      actions.select! { |action| EffectiveResources.authorized?(controller, action, instance.first.class) }
-    else
-      actions.select! { |action| EffectiveResources.authorized?(controller, action, instance) }
-    end
+    actions.select! { |action| EffectiveResources.authorized?(controller, action, (Array(instance).first || resource.klass)) }
 
     locals = { resource: instance, effective_resource: resource, namespace: namespace, actions: actions }.compact.merge(locals)
 
     if instance.kind_of?(Array) # Render as collection mode
-      return render(partial: partial, as: :resource, collection: instance, spacer_template: spacer_template, locals: locals.except(:resource))
+      render(partial: partial, collection: instance, as: :resource, locals: locals.except(:resource), spacer_template: spacer_template)
     elsif block_given?
       render(partial, locals) { yield }
     else
