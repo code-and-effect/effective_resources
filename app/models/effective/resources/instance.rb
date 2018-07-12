@@ -1,7 +1,7 @@
 module Effective
   module Resources
     module Instance
-      attr_reader :instance
+      attr_accessor :instance
 
       # This is written for use by effective_logging and effective_trash
 

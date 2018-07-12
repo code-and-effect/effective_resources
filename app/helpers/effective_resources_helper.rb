@@ -40,13 +40,17 @@ module EffectiveResourcesHelper
 
   # resource: resource is an
   # show: true, edit: true, destroy: true
-  def render_resource_actions(resource, effective_resource: nil, namespace: nil, partial: nil, **atts, &block)
-    effective_resource ||= atts.delete(:resource)
-    effective_resource ||= controller.class.effective_resource if controller.class.respond_to?(:effective_resource)
-    effective_resource ||= Effective::Resource.new(controller_path)
-    raise 'Expected resource: value to be an Effective::Resource instance' unless effective_resource.kind_of?(Effective::Resource)
+  def render_resource_actions(resource, instance = nil, atts = {}, &block)
+    (atts = instance; instance = nil) if instance.kind_of?(Hash) && atts.blank?
+    raise 'expected first argument to be an Effective::Resource' unless resource.kind_of?(Effective::Resource)
+    raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
 
-    namespace ||= effective_resource.namespace.to_sym if effective_resource.namespace
+    instance = instance || instance_variable_get('@' + resource.name) || resource.instance
+    raise "unable to find resource instance.  Either pass the instance as the second argument, or assign @#{resource.name}" unless instance
+
+    locals = atts.delete(:locals) || {}
+    namespace = atts.delete(:namespace) || (resource.namespace.to_sym if resource.namespace)
+    partial = atts.delete(:partial)
 
     partial = case partial
     when String
@@ -57,20 +61,27 @@ module EffectiveResourcesHelper
       'effective/resource/actions'
     end + '.html'.freeze
 
-    actions = effective_resource.resource_actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys
+    raise "unknown action for #{resource.name}: #{unknown}." if (unknown = (atts.keys - resource.resource_actions)).present?
+
+    actions = resource.resource_actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys
     actions = actions.uniq.select { |action| EffectiveResources.authorized?(controller, action, resource) }
 
-    locals = { resource: resource, effective_resource: effective_resource, namespace: namespace, actions: actions }
+    locals = { resource: instance, effective_resource: resource, namespace: namespace, actions: actions }.compact.merge(locals)
 
     block_given? ? render((partial), locals) { yield } : render((partial), locals)
   end
 
   # When called from /admin/things/new.html.haml this will render 'admin/things/form', or 'things/form', or 'thing/form'
-  def render_resource_form(resource, atts = {})
-    raise 'expected attributes to be a Hash. Try passing action: action if rendering custom action' unless atts.kind_of?(Hash)
+  def render_resource_form(resource, instance = nil, atts = {})
+    (atts = instance; instance = nil) if instance.kind_of?(Hash) && atts.blank?
+    raise 'expected first argument to be an Effective::Resource' unless resource.kind_of?(Effective::Resource)
+    raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
+
+    instance = instance || instance_variable_get('@' + resource.name) || resource.instance
+    raise "unable to find resource instance.  Either pass the instance as the second argument, or assign @#{resource.name}" unless instance
 
     action = atts.delete(:action)
-    atts = {:namespace => (resource.namespace.to_sym if resource.namespace.present?), resource.name.to_sym => instance_variable_get('@' + resource.name)}.compact.merge(atts)
+    atts = { :namespace => (resource.namespace.to_sym if resource.namespace), resource.name.to_sym => instance }.compact.merge(atts)
 
     if lookup_context.template_exists?("form_#{action}", controller._prefixes, :partial)
       render "form_#{action}", atts
