@@ -56,14 +56,8 @@ module EffectiveResourcesHelper
     partial = atts.delete(:partial)
     spacer_template = locals.delete(:spacer_template)
 
-    partial = case partial
-    when String
-      partial
-    when Symbol
-      ['effective/resource/actions'.freeze, partial.to_s].join('_')
-    else
-      'effective/resource/actions'.freeze
-    end + '.html'.freeze
+    partial = ['effective/resource/actions', partial.to_s].join('_') if partial.kind_of?(Symbol)
+    partial = (partial.presence || 'effective/resource/actions') + '.html'
 
     actions = (instance ? resource.member_get_actions : resource.collection_get_actions)
     actions = (actions & resource.crud_actions) if atts.delete(:crud)
@@ -73,7 +67,7 @@ module EffectiveResourcesHelper
 
     locals = { resource: instance, effective_resource: resource, namespace: namespace, actions: actions }.compact.merge(locals)
 
-    if instance.kind_of?(Array) # Render as collection mode
+    if instance.kind_of?(Array)
       render(partial: partial, collection: instance, as: :resource, locals: locals.except(:resource), spacer_template: spacer_template)
     elsif block_given?
       render(partial, locals) { yield }
