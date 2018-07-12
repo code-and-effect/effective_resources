@@ -75,6 +75,10 @@ module Effective
         (routes.keys & [:show, :edit, :destroy]) + member_actions
       end
 
+      def resource_crud_actions
+        (routes.keys & [:show, :edit, :destroy])
+      end
+
       # GET actions
       def collection_actions
         routes.values.map { |route| route.defaults[:action].to_sym if is_collection_route?(route) }.compact - crud_actions

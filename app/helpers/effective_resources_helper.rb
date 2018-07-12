@@ -40,6 +40,11 @@ module EffectiveResourcesHelper
 
   # resource: resource is an
   # show: true, edit: true, destroy: true
+  def render_resource_crud_actions(resource, instance = nil, atts = {}, &block)
+    (atts = instance; instance = nil) if instance.kind_of?(Hash) && atts.blank?
+    render_resource_actions(resource, instance, atts.merge(crud: true), &block)
+  end
+
   def render_resource_actions(resource, instance = nil, atts = {}, &block)
     (atts = instance; instance = nil) if instance.kind_of?(Hash) && atts.blank?
     raise 'expected first argument to be an Effective::Resource' unless resource.kind_of?(Effective::Resource)
@@ -48,6 +53,7 @@ module EffectiveResourcesHelper
     instance = instance || instance_variable_get('@' + resource.name) || resource.instance
     raise "unable to find resource instance.  Either pass the instance as the second argument, or assign @#{resource.name}" unless instance
 
+    crud = atts.delete(:crud) || false
     locals = atts.delete(:locals) || {}
     namespace = atts.delete(:namespace) || (resource.namespace.to_sym if resource.namespace)
     partial = atts.delete(:partial)
@@ -61,9 +67,10 @@ module EffectiveResourcesHelper
       'effective/resource/actions'
     end + '.html'.freeze
 
-    raise "unknown action for #{resource.name}: #{unknown}." if (unknown = (atts.keys - resource.resource_actions)).present?
+    actions = (crud ? resource.resource_crud_actions : resource.resource_actions)
+    raise "unknown action for #{resource.name}: #{unknown}." if (unknown = (atts.keys - actions)).present?
 
-    actions = resource.resource_actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys
+    actions = actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys
     actions = actions.uniq.select { |action| EffectiveResources.authorized?(controller, action, resource) }
 
     locals = { resource: instance, effective_resource: resource, namespace: namespace, actions: actions }.compact.merge(locals)
