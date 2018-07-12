@@ -6,12 +6,7 @@
     .col-8
       %h1= @page_title
     .col-4.text-right
-      - resource.member_post_actions.each do |action|
-        - if EffectiveResources.authorized?(controller, action, @resource) && (path = resource.action_path(action, @resource)).present?
-          = link_to action.to_s.titleize, path, class: 'btn btn-sm btn-primary', data: { confirm: "Really #{action} #{@resource}?", method: :post }
-
-      - if EffectiveResources.authorized?(controller, :destroy, @resource) && (path = resource.action_path(:destroy, @resource)).present?
-        = link_to 'Delete', path, class: 'btn btn-sm btn-danger', data: { confirm: "Really delete #{@resource}?", method: :delete }
+      = render_resource_actions(resource, @resource, show: false)
 
   = render @resource
 

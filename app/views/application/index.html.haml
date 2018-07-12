@@ -4,8 +4,7 @@
   .col-8
     %h1= @page_title
   .col-4.text-right
-    - if EffectiveResources.authorized?(controller, :new, resource.klass) && (path = resource.action_path(:new)).present?
-      = link_to "New #{resource.human_name.titleize}", path, class: 'btn btn-primary'
+    = render_resource_actions(resource)
 
 - if @datatable
   = render_datatable(@datatable)
