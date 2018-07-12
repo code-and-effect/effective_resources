@@ -38,11 +38,6 @@ module EffectiveResourcesHelper
     end
   end
 
-  def render_resource_crud_actions(resource, instance = nil, atts = {}, &block)
-    (atts = instance; instance = nil) if instance.kind_of?(Hash) && atts.blank?
-    render_resource_actions(resource, instance, atts.merge(crud: true), &block)
-  end
-
   # resource is an Effective::Resource
   # instance is an ActiveRecord thing
   # atts are crud: true|false, locals: {}, namespace:, partial:
@@ -59,6 +54,7 @@ module EffectiveResourcesHelper
     locals = atts.delete(:locals) || {}
     namespace = atts.delete(:namespace) || (resource.namespace.to_sym if resource.namespace)
     partial = atts.delete(:partial)
+    spacer_template = locals.delete(:spacer_template)
 
     partial = case partial
     when String
@@ -70,14 +66,25 @@ module EffectiveResourcesHelper
     end + '.html'.freeze
 
     actions = (crud ? resource.resource_crud_actions : resource.resource_actions)
-    raise "unknown action for #{resource.name}: #{unknown}." if (unknown = (atts.keys - actions)).present?
+    raise "unknown action for #{resource.name}: #{(atts.keys - actions).join(' ')}." if (atts.keys - actions).present?
 
-    actions = actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys
-    actions = actions.uniq.select { |action| EffectiveResources.authorized?(controller, action, resource) }
+    actions = (actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys).uniq
+
+    if instance.kind_of?(Array)
+      actions.select! { |action| EffectiveResources.authorized?(controller, action, instance.first.class) }
+    else
+      actions.select! { |action| EffectiveResources.authorized?(controller, action, instance) }
+    end
 
     locals = { resource: instance, effective_resource: resource, namespace: namespace, actions: actions }.compact.merge(locals)
 
-    block_given? ? render((partial), locals) { yield } : render((partial), locals)
+    if instance.kind_of?(Array) # Render as collection mode
+      return render(partial: partial, as: :resource, collection: instance, spacer_template: spacer_template, locals: locals.except(:resource))
+    elsif block_given?
+      render(partial, locals) { yield }
+    else
+      render(partial, locals)
+    end
   end
 
   # When called from /admin/things/new.html.haml this will render 'admin/things/form', or 'things/form', or 'thing/form'

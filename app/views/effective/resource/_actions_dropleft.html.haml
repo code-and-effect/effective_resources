@@ -9,7 +9,7 @@
     = dropdown_link_to action.to_s.titleize, effective_resource.action_path(action, resource),
       title: "#{action} #{resource}", data: { method: :post, confirm: "Really #{action} #{resource}?"}
 
-  = yield
+  = yield if block_given?
 
   - if actions.index(:destroy)
     = dropdown_link_to "Delete #{resource}", effective_resource.action_path(:destroy, resource),

@@ -8,7 +8,7 @@
   = link_to action.to_s.titleize, effective_resource.action_path(action, resource), class: 'btn btn-secondary',
     title: "#{action} #{resource}", data: { method: :post, confirm: "Really #{action} #{resource}?"}
 
-= yield
+= yield if block_given?
 
 - if actions.index(:destroy)
   = link_to "Delete #{resource}", effective_resource.action_path(:destroy, resource), class: 'btn btn-danger',
