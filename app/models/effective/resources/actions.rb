@@ -70,13 +70,14 @@ module Effective
       end
 
       # Used by render_resource_actions helper
-      # All the actions we can actually make a link to
-      def resource_actions
+      # All the actions we can actually make a link to but not submits
+      def resource_member_actions
         (routes.keys & [:show, :edit, :destroy]) + member_get_actions
       end
 
-      def resource_crud_actions
-        (routes.keys & [:show, :edit, :destroy])
+      # Used by render_resource_actions helper for the index screens or new record
+      def resource_collection_actions
+        (routes.keys & [:new]) + collection_get_actions
       end
 
       # GET actions

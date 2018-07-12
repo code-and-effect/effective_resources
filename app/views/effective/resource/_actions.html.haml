@@ -1,15 +1,22 @@
+- if actions.index(:new)
+  - name = effective_resource.human_name.titleize
+  = link_to "New #{name}", effective_resource.action_path(:new), title: "New #{name}", class: 'btn btn-primary'
+
 - if actions.index(:edit)
   = link_to 'Edit', effective_resource.action_path(:edit, resource), title: "Edit #{resource}", class: 'btn btn-secondary'
 
 - if actions.index(:show)
   = link_to 'View', effective_resource.action_path(:show, resource), title: resource.to_s, class: 'btn btn-secondary'
 
-- (actions - [:edit, :show, :destroy]).each do |action|
-  = link_to action.to_s.titleize, effective_resource.action_path(action, resource), class: 'btn btn-secondary',
-    title: "#{action} #{resource}", data: { method: :post, confirm: "Really #{action} #{resource}?"}
+- (actions - [:new, :edit, :show, :destroy]).each do |action|
+  - if effective_resource.member_post_actions.include?(action)
+    = link_to action.to_s.titleize, effective_resource.action_path(action, resource), class: 'btn btn-secondary',
+      title: "#{action} #{resource}", data: { method: :post, confirm: "#{action.to_s.titleize} #{resource}?"}
+  - else
+    = link_to action.to_s.titleize, effective_resource.action_path(action), class: 'btn btn-secondary', title: action.to_s.titleize
 
 = yield if block_given?
 
 - if actions.index(:destroy)
-  = link_to "Delete #{resource}", effective_resource.action_path(:destroy, resource), class: 'btn btn-danger',
-    title: "Delete #{resource}", data: { method: :delete, confirm: "Really delete #{resource}?" }
+  = link_to 'Delete', effective_resource.action_path(:destroy, resource), class: 'btn btn-danger',
+    title: "Delete #{resource}", data: { method: :delete, confirm: "Delete #{resource}?" }

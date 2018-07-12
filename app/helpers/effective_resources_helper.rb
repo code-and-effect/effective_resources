@@ -50,7 +50,6 @@ module EffectiveResourcesHelper
     instance = instance || instance_variable_get('@' + resource.name) || resource.instance
     raise "unable to find resource instance.  Either pass the instance as the second argument, or assign @#{resource.name}" unless instance
 
-    crud = atts.delete(:crud) || false
     locals = atts.delete(:locals) || {}
     namespace = atts.delete(:namespace) || (resource.namespace.to_sym if resource.namespace)
     partial = atts.delete(:partial)
@@ -65,7 +64,13 @@ module EffectiveResourcesHelper
       'effective/resource/actions'
     end + '.html'.freeze
 
-    actions = (crud ? resource.resource_crud_actions : resource.resource_actions)
+    actions = if (instance.respond_to?(:new_record?) && instance.new_record?) # Index screens...
+      resource.resource_collection_actions
+    else
+      resource.resource_member_actions
+    end
+
+    actions = (actions & resource.crud_actions) if atts.delete(:crud)
     raise "unknown action for #{resource.name}: #{(atts.keys - actions).join(' ')}." if (atts.keys - actions).present?
 
     actions = (actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys).uniq
