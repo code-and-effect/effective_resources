@@ -96,6 +96,10 @@ module Effective
         routes.values.map { |route| route.defaults[:action].to_sym if is_member_route?(route) && is_get_route?(route) }.compact
       end
 
+      def member_delete_actions
+        routes.values.map { |route| route.defaults[:action].to_sym if is_member_route?(route) && is_delete_route?(route) }.compact
+      end
+
       # POST/PUT/PATCH actions
       def member_post_actions
         routes.values.map { |route| route.defaults[:action].to_sym if is_member_route?(route) && is_post_route?(route) }.compact
@@ -118,6 +122,10 @@ module Effective
 
       def is_get_route?(route)
         route.verb.to_s.include?('GET')
+      end
+
+      def is_delete_route?(route)
+        route.verb.to_s.include?('DELETE')
       end
 
       def is_post_route?(route)

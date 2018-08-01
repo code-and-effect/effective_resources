@@ -59,7 +59,7 @@ module EffectiveResourcesHelper
     partial = ['effective/resource/actions', partial.to_s].join('_') if partial.kind_of?(Symbol)
     partial = (partial.presence || 'effective/resource/actions') + '.html'
 
-    actions = (instance ? resource.member_get_actions : resource.collection_get_actions)
+    actions = (instance ? (resource.member_get_actions + resource.member_delete_actions) : resource.collection_get_actions)
     actions = (actions & resource.crud_actions) if atts.delete(:crud)
 
     raise "unknown action for #{resource.name}: #{(atts.keys - actions).join(' ')}." if (atts.keys - actions).present?
