@@ -206,15 +206,15 @@ module Effective
       self.resource ||= resource_scope.new
 
       @page_title ||= "New #{resource_name.titleize}"
-
       action = commit_action[:action]
-      EffectiveResources.authorize!(self, action, resource) unless action == :save
-      EffectiveResources.authorize!(self, :create, resource) if action == :save
 
+      resource.assign_attributes(send(resource_params_method_name))
       resource.created_by ||= current_user if resource.respond_to?(:created_by=)
 
+      EffectiveResources.authorize!(self, (action == :save ? :create : action), resource)
+
       respond_to do |format|
-        if save_resource(resource, action, send(resource_params_method_name))
+        if save_resource(resource, action)
           request.format = :html if specific_redirect_path?
 
           format.html do
