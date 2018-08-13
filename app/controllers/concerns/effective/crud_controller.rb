@@ -335,6 +335,7 @@ module Effective
       raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
 
       respond_to do |format|
+
         if save_resource(resource, action, (send(resource_params_method_name) rescue {}))
           request.format = :html if specific_redirect_path?(action)
 
@@ -414,7 +415,7 @@ module Effective
 
       ActiveRecord::Base.transaction do
         begin
-          resource.assign_attributes(to_assign) if to_assign.present?
+          resource.assign_attributes(to_assign) if to_assign.respond_to?(:permitted?) && to_assign.permitted?
 
           if resource.public_send("#{action}!") == false
             raise("failed to #{action} #{resource}")
@@ -425,6 +426,8 @@ module Effective
           run_callbacks(:resource_save)
           return true
         rescue => e
+          Rails.logger.info "Failed to #{action}: #{e.message}" if Rails.env.development?
+
           if resource.respond_to?(:restore_attributes) && resource.persisted?
             resource.restore_attributes(['status', 'state'])
           end
