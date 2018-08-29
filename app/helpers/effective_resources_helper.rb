@@ -36,9 +36,9 @@ module EffectiveResourcesHelper
     actions = (controller.respond_to?(:effective_resource) ? controller.class : effective_resource).buttons
 
     actions = if resource.kind_of?(Class)
-      actions.delete_if { |_, v| !effective_resource.collection_get_actions.include?(v[:action]) }
+      actions.select { |_, v| effective_resource.collection_get_actions.include?(v[:action]) }
     else
-      actions.delete_if { |_, v| !effective_resource.member_actions.include?(v[:action]) }
+      actions.select { |_, v| effective_resource.member_actions.include?(v[:action]) }
     end
 
     render_resource_actions(resource, atts.merge(actions: actions), &block)
@@ -67,7 +67,7 @@ module EffectiveResourcesHelper
     # Filter Actions
     action_keys = actions.map { |_, v| v[:action] }
     raise "unknown action for #{effective_resource.name}: #{(atts.keys - action_keys).join(' ')}." if (atts.keys - action_keys).present?
-    actions = actions.delete_if { |_, v| atts[v[:action]] == false }
+    actions = actions.select { |_, v| atts[v[:action]] != false }
 
     # Select Partial
     partial = ['effective/resource/actions', partial.to_s].join('_') if partial.kind_of?(Symbol)

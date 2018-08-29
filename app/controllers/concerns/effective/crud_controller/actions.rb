@@ -194,7 +194,12 @@ module Effective
 
         raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
 
-        resource.assign_attributes(send(resource_params_method_name))
+        to_assign = (send(resource_params_method_name) rescue {})
+
+        if to_assign.present? && to_assign.permitted?
+          resource.assign_attributes(to_assign)
+        end
+
         resource.current_user ||= current_user if resource.respond_to?(:current_user=)
 
         respond_to do |format|
