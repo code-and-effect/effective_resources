@@ -1,16 +1,32 @@
 module EffectiveResourcesHelper
 
   def effective_submit(form, options = {}, &block) # effective_bootstrap
-    resource = (controller.class.respond_to?(:effective_resource) ? controller.class.effective_resource : Effective::Resource.new(controller_path))
-    actions = resource.submits_for(form.object, controller: controller)
-    buttons = actions.map { |name, opts| form.save(name, opts) }.join.html_safe
+    actions = (controller.respond_to?(:effective_resource) ? controller.class : Effective::Resource.new(controller_path)).submits
+
+    submits = permitted_resource_actions(form.object, actions).map { |name, opts| form.save(name, opts) }.join.html_safe
 
     form.submit('', options) do
-      (block_given? ? capture(&block) : ''.html_safe) + buttons
+      (block_given? ? capture(&block) : ''.html_safe) + submits
     end
   end
 
-  def render_resource_buttons(resource, instance = nil, atts = {}, &block)
+  def permitted_resource_actions(resource, actions)
+    actions.select do |commit, args|
+      action = (args[:action] == :save ? (resource.new_record? ? :create : :update) : args[:action])
+
+      (args.key?(:if) ? resource.instance_exec(&args[:if]) : true) &&
+      (args.key?(:unless) ? !resource.instance_exec(&args[:unless]) : true) &&
+      EffectiveResources.authorized?(controller, action, resource)
+    end.transform_values do |opts|
+      opts.except(:action, :default, :if, :unless, :redirect)
+    end
+  end
+
+  def render_resource_buttons(resource, instance, atts = {}, &block)
+    actions = (controller.respond_to?(:effective_resource) ? controller.class : Effective::Resource.new(controller_path)).buttons
+
+    buttons = permitted_resource_actions(form.object, submits).map { |name, opts| form.save(name, opts) }.join.html_safe
+
     render_resource_actions(resource, instance, atts.merge(buttons: true), &block)
   end
 

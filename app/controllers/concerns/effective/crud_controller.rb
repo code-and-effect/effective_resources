@@ -2,34 +2,15 @@ module Effective
   module CrudController
     extend ActiveSupport::Concern
 
+    include Effective::CrudController::Actions
+    include Effective::CrudController::Submits
+
     included do
-      class << self
-        def effective_resource
-          @_effective_resource ||= Effective::Resource.new(controller_path)
-        end
-
-        # { 'Save' => { action: save, ...}}
-        def submits
-          @_effective_submits ||= effective_resource.submits
-        end
-
-        # { 'Approve' => { action: approve, ...}}
-        def buttons
-          @_effective_buttons ||= effective_resource.buttons
-        end
-
-        # { :approve => { redirect: .. }}
-        def ons
-          @_effective_ons ||= {}
-        end
-      end
-
       define_actions_from_routes
       define_callbacks :resource_render, :resource_save, :resource_error
     end
 
     module ClassMethods
-
       # Automatically respond to any action defined via the routes file
       def define_actions_from_routes
         (effective_resource.member_actions - effective_resource.crud_actions).each do |action|
@@ -67,32 +48,7 @@ module Effective
       # submit :save, 'Save', success: -> { "#{self} was saved okay!" }
 
       def submit(action, label = nil, args = {})
-        raise 'expected args to be a Hash or false' unless args.kind_of?(Hash) || args == false
-
-        if label == false
-          submits.delete_if { |label, args| args[:action] == action }; return
-        end
-
-        if args == false
-          submits.delete(label); return
-        end
-
-        if label # Overwrite the default member action when given a custom submit
-          submits.delete_if { |label, args| args[:default] && args[:action] == action }
-        end
-
-        if args.key?(:if) && args[:if].respond_to?(:call) == false
-          raise "expected if: to be callable. Try submit :approve, 'Save and Approve', if: -> { finished? }"
-        end
-
-        if args.key?(:unless) && args[:unless].respond_to?(:call) == false
-          raise "expected unless: to be callable. Try submit :approve, 'Save and Approve', unless: -> { declined? }"
-        end
-
-        redirect = args.delete(:redirect_to) || args.delete(:redirect) # Remove redirect_to keyword. use redirect.
-        args.merge!(action: action, redirect: redirect)
-
-        (submits[label] ||= {}).merge!(args)
+        _insert_submit(action, label, args)
       end
 
       # This controls the resource buttons section of the page
@@ -103,52 +59,14 @@ module Effective
       # button :approve, 'Approve', unless: -> { approved? }, redirect: :show
       # button :decline, false
       def button(action, label = nil, args = {})
-        raise 'expected args to be a Hash or false' unless args.kind_of?(Hash) || args == false
-
-        if label == false
-          buttons.delete_if { |label, args| args[:action] == action }; return
-        end
-
-        if args == false
-          buttons.delete(label); return
-        end
-
-        if label # Overwrite the default member action when given a custom label
-          buttons.delete_if { |label, args| args[:default] && args[:action] == action }
-        end
-
-        if args.key?(:if) && args[:if].respond_to?(:call) == false
-          raise "expected if: to be callable. Try button :approve, 'Approve', if: -> { finished? }"
-        end
-
-        if args.key?(:unless) && args[:unless].respond_to?(:call) == false
-          raise "expected unless: to be callable. Try button :approve, 'Approve', unless: -> { declined? }"
-        end
-
-        redirect = args.delete(:redirect_to) || args.delete(:redirect) # Remove redirect_to keyword. use redirect.
-        args.merge!(action: action, redirect: redirect)
-
-        (buttons[label] ||= {}).merge!(args)
+        _insert_button(action, label, args)
       end
 
       # This is a way of defining the redirect, flash etc of any action without tweaking defaults
       # submit and buttons options will be merged ontop of these
 
       def on(action, args = {})
-        raise 'expected args to be a Hash or false' unless args.kind_of?(Hash) || args == false
-
-        if args.key?(:if) && args[:if].respond_to?(:call) == false
-          raise "expected if: to be callable. Try on :approve, redirect: -> { :edit }"
-        end
-
-        if args.key?(:unless) && args[:unless].respond_to?(:call) == false
-          raise "expected unless: to be callable. Try on :approve, redirect: -> { :edit }"
-        end
-
-        redirect = args.delete(:redirect_to) || args.delete(:redirect) # Remove redirect_to keyword. use redirect.
-        args.merge!(action: action, redirect: redirect)
-
-        (ons[action] ||= {}).merge!(args)
+        _insert_on(action, args)
       end
 
       # page_title 'My Title', only: [:new]
@@ -157,9 +75,7 @@ module Effective
         raise 'expected a label or block' unless (label || block_given?)
 
         instance_exec do
-          before_action(opts) do
-            @page_title ||= (block_given? ? instance_exec(&block) : label).to_s
-          end
+          before_action(opts) { @page_title ||= (block_given? ? instance_exec(&block) : label).to_s }
         end
       end
 
@@ -178,290 +94,16 @@ module Effective
         raise 'expected a proc or block' unless (obj.respond_to?(:call) || block_given?)
 
         instance_exec do
-          before_action(opts) do
-            @_effective_resource_scope ||= instance_exec(&(block_given? ? block : obj))
-          end
-        end
-      end
-    end
-
-    def index
-      Rails.logger.info 'Processed by Effective::CrudController#index'
-
-      EffectiveResources.authorize!(self, :index, resource_klass)
-      @page_title ||= resource_plural_name.titleize
-
-      self.resources ||= resource_scope.all
-
-      if resource_datatable_class
-        @datatable ||= resource_datatable_class.new(resource_datatable_attributes)
-        @datatable.view = view_context
-      end
-
-      run_callbacks(:resource_render)
-    end
-
-    def new
-      Rails.logger.info 'Processed by Effective::CrudController#new'
-
-      self.resource ||= resource_scope.new
-
-      self.resource.assign_attributes(
-        params.to_unsafe_h.except(:controller, :action, :id).select { |k, v| resource.respond_to?("#{k}=") }
-      )
-
-      if params[:duplicate_id]
-        duplicate = resource_scope.find(params[:duplicate_id])
-        EffectiveResources.authorize!(self, :show, duplicate)
-
-        self.resource = duplicate_resource(duplicate)
-        raise "expected duplicate_resource to return an unsaved new #{resource_klass} resource" unless resource.kind_of?(resource_klass) && resource.new_record?
-
-        if (message = flash[:success].to_s).present?
-          flash.delete(:success)
-          flash.now[:success] = "#{message.chomp('.')}. Adding another #{resource_name.titleize} based on previous."
+          before_action(opts) { @_effective_resource_scope ||= instance_exec(&(block_given? ? block : obj)) }
         end
       end
 
-      @page_title ||= "New #{resource_name.titleize}"
-      EffectiveResources.authorize!(self, :new, resource)
+      private
 
-      run_callbacks(:resource_render)
-    end
-
-    def create
-      Rails.logger.info 'Processed by Effective::CrudController#create'
-
-      self.resource ||= resource_scope.new
-
-      @page_title ||= "New #{resource_name.titleize}"
-      action = commit_action[:action]
-
-      resource.assign_attributes(send(resource_params_method_name))
-      resource.created_by ||= current_user if resource.respond_to?(:created_by=)
-
-      EffectiveResources.authorize!(self, (action == :save ? :create : action), resource)
-
-      respond_to do |format|
-        if save_resource(resource, action)
-          request.format = :html if specific_redirect_path?
-
-          format.html do
-            flash[:success] ||= resource_flash(:success, resource, action)
-            redirect_to(resource_redirect_path)
-          end
-
-          format.js do
-            flash.now[:success] ||= resource_flash(:success, resource, action)
-            reload_resource # create.js.erb
-          end
-        else
-          flash.delete(:success)
-          flash.now[:danger] ||= resource_flash(:danger, resource, action)
-
-          run_callbacks(:resource_render)
-
-          format.html { render :new }
-          format.js {} # create.js.erb
-        end
-      end
-    end
-
-    def show
-      Rails.logger.info 'Processed by Effective::CrudController#show'
-
-      self.resource ||= resource_scope.find(params[:id])
-
-      @page_title ||= resource.to_s
-      EffectiveResources.authorize!(self, :show, resource)
-
-      run_callbacks(:resource_render)
-    end
-
-    def edit
-      Rails.logger.info 'Processed by Effective::CrudController#edit'
-
-      self.resource ||= resource_scope.find(params[:id])
-
-      @page_title ||= "Edit #{resource}"
-      EffectiveResources.authorize!(self, :edit, resource)
-
-      run_callbacks(:resource_render)
-    end
-
-    def update
-      Rails.logger.info 'Processed by Effective::CrudController#update'
-
-      self.resource ||= resource_scope.find(params[:id])
-
-      @page_title = "Edit #{resource}"
-
-      action = commit_action[:action]
-      EffectiveResources.authorize!(self, action, resource) unless action == :save
-      EffectiveResources.authorize!(self, :update, resource) if action == :save
-
-      respond_to do |format|
-        if save_resource(resource, action, send(resource_params_method_name))
-          request.format = :html if specific_redirect_path?
-
-          format.html do
-            flash[:success] ||= resource_flash(:success, resource, action)
-            redirect_to(resource_redirect_path)
-          end
-
-          format.js do
-            flash.now[:success] ||= resource_flash(:success, resource, action)
-            reload_resource # update.js.erb
-          end
-        else
-          flash.delete(:success)
-          flash.now[:danger] ||= resource_flash(:danger, resource, action)
-
-          run_callbacks(:resource_render)
-
-          format.html { render :edit }
-          format.js { } # update.js.erb
-        end
-      end
-    end
-
-    def destroy
-      Rails.logger.info 'Processed by Effective::CrudController#destroy'
-
-      self.resource = resource_scope.find(params[:id])
-
-      action = :destroy
-      @page_title ||= "Destroy #{resource}"
-      EffectiveResources.authorize!(self, action, resource)
-
-      respond_to do |format|
-        if save_resource(resource, action)
-          request.format = :html if specific_redirect_path?(action)
-
-          format.html do
-            flash[:success] ||= resource_flash(:success, resource, action)
-            redirect_to(resource_redirect_path(action))
-          end
-
-          format.js do
-            flash.now[:success] ||= resource_flash(:success, resource, action)
-            # destroy.js.erb
-          end
-        else
-          flash.delete(:success)
-          request.format = :html  # Don't run destroy.js.erb
-
-          format.html do
-            flash[:danger] = (flash.now[:danger].presence || resource_flash(:danger, resource, action))
-            redirect_to(resource_redirect_path(action))
-          end
-
-        end
-      end
-    end
-
-    def member_action(action)
-      Rails.logger.info 'Processed by Effective::CrudController#member_action'
-
-      self.resource ||= resource_scope.find(params[:id])
-
-      EffectiveResources.authorize!(self, action, resource)
-
-      @page_title ||= "#{action.to_s.titleize} #{resource}"
-
-      if request.get?
-        run_callbacks(:resource_render) and return
+      def effective_resource
+        @_effective_resource ||= Effective::Resource.new(controller_path)
       end
 
-      raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
-
-      respond_to do |format|
-        if save_resource(resource, action, (send(resource_params_method_name) rescue {}))
-          request.format = :html if specific_redirect_path?(action)
-
-          format.html do
-            flash[:success] ||= resource_flash(:success, resource, action)
-            redirect_to(resource_redirect_path(action))
-          end
-
-          format.js do
-            flash.now[:success] ||= resource_flash(:success, resource, action)
-            reload_resource
-            render_member_action(action)
-          end
-        else
-          flash.delete(:success)
-          flash.now[:danger] ||= resource_flash(:danger, resource, action)
-
-          run_callbacks(:resource_render)
-
-          format.html do
-            if resource_edit_path && (referer_redirect_path || '').end_with?(resource_edit_path)
-              @page_title ||= "Edit #{resource}"
-              render :edit
-            elsif resource_new_path && (referer_redirect_path || '').end_with?(resource_new_path)
-              @page_title ||= "New #{resource_name.titleize}"
-              render :new
-            elsif resource_show_path && (referer_redirect_path || '').end_with?(resource_show_path)
-              @page_title ||= resource_name.titleize
-              render :show
-            else
-              @page_title ||= resource.to_s
-              flash[:danger] = flash.now[:danger]
-              redirect_to(referer_redirect_path || resource_redirect_path(action))
-            end
-          end
-
-          format.js { render_member_action(action) }
-        end
-      end
-    end
-
-    # Which member javascript view to render: #{action}.js or effective_resources member_action.js
-    def render_member_action(action)
-      view = lookup_context.template_exists?(action, _prefixes) ? action : :member_action
-      render(view, locals: { action: action })
-    end
-
-    # No attributes are assigned or saved. We purely call action! on the resource
-    def collection_action(action)
-      Rails.logger.info 'Processed by Effective::CrudController#collection_action'
-
-      action = action.to_s.gsub('bulk_', '').to_sym
-
-      if params[:ids].present?
-        self.resources ||= resource_scope.where(id: params[:ids])
-      end
-
-      if effective_resource.scope?(action)
-        self.resources ||= resource_scope.public_send(action)
-      end
-
-      self.resources ||= resource_scope.all
-
-      EffectiveResources.authorize!(self, action, resource_klass)
-      @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
-
-      if request.get?
-        run_callbacks(:resource_render) and return
-      end
-
-      raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
-      raise "expected all #{resource_name} objects to respond to #{action}!" if resources.to_a.present? && !resources.all? { |resource| resource.respond_to?("#{action}!") }
-
-      successes = 0
-
-      ActiveRecord::Base.transaction do
-        successes = resources.select do |resource|
-          begin
-            resource.public_send("#{action}!") if EffectiveResources.authorized?(self, action, resource)
-          rescue => e
-            false
-          end
-        end.length
-      end
-
-      render json: { status: 200, message: "Successfully #{action_verb(action)} #{successes} / #{resources.length} selected #{resource_plural_name}" }
     end
 
     protected
@@ -643,7 +285,7 @@ module Effective
         config[params[:commit].to_s] || config.find { |_, v| v[:action] == :save } || { action: :save }
       end
 
-      commit.reverse_merge!(ons[commit[:action]]) if ons[commit[:action]]
+      commit.reverse_merge!(self.class.ons[commit[:action]]) if self.class.ons[commit[:action]]
 
       commit
     end
