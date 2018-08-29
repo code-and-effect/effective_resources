@@ -28,7 +28,7 @@ module EffectiveResourcesPrivateHelper
       opts[:class] ||= (
         if opts['data-method'] == :delete
           'btn btn-danger'
-        elsif action == :save && index == 0
+        elsif index == 0
           'btn btn-primary'
         elsif defined?(EffectiveBootstrap)
           'btn btn-secondary'

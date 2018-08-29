@@ -22,7 +22,7 @@ module Effective
         end
 
         (effective_resource.collection_actions - effective_resource.crud_actions).each do |action|
-          define_method(action) { collecton_action(action) }
+          define_method(action) { collection_action(action) }
         end
       end
 

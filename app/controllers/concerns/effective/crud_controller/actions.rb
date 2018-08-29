@@ -189,7 +189,7 @@ module Effective
         @page_title ||= "#{action.to_s.titleize} #{resource}"
 
         if request.get?
-          run_callbacks(:resource_render) and return
+          run_callbacks(:resource_render); return
         end
 
         raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
@@ -263,7 +263,7 @@ module Effective
         @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
 
         if request.get?
-          run_callbacks(:resource_render) and return
+          run_callbacks(:resource_render); return
         end
 
         raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
