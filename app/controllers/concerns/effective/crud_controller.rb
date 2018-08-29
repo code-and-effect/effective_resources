@@ -11,6 +11,10 @@ module Effective
     end
 
     module ClassMethods
+      def effective_resource
+        @_effective_resource ||= Effective::Resource.new(controller_path)
+      end
+
       # Automatically respond to any action defined via the routes file
       def define_actions_from_routes
         (effective_resource.member_actions - effective_resource.crud_actions).each do |action|
@@ -98,15 +102,6 @@ module Effective
         end
       end
 
-      private
-
-      def effective_resource
-        @_effective_resource ||= Effective::Resource.new(controller_path)
-      end
-    end
-
-    def effective_resource
-      @_effective_resource ||= Effective::Resource.new(controller_path)
     end
 
     protected
@@ -261,7 +256,9 @@ module Effective
 
     private
 
-
+    def effective_resource
+      self.class.effective_resource
+    end
 
     def resource_name # 'thing'
       effective_resource.name

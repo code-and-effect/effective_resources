@@ -44,8 +44,11 @@ module Effective
             raise "expected unless: to be callable. Try submit :approve, 'Save and Approve', unless: -> { declined? }"
           end
 
-          redirect = args.delete(:redirect_to) || args.delete(:redirect) # Remove redirect_to keyword. use redirect.
-          args.merge!(action: action, redirect: redirect)
+          if args.key?(:redirect_to) # Normalize this option to redirect
+            args[:redirect] = args.delete(:redirect_to)
+          end
+
+          args[:action] = action
 
           (submits[label] ||= {}).merge!(args)
         end
@@ -73,8 +76,11 @@ module Effective
             raise "expected unless: to be callable. Try button :approve, 'Approve', unless: -> { declined? }"
           end
 
-          redirect = args.delete(:redirect_to) || args.delete(:redirect) # Remove redirect_to keyword. use redirect.
-          args.merge!(action: action, redirect: redirect)
+          if args.key?(:redirect_to) # Normalize this option to redirect
+            args[:redirect] = args.delete(:redirect_to)
+          end
+
+          args[:action] = action
 
           (buttons[label] ||= {}).merge!(args)
         end
@@ -90,8 +96,11 @@ module Effective
             raise "expected unless: to be callable. Try on :approve, redirect: -> { :edit }"
           end
 
-          redirect = args.delete(:redirect_to) || args.delete(:redirect) # Remove redirect_to keyword. use redirect.
-          args.merge!(action: action, redirect: redirect)
+          if args.key?(:redirect_to) # Normalize this option to redirect
+            args[:redirect] = args.delete(:redirect_to)
+          end
+
+          args[:action] = action
 
           (ons[action] ||= {}).merge!(args)
         end

@@ -40,7 +40,7 @@ module EffectiveResourcesPrivateHelper
       # Replace resource name in any token strings
       opts['data-confirm'].gsub!('%resource%', resource.to_s) if opts['data-confirm']
 
-      opts.except(:if, :unless, :redirect)
+      opts.except(:if, :unless, :redirect, :default)
     end
   end
 
