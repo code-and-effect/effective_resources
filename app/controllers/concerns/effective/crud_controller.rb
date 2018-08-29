@@ -257,7 +257,7 @@ module Effective
     private
 
     def effective_resource
-      self.class.effective_resource
+      @_effective_resource ||= self.class.effective_resource
     end
 
     def resource_name # 'thing'

@@ -1,7 +1,9 @@
 module EffectiveResourcesHelper
 
   def effective_submit(form, options = {}, &block) # effective_bootstrap
-    actions = (controller.respond_to?(:effective_resource) ? controller.class : Effective::Resource.new(controller_path)).submits
+    effective_resource = (controller.respond_to?(:effective_resource) ? controller.effective_resource : Effective::Resource.new(controller_path))
+    actions = (controller.respond_to?(:effective_resource) ? controller.class : effective_resource).submits
+
     submits = permitted_resource_actions(form.object, actions).map { |name, opts| form.save(name, opts.except(:action, 'data-method', 'data-confirm')) }.join.html_safe
 
     form.submit('', options) do
@@ -10,7 +12,15 @@ module EffectiveResourcesHelper
   end
 
   def render_resource_buttons(resource, atts = {}, &block)
-    actions = (controller.respond_to?(:effective_resource) ? controller.class : Effective::Resource.new(controller_path)).buttons
+    effective_resource = (controller.respond_to?(:effective_resource) ? controller.effective_resource : Effective::Resource.new(controller_path))
+    actions = (controller.respond_to?(:effective_resource) ? controller.class : effective_resource).buttons
+
+    if resource.kind_of?(Class)
+      actions = actions.delete_if { |_, v| !effective_resource.collection_get_actions.include?(v[:action]) }
+    else
+      actions = actions.delete_if { |_, v| !effective_resource.member_actions.include?(v[:action]) }
+    end
+
     render_resource_actions(resource, atts.merge(actions: actions), &block)
   end
 
@@ -23,7 +33,10 @@ module EffectiveResourcesHelper
   # locals: {} render locals
   # you can also pass all action names and true/false such as edit: true, show: false
   def render_resource_actions(resource, atts = {}, &block)
-    raise 'expected first argument to be an ActiveRecord::Base object or Array of objects' unless resource.kind_of?(ActiveRecord::Base) || resource.kind_of?(Array)
+    unless resource.kind_of?(ActiveRecord::Base) || resource.kind_of?(Class) || resource.kind_of?(Array)
+      raise 'expected first argument to be an ActiveRecord::Base object or Array of objects'
+    end
+
     raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
 
     effective_resource = atts.delete(:effective_resource)

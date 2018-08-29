@@ -6,7 +6,7 @@
     .col-8
       %h1= @page_title
     .col-4.text-right
-      = render_resource_actions(resource, @resource, show: false)
+      = render_resource_buttons(@resource, show: false)
 
   = render @resource
 

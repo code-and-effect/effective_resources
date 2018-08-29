@@ -39,6 +39,10 @@ module Effective
         class_name.gsub('::', ' ').underscore.gsub('_', ' ')
       end
 
+      def human_plural_name
+        class_name.pluralize.gsub('::', ' ').underscore.gsub('_', ' ')
+      end
+
     end
   end
 end
