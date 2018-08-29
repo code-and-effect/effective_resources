@@ -68,7 +68,6 @@ module Effective
 
       # This is a way of defining the redirect, flash etc of any action without tweaking defaults
       # submit and buttons options will be merged ontop of these
-
       def on(action, args = {})
         _insert_on(action, args)
       end
@@ -101,21 +100,18 @@ module Effective
           before_action(opts) { @_effective_resource_scope ||= instance_exec(&(block_given? ? block : obj)) }
         end
       end
-
     end
 
     protected
 
     # This calls the appropriate member action, probably save!, on the resource.
-    def save_resource(resource, action = :save, to_assign = {}, &block)
+    def save_resource(resource, action = :save, &block)
       raise "expected @#{resource_name} to respond to #{action}!" unless resource.respond_to?("#{action}!")
 
       resource.current_user ||= current_user if resource.respond_to?(:current_user=)
 
       ActiveRecord::Base.transaction do
         begin
-          resource.assign_attributes(to_assign) if to_assign.respond_to?(:permitted?) && to_assign.permitted?
-
           if resource.public_send("#{action}!") == false
             raise("failed to #{action} #{resource}")
           end

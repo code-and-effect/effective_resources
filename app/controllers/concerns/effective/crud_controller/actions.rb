@@ -117,8 +117,11 @@ module Effective
         EffectiveResources.authorize!(self, action, resource) unless action == :save
         EffectiveResources.authorize!(self, :update, resource) if action == :save
 
+        resource.assign_attributes(send(resource_params_method_name))
+        resource.current_user ||= current_user if resource.respond_to?(:current_user=)
+
         respond_to do |format|
-          if save_resource(resource, action, send(resource_params_method_name))
+          if save_resource(resource, action)
             request.format = :html if specific_redirect_path?
 
             format.html do
@@ -191,8 +194,11 @@ module Effective
 
         raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
 
+        resource.assign_attributes(send(resource_params_method_name))
+        resource.current_user ||= current_user if resource.respond_to?(:current_user=)
+
         respond_to do |format|
-          if save_resource(resource, action, (send(resource_params_method_name) rescue {}))
+          if save_resource(resource, action)
             request.format = :html if specific_redirect_path?(action)
 
             format.html do

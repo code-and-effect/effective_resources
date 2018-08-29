@@ -106,7 +106,6 @@ module Effective
         end
       end
 
-
     end
   end
 end
