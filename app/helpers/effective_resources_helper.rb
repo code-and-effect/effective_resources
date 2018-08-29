@@ -3,31 +3,20 @@ module EffectiveResourcesHelper
   def effective_submit(form, options = {}, &block) # effective_bootstrap
     actions = (controller.respond_to?(:effective_resource) ? controller.class : Effective::Resource.new(controller_path)).submits
 
-    submits = permitted_resource_actions(form.object, actions).map { |name, opts| form.save(name, opts) }.join.html_safe
+    effective_resource = (controller.respond_to?(:effective_resource) ? controller.effective_resource : Effective::Resource.new(controller_path))
+
+    submits = permitted_resource_actions(form.object, effective_resource, actions).map do |name, opts|
+      form.save(name, opts.except(:action, 'data-method', 'data-confirm'))
+    end.join.html_safe
 
     form.submit('', options) do
       (block_given? ? capture(&block) : ''.html_safe) + submits
     end
   end
 
-  def permitted_resource_actions(resource, actions)
-    actions.select do |commit, args|
-      action = (args[:action] == :save ? (resource.new_record? ? :create : :update) : args[:action])
-
-      (args.key?(:if) ? resource.instance_exec(&args[:if]) : true) &&
-      (args.key?(:unless) ? !resource.instance_exec(&args[:unless]) : true) &&
-      EffectiveResources.authorized?(controller, action, resource)
-    end.transform_values do |opts|
-      opts.except(:action, :default, :if, :unless, :redirect)
-    end
-  end
-
-  def render_resource_buttons(resource, instance, atts = {}, &block)
+  def render_resource_buttons(resource, atts = {}, &block)
     actions = (controller.respond_to?(:effective_resource) ? controller.class : Effective::Resource.new(controller_path)).buttons
-
-    buttons = permitted_resource_actions(form.object, submits).map { |name, opts| form.save(name, opts) }.join.html_safe
-
-    render_resource_actions(resource, instance, atts.merge(buttons: true), &block)
+    render_resource_actions(resource, atts.merge(actions: actions), &block)
   end
 
   # Renders the effective/resource view partial for this resource
@@ -38,30 +27,34 @@ module EffectiveResourcesHelper
   # partial: :dropleft|:glyphicons|string
   # locals: {} render locals
   # you can also pass all action names and true/false such as edit: true, show: false
-  def render_resource_actions(resource, instance = nil, atts = {}, &block)
-    (atts = instance; instance = nil) if instance.kind_of?(Hash) && atts.blank?
-    raise 'expected first argument to be an Effective::Resource' unless resource.kind_of?(Effective::Resource)
+  def render_resource_actions(resource, atts = {}, &block)
+    raise 'expected first argument to be an ActiveRecord::Base object or Array of objects' unless resource.kind_of?(ActiveRecord::Base) || resource.kind_of?(Array)
     raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
 
+    effective_resource = atts.delete(:effective_resource)
+    effective_resource ||= (controller.respond_to?(:effective_resource) ? controller.effective_resource : Effective::Resource.new(controller_path))
+
+    actions = atts.delete(:actions) || effective_resource.resource_actions
     locals = atts.delete(:locals) || {}
-    namespace = atts.delete(:namespace) || (resource.namespace.to_sym if resource.namespace)
+    namespace = atts.delete(:namespace) || (effective_resource.namespace.to_sym if effective_resource.namespace)
     partial = atts.delete(:partial)
     spacer_template = locals.delete(:spacer_template)
 
+    # Filter Actions
+    action_keys = actions.map { |_, v| v[:action] }
+    raise "unknown action for #{effective_resource.name}: #{(atts.keys - action_keys).join(' ')}." if (atts.keys - action_keys).present?
+    actions = actions.delete_if { |_, v| atts[v[:action]] == false }
+
+    # Select Partial
     partial = ['effective/resource/actions', partial.to_s].join('_') if partial.kind_of?(Symbol)
     partial = (partial.presence || 'effective/resource/actions') + '.html'
 
-    actions = (instance ? resource.member_actions : resource.collection_get_actions)
-    actions = (actions & resource.crud_actions) if atts.delete(:crud)
-    actions = (actions - resource.crud_actions) if atts.delete(:buttons)
+    # Assign Locals
+    locals = { resource: resource, effective_resource: effective_resource, namespace: namespace, actions: actions }.compact.merge(locals)
 
-    raise "unknown action for #{resource.name}: #{(atts.keys - actions).join(' ')}." if (atts.keys - actions).present?
-    actions = (actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys).uniq
-
-    locals = { resource: instance, effective_resource: resource, namespace: namespace, actions: actions }.compact.merge(locals)
-
-    if instance.kind_of?(Array)
-      render(partial: partial, collection: instance, as: :resource, locals: locals.except(:resource), spacer_template: spacer_template)
+    # Render
+    if resource.kind_of?(Array)
+      render(partial: partial, collection: resource, as: :resource, locals: locals.except(:resource), spacer_template: spacer_template)
     elsif block_given?
       render(partial, locals) { yield }
     else

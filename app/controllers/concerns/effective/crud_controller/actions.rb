@@ -177,7 +177,7 @@ module Effective
       end
 
       def member_action(action)
-        Rails.logger.info 'Processed by Effective::CrudController#member_action'
+        Rails.logger.info "Processed by Effective::CrudController#member_action"
 
         self.resource ||= resource_scope.find(params[:id])
 

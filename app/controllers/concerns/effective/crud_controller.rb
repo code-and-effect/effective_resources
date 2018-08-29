@@ -103,7 +103,10 @@ module Effective
       def effective_resource
         @_effective_resource ||= Effective::Resource.new(controller_path)
       end
+    end
 
+    def effective_resource
+      @_effective_resource ||= Effective::Resource.new(controller_path)
     end
 
     protected
@@ -258,9 +261,7 @@ module Effective
 
     private
 
-    def effective_resource
-      @_effective_resource ||= Effective::Resource.new(controller_path)
-    end
+
 
     def resource_name # 'thing'
       effective_resource.name

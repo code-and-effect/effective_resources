@@ -1,11 +1,4 @@
-- if actions.index(:edit)
-  - if EffectiveResources.authorized?(controller, :edit, resource)
-    = edit_icon_to effective_resource.action_path(:edit, resource)
+- permitted_resource_actions(resource, effective_resource, actions).each do |label, opts|
+  = glyphicon_to(opts[:action], (effective_resource.action_path(opts[:action], resource) || '#'), opts.except(:action, :class))
 
-- if actions.index(:show)
-  - if EffectiveResources.authorized?(controller, :show, resource)
-    = show_icon_to effective_resource.action_path(:show, resource)
-
-- if actions.index(:destroy)
-  - if EffectiveResources.authorized?(controller, :destroy, resource)
-    = destroy_icon_to effective_resource.action_path(:destroy, resource), data: { method: :delete, confirm: "Really delete #{resource}?" }
+= yield if block_given?
