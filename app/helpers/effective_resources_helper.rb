@@ -2,12 +2,7 @@ module EffectiveResourcesHelper
 
   def effective_submit(form, options = {}, &block) # effective_bootstrap
     actions = (controller.respond_to?(:effective_resource) ? controller.class : Effective::Resource.new(controller_path)).submits
-
-    effective_resource = (controller.respond_to?(:effective_resource) ? controller.effective_resource : Effective::Resource.new(controller_path))
-
-    submits = permitted_resource_actions(form.object, effective_resource, actions).map do |name, opts|
-      form.save(name, opts.except(:action, 'data-method', 'data-confirm'))
-    end.join.html_safe
+    submits = permitted_resource_actions(form.object, actions).map { |name, opts| form.save(name, opts.except(:action, 'data-method', 'data-confirm')) }.join.html_safe
 
     form.submit('', options) do
       (block_given? ? capture(&block) : ''.html_safe) + submits

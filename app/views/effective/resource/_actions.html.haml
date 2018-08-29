@@ -1,4 +1,4 @@
-- permitted_resource_actions(resource, effective_resource, actions).each do |label, opts|
+- permitted_resource_actions(resource, actions, effective_resource).each do |label, opts|
   = link_to(label, (effective_resource.action_path(opts[:action], resource) || '#'), opts.except(:action))
 
 = yield if block_given?

@@ -1,6 +1,8 @@
 module EffectiveResourcesPrivateHelper
 
-  def permitted_resource_actions(resource, effective_resource, actions)
+  def permitted_resource_actions(resource, actions, effective_resource = nil)
+    effective_resource ||= (controller.respond_to?(:effective_resource) ? controller.effective_resource : Effective::Resource.new(controller_path))
+
     actions.select do |commit, args|
       action = (args[:action] == :save ? (resource.new_record? ? :create : :update) : args[:action])
 

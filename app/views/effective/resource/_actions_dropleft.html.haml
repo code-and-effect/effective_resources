@@ -1,5 +1,5 @@
 = dropdown(variation: :dropleft) do
-  - permitted_resource_actions(resource, effective_resource, actions).each do |label, opts|
+  - permitted_resource_actions(resource, actions, effective_resource).each do |label, opts|
     = dropdown_link_to(label, (effective_resource.action_path(opts[:action], resource) || '#'), opts.except(:action, :class))
 
   = yield if block_given?
