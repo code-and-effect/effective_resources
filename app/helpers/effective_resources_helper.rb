@@ -1,12 +1,32 @@
 module EffectiveResourcesHelper
 
-  def effective_submit(form, options = {}, &block) # effective_bootstrap
+  # effective_bootstrap
+  def effective_submit(form, options = {}, &block)
     actions = (controller.respond_to?(:effective_resource) ? controller.class : find_effective_resource).submits
     actions = permitted_resource_actions(form.object, actions)
 
     submits = actions.map { |name, opts| form.save(name, opts.except(:action, 'data-method', 'data-confirm')) }.join.html_safe
 
     form.submit('', options) do
+      (block_given? ? capture(&block) : ''.html_safe) + submits
+    end
+  end
+
+  # effective_form_inputs
+  def simple_form_submit(form, options = {}, &block)
+    actions = (controller.respond_to?(:effective_resource) ? controller.class : find_effective_resource).submits
+    actions = permitted_resource_actions(form.object, actions)
+
+    submits = actions.map { |name, opts| form.button(:submit, name, opts.except(:action, 'data-method', 'data-confirm')) }.join('&nbsp;').html_safe
+
+    # I think this is a bug. I can't override default button class when passing my own class: variable. it merges them.
+    if (btn_class = SimpleForm.button_class).present?
+      submits = submits.map { |submit| submit.sub(btn_class, '') }
+    end
+
+    wrapper_options = { class: 'form-actions' }.merge(options.delete(:wrapper_html) || {})
+
+    content_tag(:div, wrapper_options) do
       (block_given? ? capture(&block) : ''.html_safe) + submits
     end
   end
