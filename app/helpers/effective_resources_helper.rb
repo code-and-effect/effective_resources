@@ -1,10 +1,10 @@
 module EffectiveResourcesHelper
 
   def effective_submit(form, options = {}, &block) # effective_bootstrap
-    effective_resource = (controller.respond_to?(:effective_resource) ? controller.effective_resource : Effective::Resource.new(controller_path))
-    actions = (controller.respond_to?(:effective_resource) ? controller.class : effective_resource).submits
+    actions = (controller.respond_to?(:effective_resource) ? controller.class : find_effective_resource).submits
+    actions = permitted_resource_actions(form.object, actions)
 
-    submits = permitted_resource_actions(form.object, actions).map { |name, opts| form.save(name, opts.except(:action, 'data-method', 'data-confirm')) }.join.html_safe
+    submits = actions.map { |name, opts| form.save(name, opts.except(:action, 'data-method', 'data-confirm')) }.join.html_safe
 
     form.submit('', options) do
       (block_given? ? capture(&block) : ''.html_safe) + submits
@@ -12,13 +12,13 @@ module EffectiveResourcesHelper
   end
 
   def render_resource_buttons(resource, atts = {}, &block)
-    effective_resource = (controller.respond_to?(:effective_resource) ? controller.effective_resource : Effective::Resource.new(controller_path))
+    effective_resource = find_effective_resource
     actions = (controller.respond_to?(:effective_resource) ? controller.class : effective_resource).buttons
 
-    if resource.kind_of?(Class)
-      actions = actions.delete_if { |_, v| !effective_resource.collection_get_actions.include?(v[:action]) }
+    actions = if resource.kind_of?(Class)
+      actions.delete_if { |_, v| !effective_resource.collection_get_actions.include?(v[:action]) }
     else
-      actions = actions.delete_if { |_, v| !effective_resource.member_actions.include?(v[:action]) }
+      actions.delete_if { |_, v| !effective_resource.member_actions.include?(v[:action]) }
     end
 
     render_resource_actions(resource, atts.merge(actions: actions), &block)
@@ -33,20 +33,16 @@ module EffectiveResourcesHelper
   # locals: {} render locals
   # you can also pass all action names and true/false such as edit: true, show: false
   def render_resource_actions(resource, atts = {}, &block)
-    unless resource.kind_of?(ActiveRecord::Base) || resource.kind_of?(Class) || resource.kind_of?(Array)
-      raise 'expected first argument to be an ActiveRecord::Base object or Array of objects'
-    end
-
+    raise 'expected first argument to be an ActiveRecord::Base object or Array of objects' unless resource.kind_of?(ActiveRecord::Base) || resource.kind_of?(Class) || resource.kind_of?(Array)
     raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
 
-    effective_resource = atts.delete(:effective_resource)
-    effective_resource ||= (controller.respond_to?(:effective_resource) ? controller.effective_resource : Effective::Resource.new(controller_path))
-
-    actions = atts.delete(:actions) || effective_resource.resource_actions
     locals = atts.delete(:locals) || {}
-    namespace = atts.delete(:namespace) || (effective_resource.namespace.to_sym if effective_resource.namespace)
     partial = atts.delete(:partial)
     spacer_template = locals.delete(:spacer_template)
+
+    effective_resource = (atts.delete(:effective_resource) || find_effective_resource)
+    actions = atts.delete(:actions) || effective_resource.resource_actions
+    namespace = atts.delete(:namespace) || (effective_resource.namespace.to_sym if effective_resource.namespace)
 
     # Filter Actions
     action_keys = actions.map { |_, v| v[:action] }
@@ -71,25 +67,23 @@ module EffectiveResourcesHelper
   end
 
   # When called from /admin/things/new.html.haml this will render 'admin/things/form', or 'things/form', or 'thing/form'
-  def render_resource_form(resource, instance = nil, atts = {})
-    (atts = instance; instance = nil) if instance.kind_of?(Hash) && atts.blank?
-    raise 'expected first argument to be an Effective::Resource' unless resource.kind_of?(Effective::Resource)
+  def render_resource_form(resource, atts = {})
+    raise 'expected first argument to be an ActiveRecord::Base object' unless resource.kind_of?(ActiveRecord::Base)
     raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
 
-    instance = instance || instance_variable_get('@' + resource.name) || resource.instance
-    raise "unable to find resource instance.  Either pass the instance as the second argument, or assign @#{resource.name}" unless instance
+    effective_resource = (atts.delete(:effective_resource) || find_effective_resource)
 
     action = atts.delete(:action)
-    atts = { :namespace => (resource.namespace.to_sym if resource.namespace), resource.name.to_sym => instance }.compact.merge(atts)
+    atts = { :namespace => (effective_resource.namespace.to_sym if effective_resource.namespace), effective_resource.name.to_sym => resource }.compact.merge(atts)
 
     if lookup_context.template_exists?("form_#{action}", controller._prefixes, :partial)
       render "form_#{action}", atts
     elsif lookup_context.template_exists?('form', controller._prefixes, :partial)
       render 'form', atts
-    elsif lookup_context.template_exists?('form', resource.plural_name, :partial)
-      render "#{resource.plural_name}/form", atts
-    elsif lookup_context.template_exists?('form', resource.name, :partial)
-      render "#{resource.name}/form", atts
+    elsif lookup_context.template_exists?('form', effective_resource.plural_name, :partial)
+      render "#{effective_resource.plural_name}/form", atts
+    elsif lookup_context.template_exists?('form', effective_resource.name, :partial)
+      render "#{effective_resource.name}/form", atts
     else
       render 'form', atts  # Will raise the regular error
     end

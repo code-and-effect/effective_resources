@@ -26,10 +26,10 @@ module EffectiveResourcesPrivateHelper
 
       # Assign class
       opts[:class] ||= (
-        if action == :save && index == 0
-          'btn btn-primary'
-        elsif opts['data-method'] == :delete
+        if opts['data-method'] == :delete
           'btn btn-danger'
+        elsif action == :save && index == 0
+          'btn btn-primary'
         elsif defined?(EffectiveBootstrap)
           'btn btn-secondary'
         else
@@ -42,6 +42,10 @@ module EffectiveResourcesPrivateHelper
 
       opts.except(:if, :unless, :redirect, :default)
     end
+  end
+
+  def find_effective_resource
+    @_effective_resource || (controller.effective_resource if controller.respond_to?(:effective_resource)) || Effective::Resource.new(controller_path)
   end
 
 end
