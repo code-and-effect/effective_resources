@@ -8,8 +8,19 @@ module Effective
           @_effective_resource ||= Effective::Resource.new(controller_path)
         end
 
+        # { 'Save' => { action: save, ...}}
         def submits
-          effective_resource.submits
+          @_effective_submits ||= effective_resource.submits
+        end
+
+        # { 'Approve' => { action: approve, ...}}
+        def buttons
+          @_effective_buttons ||= effective_resource.buttons
+        end
+
+        # { :approve => { redirect: .. }}
+        def ons
+          @_effective_ons ||= {}
         end
       end
 
@@ -21,9 +32,13 @@ module Effective
 
       # Automatically respond to any action defined via the routes file
       def define_actions_from_routes
-        resource = Effective::Resource.new(controller_path)
-        (resource.member_actions - resource.crud_actions).each { |action| member_action(action) }
-        (resource.collection_actions - resource.crud_actions).each { |action| collection_action(action) }
+        (effective_resource.member_actions - effective_resource.crud_actions).each do |action|
+          define_method(action) { member_action(action) }
+        end
+
+        (effective_resource.collection_actions - effective_resource.crud_actions).each do |action|
+          define_method(action) { collecton_action(action) }
+        end
       end
 
       # https://github.com/rails/rails/blob/v5.1.4/actionpack/lib/abstract_controller/callbacks.rb
@@ -40,9 +55,9 @@ module Effective
       end
 
       # This controls the form submit options of effective_submit
-      # It also controls the redirect path for any actions
+      # Takes precidence over any 'on' dsl commands
       #
-      # Effective::Resource will populate this with all member_post_actions
+      # Effective::Resource will populate this with all crud actions
       # And you can control the details with this DSL:
       #
       # submit :approve, 'Save and Approve', unless: -> { approved? }, redirect: :show
@@ -51,19 +66,19 @@ module Effective
       # submit :toggle, 'Whitelist', if: -> { !sync? }, class: 'btn btn-primary'
       # submit :save, 'Save', success: -> { "#{self} was saved okay!" }
 
-      def submit(action, commit = nil, args = {})
+      def submit(action, label = nil, args = {})
         raise 'expected args to be a Hash or false' unless args.kind_of?(Hash) || args == false
 
-        if commit == false
-          submits.delete_if { |commit, args| args[:action] == action }; return
+        if label == false
+          submits.delete_if { |label, args| args[:action] == action }; return
         end
 
         if args == false
-          submits.delete(commit); return
+          submits.delete(label); return
         end
 
-        if commit # Overwrite the default member action when given a custom commit
-          submits.delete_if { |commit, args| args[:default] && args[:action] == action }
+        if label # Overwrite the default member action when given a custom submit
+          submits.delete_if { |label, args| args[:default] && args[:action] == action }
         end
 
         if args.key?(:if) && args[:if].respond_to?(:call) == false
@@ -77,7 +92,63 @@ module Effective
         redirect = args.delete(:redirect_to) || args.delete(:redirect) # Remove redirect_to keyword. use redirect.
         args.merge!(action: action, redirect: redirect)
 
-        (submits[commit] ||= {}).merge!(args)
+        (submits[label] ||= {}).merge!(args)
+      end
+
+      # This controls the resource buttons section of the page
+      # Takes precidence over any on commands
+      #
+      # Effective::Resource will populate this with all member_actions
+      #
+      # button :approve, 'Approve', unless: -> { approved? }, redirect: :show
+      # button :decline, false
+      def button(action, label = nil, args = {})
+        raise 'expected args to be a Hash or false' unless args.kind_of?(Hash) || args == false
+
+        if label == false
+          buttons.delete_if { |label, args| args[:action] == action }; return
+        end
+
+        if args == false
+          buttons.delete(label); return
+        end
+
+        if label # Overwrite the default member action when given a custom label
+          buttons.delete_if { |label, args| args[:default] && args[:action] == action }
+        end
+
+        if args.key?(:if) && args[:if].respond_to?(:call) == false
+          raise "expected if: to be callable. Try button :approve, 'Approve', if: -> { finished? }"
+        end
+
+        if args.key?(:unless) && args[:unless].respond_to?(:call) == false
+          raise "expected unless: to be callable. Try button :approve, 'Approve', unless: -> { declined? }"
+        end
+
+        redirect = args.delete(:redirect_to) || args.delete(:redirect) # Remove redirect_to keyword. use redirect.
+        args.merge!(action: action, redirect: redirect)
+
+        (buttons[label] ||= {}).merge!(args)
+      end
+
+      # This is a way of defining the redirect, flash etc of any action without tweaking defaults
+      # submit and buttons options will be merged ontop of these
+
+      def on(action, args = {})
+        raise 'expected args to be a Hash or false' unless args.kind_of?(Hash) || args == false
+
+        if args.key?(:if) && args[:if].respond_to?(:call) == false
+          raise "expected if: to be callable. Try on :approve, redirect: -> { :edit }"
+        end
+
+        if args.key?(:unless) && args[:unless].respond_to?(:call) == false
+          raise "expected unless: to be callable. Try on :approve, redirect: -> { :edit }"
+        end
+
+        redirect = args.delete(:redirect_to) || args.delete(:redirect) # Remove redirect_to keyword. use redirect.
+        args.merge!(action: action, redirect: redirect)
+
+        (ons[action] ||= {}).merge!(args)
       end
 
       # page_title 'My Title', only: [:new]
@@ -112,55 +183,13 @@ module Effective
           end
         end
       end
-
-      # Defines a function to handle a GET and POST request on this URL
-      # Just add a member action to your routes, you shouldn't need to call this directly
-      def member_action(action)
-        define_method(action) do
-          Rails.logger.info 'Processed by Effective::CrudController#member_action'
-
-          self.resource ||= resource_scope.find(params[:id])
-
-          EffectiveResources.authorize!(self, action, resource)
-
-          @page_title ||= "#{action.to_s.titleize} #{resource}"
-
-          request.get? ? run_callbacks(:resource_render) : member_post_action(action)
-        end
-      end
-
-      # Defines a function to handle a GET and POST request on this URL
-      # Handles bulk_ actions
-      # Just add a member action to your routes, you shouldn't need to call this directly
-      # You shouldn't need to call this directly
-      def collection_action(action)
-        define_method(action) do
-          Rails.logger.info 'Processed by Effective::CrudController#collection_action'
-
-          if params[:ids].present?
-            self.resources ||= resource_scope.where(id: params[:ids])
-          end
-
-          if effective_resource.scope?(action)
-            self.resources ||= resource_scope.public_send(action)
-          end
-
-          self.resources ||= resource_scope.all
-
-          EffectiveResources.authorize!(self, action, resource_klass)
-
-          @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
-
-          request.get? ? run_callbacks(:resource_render) : collection_post_action(action)
-        end
-      end
     end
 
     def index
       Rails.logger.info 'Processed by Effective::CrudController#index'
 
-      @page_title ||= resource_plural_name.titleize
       EffectiveResources.authorize!(self, :index, resource_klass)
+      @page_title ||= resource_plural_name.titleize
 
       self.resources ||= resource_scope.all
 
@@ -331,11 +360,22 @@ module Effective
       end
     end
 
-    def member_post_action(action)
+    def member_action(action)
+      Rails.logger.info 'Processed by Effective::CrudController#member_action'
+
+      self.resource ||= resource_scope.find(params[:id])
+
+      EffectiveResources.authorize!(self, action, resource)
+
+      @page_title ||= "#{action.to_s.titleize} #{resource}"
+
+      if request.get?
+        run_callbacks(:resource_render) and return
+      end
+
       raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
 
       respond_to do |format|
-
         if save_resource(resource, action, (send(resource_params_method_name) rescue {}))
           request.format = :html if specific_redirect_path?(action)
 
@@ -384,11 +424,30 @@ module Effective
     end
 
     # No attributes are assigned or saved. We purely call action! on the resource
-    def collection_post_action(action)
+    def collection_action(action)
+      Rails.logger.info 'Processed by Effective::CrudController#collection_action'
+
       action = action.to_s.gsub('bulk_', '').to_sym
 
+      if params[:ids].present?
+        self.resources ||= resource_scope.where(id: params[:ids])
+      end
+
+      if effective_resource.scope?(action)
+        self.resources ||= resource_scope.public_send(action)
+      end
+
+      self.resources ||= resource_scope.all
+
+      EffectiveResources.authorize!(self, action, resource_klass)
+      @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
+
+      if request.get?
+        run_callbacks(:resource_render) and return
+      end
+
       raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
-      raise "expected #{resource_name} to respond to #{action}!" if resources.to_a.present? && !resources.first.respond_to?("#{action}!")
+      raise "expected all #{resource_name} objects to respond to #{action}!" if resources.to_a.present? && !resources.all? { |resource| resource.respond_to?("#{action}!") }
 
       successes = 0
 
@@ -569,25 +628,24 @@ module Effective
       effective_resource.klass
     end
 
-    def resource_human_name
-      effective_resource.human_name
-    end
-
     def resource_plural_name # 'things'
       effective_resource.plural_name
     end
 
     # Based on the incoming params[:commit] or passed action
+    # Merges any ons
     def commit_action(action = nil)
-      if action.present?
-        self.class.submits[action.to_s] ||
-        self.class.submits.find { |_, v| v[:action] == action }.try(:last) ||
-        { action: action }
-      else # Get the current commit
-        self.class.submits[params[:commit].to_s] ||
-        self.class.submits.find { |_, v| v[:action] == :save }.try(:last) ||
-        { action: :save }
+      config = (['create', 'update'].include?(params[:action]) ? self.class.submits : self.class.buttons)
+
+      commit = if action.present?
+        config[action.to_s] || config.find { |_, v| v[:action] == action }.try(:last) || { action: action }
+      else
+        config[params[:commit].to_s] || config.find { |_, v| v[:action] == :save } || { action: :save }
       end
+
+      commit.reverse_merge!(ons[commit[:action]]) if ons[commit[:action]]
+
+      commit
     end
 
     def specific_redirect_path?(action = nil)

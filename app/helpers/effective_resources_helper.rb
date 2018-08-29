@@ -10,32 +10,8 @@ module EffectiveResourcesHelper
     end
   end
 
-  # effective_form_inputs
-  def simple_form_submit(form, options = {}, &block)
-    resource = (controller.class.respond_to?(:effective_resource) ? controller.class.effective_resource : Effective::Resource.new(controller_path))
-    actions = resource.submits_for(form.object, controller: controller)
-
-    buttons = actions.map { |action| form.button(:submit, *action) }
-
-    # I think this is a bug. I can't override default button class when passing my own class: variable. it merges them.
-    if defined?(SimpleForm) && (btn_class = SimpleForm.button_class).present?
-      buttons = buttons.map { |button| button.sub(btn_class, '') }
-    end
-
-    wrapper_options = { class: 'form-actions' }.merge(options.delete(:wrapper_html) || {})
-
-    content_tag(:div, wrapper_options) do
-      (block_given? ? capture(&block) : ''.html_safe) + buttons.join('&nbsp;').html_safe
-    end
-  end
-
-  def simple_form_save(form, label = 'Save', options = {}, &block)
-    wrapper_options = { class: 'form-actions' }.merge(options.delete(:wrapper_html) || {})
-    options = { class: 'btn btn-primary', data: { disable_with: 'Saving...'} }.merge(options)
-
-    content_tag(:div, wrapper_options) do
-      form.button(:submit, label, options) + (capture(&block) if block_given?)
-    end
+  def render_resource_buttons(resource, instance = nil, atts = {}, &block)
+    render_resource_actions(resource, instance, atts.merge(buttons: true), &block)
   end
 
   # Renders the effective/resource view partial for this resource
@@ -59,8 +35,9 @@ module EffectiveResourcesHelper
     partial = ['effective/resource/actions', partial.to_s].join('_') if partial.kind_of?(Symbol)
     partial = (partial.presence || 'effective/resource/actions') + '.html'
 
-    actions = (instance ? (resource.member_get_actions + resource.member_delete_actions) : resource.collection_get_actions)
+    actions = (instance ? resource.member_actions : resource.collection_get_actions)
     actions = (actions & resource.crud_actions) if atts.delete(:crud)
+    actions = (actions - resource.crud_actions) if atts.delete(:buttons)
 
     raise "unknown action for #{resource.name}: #{(atts.keys - actions).join(' ')}." if (atts.keys - actions).present?
     actions = (actions - atts.reject { |_, v| v }.keys + atts.select { |_, v| v }.keys).uniq

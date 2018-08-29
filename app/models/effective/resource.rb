@@ -3,6 +3,7 @@ module Effective
     include Effective::Resources::Actions
     include Effective::Resources::Associations
     include Effective::Resources::Attributes
+    include Effective::Resources::Controller
     include Effective::Resources::Init
     include Effective::Resources::Instance
     include Effective::Resources::Forms
