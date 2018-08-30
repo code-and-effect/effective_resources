@@ -1,7 +1,10 @@
 module Effective
   module Resources
     module Relation
-      attr_reader :relation
+
+      def relation
+        @relation ||= klass.where(nil)
+      end
 
       # When Effective::Resource is initialized with an ActiveRecord relation, the following
       # methods will be available to operate on that relation, and be chainable and such

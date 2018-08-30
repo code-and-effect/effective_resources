@@ -32,7 +32,7 @@ module Effective
       end
 
       def namespaces # ['admin', 'things']
-        @namespaces
+        @namespaces || []
       end
 
       def human_name

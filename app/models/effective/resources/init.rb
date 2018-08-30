@@ -5,8 +5,6 @@ module Effective
       private
 
       def _initialize_input(input, namespace: nil)
-        @namespaces = (namespace.kind_of?(String) ? namespace.split('/') : Array(namespace)) if namespace
-
         @model_klass = case input
         when String, Symbol
           _klass_by_name(input)
@@ -25,8 +23,21 @@ module Effective
         else        ; _klass_by_name(input.class.name)
         end
 
-        @relation = _initialize_relation(input)
-        @instance = input if (klass && input.instance_of?(klass))
+        if namespace
+          @namespaces = (namespace.kind_of?(String) ? namespace.split('/') : Array(namespace))
+        end
+
+        if input.kind_of?(ActiveRecord::Relation)
+          @relation = input
+        end
+
+        if input.kind_of?(ActiveRecord::Reflection::MacroReflection) && input.scope
+          @relation = klass.where(nil).merge(input.scope)
+        end
+
+        if klass && input.instance_of?(klass)
+          @instance = input
+        end
       end
 
       def _klass_by_name(input)
@@ -48,17 +59,6 @@ module Effective
         end
 
         nil
-      end
-
-      def _initialize_relation(input)
-        return nil unless klass && klass.respond_to?(:where)
-
-        case input
-        when ActiveRecord::Relation
-          input
-        when ActiveRecord::Reflection::MacroReflection
-          klass.where(nil).merge(input.scope) if input.scope
-        end || klass.where(nil)
       end
 
       # Lazy initialized
