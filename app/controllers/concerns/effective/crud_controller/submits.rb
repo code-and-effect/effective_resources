@@ -19,8 +19,6 @@ module Effective
           @_effective_ons ||= effective_resource.ons
         end
 
-        private
-
         def _insert_submit(action, label = nil, args = {})
           raise 'expected args to be a Hash or false' unless args.kind_of?(Hash) || args == false
 
