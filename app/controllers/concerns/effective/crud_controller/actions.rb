@@ -40,8 +40,8 @@ module Effective
           end
         end
 
-        @page_title ||= "New #{resource_name.titleize}"
         EffectiveResources.authorize!(self, :new, resource)
+        @page_title ||= "New #{resource_name.titleize}"
 
         run_callbacks(:resource_render)
       end
@@ -50,14 +50,13 @@ module Effective
         Rails.logger.info 'Processed by Effective::CrudController#create'
 
         self.resource ||= resource_scope.new
-
-        @page_title ||= "New #{resource_name.titleize}"
         action = commit_action[:action]
 
         resource.assign_attributes(send(resource_params_method_name))
-        resource.created_by ||= current_user if resource.respond_to?(:created_by=)
+        resource.created_by = current_user if resource.respond_to?(:created_by=)
 
         EffectiveResources.authorize!(self, (action == :save ? :create : action), resource)
+        @page_title ||= "New #{resource_name.titleize}"
 
         respond_to do |format|
           if save_resource(resource, action)
@@ -89,8 +88,8 @@ module Effective
 
         self.resource ||= resource_scope.find(params[:id])
 
-        @page_title ||= resource.to_s
         EffectiveResources.authorize!(self, :show, resource)
+        @page_title ||= resource.to_s
 
         run_callbacks(:resource_render)
       end
@@ -100,8 +99,8 @@ module Effective
 
         self.resource ||= resource_scope.find(params[:id])
 
-        @page_title ||= "Edit #{resource}"
         EffectiveResources.authorize!(self, :edit, resource)
+        @page_title ||= "Edit #{resource}"
 
         run_callbacks(:resource_render)
       end
@@ -110,15 +109,13 @@ module Effective
         Rails.logger.info 'Processed by Effective::CrudController#update'
 
         self.resource ||= resource_scope.find(params[:id])
-
-        @page_title = "Edit #{resource}"
-
         action = commit_action[:action]
-        EffectiveResources.authorize!(self, action, resource) unless action == :save
-        EffectiveResources.authorize!(self, :update, resource) if action == :save
+
+        EffectiveResources.authorize!(self, (action == :save ? :update : action), resource)
+        @page_title ||= "Edit #{resource}"
 
         resource.assign_attributes(send(resource_params_method_name))
-        resource.current_user ||= current_user if resource.respond_to?(:current_user=)
+        resource.current_user = current_user if resource.respond_to?(:current_user=)
 
         respond_to do |format|
           if save_resource(resource, action)
@@ -149,10 +146,10 @@ module Effective
         Rails.logger.info 'Processed by Effective::CrudController#destroy'
 
         self.resource = resource_scope.find(params[:id])
-
         action = :destroy
-        @page_title ||= "Destroy #{resource}"
+
         EffectiveResources.authorize!(self, action, resource)
+        @page_title ||= "Destroy #{resource}"
 
         respond_to do |format|
           if save_resource(resource, action)
@@ -185,22 +182,16 @@ module Effective
         self.resource ||= resource_scope.find(params[:id])
 
         EffectiveResources.authorize!(self, action, resource)
-
         @page_title ||= "#{action.to_s.titleize} #{resource}"
 
         if request.get?
           run_callbacks(:resource_render); return
         end
 
-        raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
-
         to_assign = (send(resource_params_method_name) rescue {})
+        resource.assign_attributes(to_assign) if to_assign.present? && to_assign.permitted?
 
-        if to_assign.present? && to_assign.permitted?
-          resource.assign_attributes(to_assign)
-        end
-
-        resource.current_user ||= current_user if resource.respond_to?(:current_user=)
+        resource.current_user = current_user if resource.respond_to?(:current_user=)
 
         respond_to do |format|
           if save_resource(resource, action)
@@ -266,7 +257,6 @@ module Effective
           run_callbacks(:resource_render); return
         end
 
-        raise 'expected post, patch or put http action' unless (request.post? || request.patch? || request.put?)
         raise "expected all #{resource_name} objects to respond to #{action}!" if resources.to_a.present? && !resources.all? { |resource| resource.respond_to?("#{action}!") }
 
         successes = 0

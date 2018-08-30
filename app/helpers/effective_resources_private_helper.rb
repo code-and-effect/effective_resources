@@ -1,7 +1,7 @@
 module EffectiveResourcesPrivateHelper
 
   def permitted_resource_actions(resource, actions, effective_resource = nil)
-    effective_resource ||= (controller.respond_to?(:effective_resource) ? controller.effective_resource : Effective::Resource.new(controller_path))
+    effective_resource ||= find_effective_resource
 
     actions.select do |commit, args|
       action = (args[:action] == :save ? (resource.new_record? ? :create : :update) : args[:action])
@@ -40,12 +40,12 @@ module EffectiveResourcesPrivateHelper
       # Replace resource name in any token strings
       opts['data-confirm'].gsub!('%resource%', resource.to_s) if opts['data-confirm']
 
-      opts.except(:if, :unless, :redirect, :default)
+      opts.except(:if, :unless, :redirect, :default, :success, :error)
     end
   end
 
   def find_effective_resource
-    @_effective_resource || (controller.effective_resource if controller.respond_to?(:effective_resource)) || Effective::Resource.new(controller_path)
+    @_effective_resource ||= (controller.respond_to?(:effective_resource) ? controller.effective_resource : Effective::Resource.new(controller_path))
   end
 
 end
