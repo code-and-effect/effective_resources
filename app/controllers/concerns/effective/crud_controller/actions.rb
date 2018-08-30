@@ -10,8 +10,8 @@ module Effective
 
         self.resources ||= resource_scope.all
 
-        if resource_datatable_class
-          @datatable ||= resource_datatable_class.new(resource_datatable_attributes)
+        if (datatable = resource_datatable_class).present?
+          @datatable ||= datatable.new(resource_datatable_attributes)
           @datatable.view = view_context
         end
 
