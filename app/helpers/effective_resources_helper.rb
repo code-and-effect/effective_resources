@@ -37,8 +37,10 @@ module EffectiveResourcesHelper
 
     actions = if resource.kind_of?(Class)
       actions.select { |_, v| effective_resource.collection_get_actions.include?(v[:action]) }
-    else
+    elsif resource.respond_to?(:persisted?) && resource.persisted?
       actions.select { |_, v| effective_resource.member_actions.include?(v[:action]) }
+    else
+      {}
     end
 
     render_resource_actions(resource, atts.merge(actions: actions), &block)

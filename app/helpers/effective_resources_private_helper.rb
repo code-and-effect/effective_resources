@@ -1,9 +1,10 @@
 module EffectiveResourcesPrivateHelper
+  REPLACE_PAGE_ACTIONS = {'update' => :edit, 'create' => :new}
 
   def permitted_resource_actions(resource, actions, effective_resource = nil)
     effective_resource ||= find_effective_resource
 
-    page_action = (params[:action] || 'save').to_sym
+    page_action = REPLACE_PAGE_ACTIONS[params[:action]] || params[:action]&.to_sym || :save
 
     actions.select do |commit, args|
       action = (args[:action] == :save ? (resource.new_record? ? :create : :update) : args[:action])
@@ -42,7 +43,9 @@ module EffectiveResourcesPrivateHelper
       )
 
       # Replace resource name in any token strings
-      opts['data-confirm'].gsub!('@resource', resource.to_s) if opts['data-confirm']
+      if opts['data-confirm']
+        opts['data-confirm'].gsub!('@resource', (resource.to_s.presence || effective_resource.human_name))
+      end
 
       opts.except(:default, :only, :except, :if, :unless, :redirect, :success, :danger)
     end
