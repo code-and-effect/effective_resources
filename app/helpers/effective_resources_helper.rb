@@ -109,19 +109,7 @@ module EffectiveResourcesHelper
     end
   end
 
-  def number_to_duration(duration)
-    duration = duration.to_i
-    value = duration.abs
-
-    [
-      ('-' if duration < 0),
-      ("#{value / 60}h " if value >= 60),
-      ("#{'%0.2d' % (value % 60)}m" if value > 0),
-      ('0m' if value == 0),
-    ].compact.join
-  end
-
-  ### Tableize attributes
+  # Tableize attributes
   # This is used by effective_orders, effective_logging, effective_trash and effective_mergery
   def tableize_hash(obj, table: 'table', th: true, sub_table: 'table', sub_th: true, flatten: true)
     case obj
