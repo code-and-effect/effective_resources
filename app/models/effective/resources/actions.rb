@@ -6,7 +6,7 @@ module Effective
       # Effective::Resource.new('admin/posts').routes[:index]
       def routes
         @_routes ||= (
-          matches = [[namespace, plural_name].compact.join('/'), [namespace, name].compact.join('/')]
+          matches = [[namespace, plural_name].compact.join('/'.freeze), [namespace, name].compact.join('/'.freeze)]
 
           routes_engine.routes.routes.select do |route|
             matches.any? { |match| match == route.defaults[:controller] }
@@ -19,7 +19,7 @@ module Effective
       # Effective::Resource.new('effective/order', namespace: :admin)
       def routes_engine
         case class_name
-        when 'Effective::Order'
+        when 'Effective::Order'.freeze
           EffectiveOrders::Engine
         else
           Rails.application
@@ -30,7 +30,7 @@ module Effective
       # This will return empty for create, update and destroy
       def action_path_helper(action)
         return unless routes[action]
-        return (routes[action].name + '_path') if routes[action].name.present?
+        return (routes[action].name + '_path'.freeze) if routes[action].name.present?
       end
 
       # Effective::Resource.new('admin/posts').action_path(:edit, Post.last) => '/admin/posts/3/edit'
@@ -107,29 +107,29 @@ module Effective
 
       # Same as controller_path in the view
       def controller_path
-        [namespace, plural_name].compact * '/'
+        [namespace, plural_name].compact * '/'.freeze
       end
 
       private
 
       def is_member_route?(route)
-        (route.path.required_names || []).include?('id')
+        (route.path.required_names || []).include?('id'.freeze)
       end
 
       def is_collection_route?(route)
-        (route.path.required_names || []).include?('id') == false
+        (route.path.required_names || []).include?('id'.freeze) == false
       end
 
       def is_get_route?(route)
-        route.verb.to_s.include?('GET')
+        route.verb.to_s.include?('GET'.freeze)
       end
 
       def is_delete_route?(route)
-        route.verb.to_s.include?('DELETE')
+        route.verb.to_s.include?('DELETE'.freeze)
       end
 
       def is_post_route?(route)
-        ['POST', 'PUT', 'PATCH'].any? { |verb| route.verb == verb }
+        ['POST', 'PUT', 'PATCH'].freeze.any? { |verb| route.verb == verb }
       end
     end
   end

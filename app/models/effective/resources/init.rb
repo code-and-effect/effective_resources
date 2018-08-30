@@ -4,12 +4,14 @@ module Effective
 
       private
 
-      def _initialize(input, namespace: nil)
+      def _initialize_input(input, namespace: nil)
         @namespaces = (namespace.kind_of?(String) ? namespace.split('/') : Array(namespace)) if namespace
 
         @model_klass = case input
         when String, Symbol
           _klass_by_name(input)
+        when Class
+          input
         when ActiveRecord::Relation
           input.klass
         when (ActiveRecord::Reflection::AbstractReflection rescue :nil)
@@ -19,8 +21,6 @@ module Effective
         when ActionDispatch::Journey::Route
           @initialized_name = input.defaults[:controller]
           _klass_by_name(input.defaults[:controller])
-        when Class
-          input
         when nil    ; raise 'expected a string or class'
         else        ; _klass_by_name(input.class.name)
         end

@@ -32,7 +32,7 @@ module Effective
       end
 
       def sql_direction(name)
-        name.to_s.downcase == 'desc' ? 'DESC' : 'ASC'
+        name.to_s.downcase == 'desc' ? 'DESC'.freeze : 'ASC'.freeze
       end
 
       # This is for EffectiveDatatables (col as:)

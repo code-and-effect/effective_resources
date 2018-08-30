@@ -21,6 +21,7 @@ module EffectiveResources
       ActiveSupport.on_load :active_record do
         ActiveRecord::Base.extend(ActsAsTokened::ActiveRecord)
         ActiveRecord::Base.extend(ActsAsSlugged::ActiveRecord)
+        ActiveRecord::Base.extend(EffectiveResource::ActiveRecord)
       end
     end
 
