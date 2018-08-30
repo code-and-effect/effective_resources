@@ -9,7 +9,7 @@ module Effective
         commit = if action.present?
           config[action.to_s] || config.find { |_, v| v[:action] == action }.try(:last) || { action: action }
         else
-          config[params[:commit].to_s] || config.find { |_, v| v[:action] == :save } || { action: :save }
+          config[params[:commit].to_s] || config.find { |_, v| v[:action] == :save }.try(:last) || { action: :save }
         end
 
         commit.reverse_merge!(self.class.ons[commit[:action]]) if self.class.ons[commit[:action]]

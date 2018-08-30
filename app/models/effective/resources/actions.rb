@@ -5,7 +5,7 @@ module Effective
       # This was written for the Edit actions fallback templates and Datatables
       # Effective::Resource.new('admin/posts').routes[:index]
       def routes
-        @_routes ||= (
+        @routes ||= (
           matches = [[namespace, plural_name].compact.join('/'.freeze), [namespace, name].compact.join('/'.freeze)]
 
           routes_engine.routes.routes.select do |route|
