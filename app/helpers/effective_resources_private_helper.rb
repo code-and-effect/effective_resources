@@ -10,8 +10,8 @@ module EffectiveResourcesPrivateHelper
 
       (args.key?(:only) ? args[:only].include?(page_action) : true) &&
       (args.key?(:except) ? !args[:except].include?(page_action) : true) &&
-      (args.key?(:if) ? resource.instance_exec(&args[:if]) : true) &&
-      (args.key?(:unless) ? !resource.instance_exec(&args[:unless]) : true) &&
+      (args.key?(:if) ? controller.instance_exec(&args[:if]) : true) &&
+      (args.key?(:unless) ? !controller.instance_exec(&args[:unless]) : true) &&
       EffectiveResources.authorized?(controller, action, resource)
     end.transform_values.with_index do |opts, index|
       action = opts[:action]

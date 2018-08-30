@@ -21,11 +21,11 @@ module Effective
       # Effective::Resource will populate this with all crud actions
       # And you can control the details with this DSL:
       #
-      # submit :approve, 'Save and Approve', unless: -> { approved? }, redirect: :show
+      # submit :approve, 'Save and Approve', unless: -> { resource.approved? }, redirect: :show
       #
       # submit :toggle, 'Blacklist', if: -> { sync? }, class: 'btn btn-primary'
       # submit :toggle, 'Whitelist', if: -> { !sync? }, class: 'btn btn-primary'
-      # submit :save, 'Save', success: -> { "#{self} was saved okay!" }
+      # submit :save, 'Save', success: -> { "#{resource} was saved okay!" }
       def submit(action, label = nil, args = {})
         _insert_submit(action, label, args)
       end
@@ -35,7 +35,7 @@ module Effective
       #
       # Effective::Resource will populate this with all member_actions
       #
-      # button :approve, 'Approve', unless: -> { approved? }, redirect: :show
+      # button :approve, 'Approve', unless: -> { resource.approved? }, redirect: :show
       # button :decline, false
       def button(action, label = nil, args = {})
         _insert_button(action, label, args)
