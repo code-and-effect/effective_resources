@@ -19,6 +19,7 @@ module Effective
           @_effective_ons ||= effective_resource.ons
         end
 
+        # :only, :except, :if, :unless, :redirect, :success, :danger, :class
         def _insert_submit(action, label = nil, args = {})
           raise 'expected args to be a Hash or false' unless args.kind_of?(Hash) || args == false
 
@@ -40,6 +41,16 @@ module Effective
 
           if args.key?(:unless) && args[:unless].respond_to?(:call) == false
             raise "expected unless: to be callable. Try submit :approve, 'Save and Approve', unless: -> { declined? }"
+          end
+
+          if args.key?(:only)
+            args[:only] = Array(args[:only])
+            raise "expected only: to be a symbol or array of symbols. Try submit :approve, 'Save and Approve', only: [:edit]" unless args[:only].all? { |v| v.kind_of?(Symbol) }
+          end
+
+          if args.key?(:except)
+            args[:except] = Array(args[:except])
+            raise "expected except: to be a symbol or array of symbols. Try submit :approve, 'Save and Approve', except: [:edit]" unless args[:except].all? { |v| v.kind_of?(Symbol) }
           end
 
           if args.key?(:redirect_to) # Normalize this option to redirect
@@ -74,6 +85,16 @@ module Effective
             raise "expected unless: to be callable. Try button :approve, 'Approve', unless: -> { declined? }"
           end
 
+          if args.key?(:only)
+            args[:only] = Array(args[:only])
+            raise "expected only: to be a symbol or array of symbols. Try button :approve, 'Save and Approve', only: [:edit]" unless args[:only].all? { |v| v.kind_of?(Symbol) }
+          end
+
+          if args.key?(:except)
+            args[:except] = Array(args[:except])
+            raise "expected except: to be a symbol or array of symbols. Try button :approve, 'Save and Approve', except: [:edit]" unless args[:except].all? { |v| v.kind_of?(Symbol) }
+          end
+
           if args.key?(:redirect_to) # Normalize this option to redirect
             args[:redirect] = args.delete(:redirect_to)
           end
@@ -84,15 +105,7 @@ module Effective
         end
 
         def _insert_on(action, args = {})
-          raise 'expected args to be a Hash or false' unless args.kind_of?(Hash) || args == false
-
-          if args.key?(:if) && args[:if].respond_to?(:call) == false
-            raise "expected if: to be callable. Try on :approve, redirect: -> { :edit }"
-          end
-
-          if args.key?(:unless) && args[:unless].respond_to?(:call) == false
-            raise "expected unless: to be callable. Try on :approve, redirect: -> { :edit }"
-          end
+          raise 'expected args to be a Hash' unless args.kind_of?(Hash)
 
           if args.key?(:redirect_to) # Normalize this option to redirect
             args[:redirect] = args.delete(:redirect_to)

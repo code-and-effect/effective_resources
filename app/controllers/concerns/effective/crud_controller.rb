@@ -2,8 +2,6 @@ module Effective
   module CrudController
     extend ActiveSupport::Concern
 
-    extend Effective::CrudController::Dsl
-
     include Effective::CrudController::Actions
     include Effective::CrudController::Paths
     include Effective::CrudController::Save
@@ -15,6 +13,8 @@ module Effective
     end
 
     module ClassMethods
+      include Effective::CrudController::Dsl
+
       def effective_resource
         @_effective_resource ||= Effective::Resource.new(controller_path)
       end
@@ -91,7 +91,7 @@ module Effective
       resource_scope.where_values_hash.symbolize_keys
     end
 
-    def resource_datatable_class # ThingsDatatable
+    def resource_datatable_class
       effective_resource.datatable_klass
     end
 
