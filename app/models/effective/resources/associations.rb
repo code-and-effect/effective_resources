@@ -11,6 +11,11 @@ module Effective
         @belong_tos ||= klass.reflect_on_all_associations(:belongs_to)
       end
 
+      # author_id, post_id
+      def belong_tos_ids
+        belong_tos.map { |ass| (ass.options[:foreign_key] || "#{ass.name}_id").to_sym }
+      end
+
       def has_ones
         return [] unless klass.respond_to?(:reflect_on_all_associations)
         @has_ones ||= klass.reflect_on_all_associations(:has_one)

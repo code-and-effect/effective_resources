@@ -4,11 +4,13 @@ module Effective
 
     include Effective::CrudController::Actions
     include Effective::CrudController::Paths
+    include Effective::CrudController::PermittedParams
     include Effective::CrudController::Save
     include Effective::CrudController::Submits
 
     included do
       define_actions_from_routes
+      define_permitted_params_from_model
       define_callbacks :resource_render, :resource_save, :resource_error
     end
 
@@ -29,6 +31,13 @@ module Effective
           define_method(action) { collection_action(action) }
         end
       end
+
+      def define_permitted_params_from_model
+        if effective_resource.model.present?
+          define_method(:effective_resource_permitted_params) { resource_permitted_params } # save.rb
+        end
+      end
+
     end
 
     def resource # @thing
@@ -96,7 +105,7 @@ module Effective
     end
 
     def resource_params_method_name
-      ["#{resource_name}_params", "#{resource_plural_name}_params", 'permitted_params'].find { |name| respond_to?(name, true) } || 'params'
+      ["#{resource_name}_params", "#{resource_plural_name}_params", 'permitted_params', 'effective_resource_permitted_params'].find { |name| respond_to?(name, true) } || 'params'
     end
 
   end
