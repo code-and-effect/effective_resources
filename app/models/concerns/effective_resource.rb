@@ -1,6 +1,6 @@
 # EffectiveResource
 #
-# Mark your model with 'effective_resource' make sure you have a string field :slug
+# Mark your model with 'effective_resource'
 
 module EffectiveResource
   extend ActiveSupport::Concern

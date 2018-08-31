@@ -42,6 +42,17 @@ module EffectiveResourcesPrivateHelper
         end
       )
 
+      # Assign title
+      unless action == :save
+        opts[:title] ||= case action
+          when :edit then "Edit #{resource}"
+          when :show then "#{resource}"
+          when :destroy then "Delete #{resource}"
+          when :index then "All #{effective_resource.human_plural_name.titleize}"
+          else "#{action.to_s.titleize} #{resource}"
+        end
+      end
+
       # Replace resource name in any token strings
       if opts['data-confirm']
         opts['data-confirm'].gsub!('@resource', (resource.to_s.presence || effective_resource.human_name))
