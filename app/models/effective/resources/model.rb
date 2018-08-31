@@ -16,7 +16,7 @@ module Effective
       end
 
       def permitted_attributes
-        bts = belong_tos_ids.inject({}) { |h, ass| h[ass] = [:integer]; h }
+        bts = ([klass.primary_key.to_sym] + belong_tos_ids).inject({}) { |h, ass| h[ass] = [:integer]; h }
         bts.merge(model_attributes)
       end
 

@@ -9,6 +9,29 @@ module Effective
       def resource_permitted_params
         raise 'expected resource class to have effective_resource do .. end' if effective_resource.model.blank?
 
+        permitted_params = permitted_params_for(resource)
+
+        if Rails.env.development?
+          Rails.logger.info "Effective::CrudController#resource_permitted_params:"
+          Rails.logger.info "params.require(:#{effective_resource.name}).permit(#{permitted_params.to_s[1...-1]})"
+        end
+
+        params.require(effective_resource.name).permit(*permitted_params)
+      end
+
+      private
+
+      def permitted_params_for(resource)
+        effective_resource = if resource.kind_of?(Class)
+          resource.effective_resource if resource.respond_to?(:effective_resource)
+        else
+          resource.class.effective_resource if resource.class.respond_to?(:effective_resource)
+        end
+
+        # That class doesn't implement effective_resource do .. end block
+        return [] unless effective_resource.present?
+
+        # This is :id, all belongs_to ids, and model attributes
         permitted_params = effective_resource.permitted_attributes.select do |name, (datatype, atts)|
           if BLACKLIST.include?(name)
             false
@@ -17,9 +40,9 @@ module Effective
           else
             permitted = (atts[:permitted].respond_to?(:call) ? instance_exec(&atts[:permitted]) : atts[:permitted])
 
-            if [false, true, nil].include?(permitted)
-              permitted || false
-            elsif permitted == :blank
+            if [false, true].include?(permitted)
+              permitted
+            elsif permitted.nil? || permitted == :blank
               effective_resource.namespaces.length == 0
             else # A symbol, string, or array of, representing the namespace
               (effective_resource.namespaces & Array(permitted).map(&:to_s)).present?
@@ -27,12 +50,15 @@ module Effective
           end
         end.keys
 
-        if Rails.env.development?
-          Rails.logger.info "Effective::CrudController#resource_permitted_params:"
-          Rails.logger.info permitted_params
+        # Recursively add any accepts_nested_resources
+        effective_resource.nested_resources.each do |ass|
+          if (nested_params = permitted_params_for(ass.klass)).present?
+            nested_params.insert(nested_params.rindex { |obj| !obj.kind_of?(Hash)} + 1, :_destroy)
+            permitted_params << { "#{ass.plural_name}_attributes".to_sym => nested_params }
+          end
         end
 
-        params.require(effective_resource.name).permit(*permitted_params)
+        permitted_params
       end
 
     end
