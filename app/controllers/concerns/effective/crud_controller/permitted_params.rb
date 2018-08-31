@@ -32,7 +32,7 @@ module Effective
         return [] unless effective_resource.present?
 
         # This is :id, all belongs_to ids, and model attributes
-        permitted_params = effective_resource.permitted_attributes.select do |name, (datatype, atts)|
+        permitted_params = effective_resource.permitted_attributes.select do |name, (_, atts)|
           if BLACKLIST.include?(name)
             false
           elsif atts.blank? || !atts.key?(:permitted)
@@ -40,9 +40,9 @@ module Effective
           else
             permitted = (atts[:permitted].respond_to?(:call) ? instance_exec(&atts[:permitted]) : atts[:permitted])
 
-            if [false, true].include?(permitted)
+            if permitted == true || permitted == false
               permitted
-            elsif permitted.nil? || permitted == :blank
+            elsif permitted == nil || permitted == :blank
               effective_resource.namespaces.length == 0
             else # A symbol, string, or array of, representing the namespace
               (effective_resource.namespaces & Array(permitted).map(&:to_s)).present?
@@ -51,10 +51,10 @@ module Effective
         end.keys
 
         # Recursively add any accepts_nested_resources
-        effective_resource.nested_resources.each do |ass|
-          if (nested_params = permitted_params_for(ass.klass)).present?
+        effective_resource.nested_resources.each do |nested|
+          if (nested_params = permitted_params_for(nested.klass)).present?
             nested_params.insert(nested_params.rindex { |obj| !obj.kind_of?(Hash)} + 1, :_destroy)
-            permitted_params << { "#{ass.plural_name}_attributes".to_sym => nested_params }
+            permitted_params << { "#{nested.plural_name}_attributes".to_sym => nested_params }
           end
         end
 
