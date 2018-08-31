@@ -69,7 +69,7 @@ module EffectiveResourcesHelper
     # Filter Actions
     action_keys = actions.map { |_, v| v[:action] }
     raise "unknown action for #{effective_resource.name}: #{(atts.keys - action_keys).join(' ')}." if (atts.keys - action_keys).present?
-    actions = actions.select { |_, v| atts[v[:action]] != false }
+    actions = actions.select { |_, v| atts[v[:action]].respond_to?(:call) ? instance_exec(&atts[v[:action]]) : (atts[v[:action]] != false) }
 
     # Select Partial
     partial = ['effective/resource/actions', partial.to_s].join('_') if partial.kind_of?(Symbol)
@@ -80,6 +80,7 @@ module EffectiveResourcesHelper
 
     # Render
     if resource.kind_of?(Array)
+      locals[:format_block] = block if block_given?
       render(partial: partial, collection: resource, as: :resource, locals: locals.except(:resource), spacer_template: spacer_template)
     elsif block_given?
       render(partial, locals) { yield }

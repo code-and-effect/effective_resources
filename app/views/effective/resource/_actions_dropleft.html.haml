@@ -2,4 +2,5 @@
   - permitted_resource_actions(resource, actions, effective_resource).each do |label, opts|
     = dropdown_link_to(label, (effective_resource.action_path(opts[:action], resource) || '#'), opts.except(:action, :class))
 
-  = yield if block_given?
+  = instance_exec(resource, &format_block) if local_assigns[:format_block]
+  = yield(resource) if block_given?
