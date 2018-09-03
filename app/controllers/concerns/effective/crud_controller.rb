@@ -56,11 +56,11 @@ module Effective
       send(:instance_variable_set, "@#{resource_plural_name}", instance)
     end
 
-    private
-
     def effective_resource
       @_effective_resource ||= self.class.effective_resource
     end
+
+    private
 
     def resource_name # 'thing'
       effective_resource.name

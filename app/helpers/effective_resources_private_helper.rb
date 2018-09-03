@@ -18,7 +18,9 @@ module EffectiveResourcesPrivateHelper
       action = opts[:action]
 
       # Transform data: { ... } hash into 'data-' keys
-      data.each { |k, v| opts["data-#{k}"] ||= v } if (data = opts.delete(:data))
+      if (data = opts.delete(:data))
+        data.each { |k, v| opts["data-#{k}"] ||= v }
+      end
 
       # Assign data method and confirm
       if effective_resource.member_post_actions.include?(action)
