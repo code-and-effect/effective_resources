@@ -8,7 +8,7 @@ module Effective
       end
 
       def model
-        @model || (klass.effective_resource.model if klass.respond_to?(:effective_resource))
+        @model || (klass.effective_resource.model if klass.respond_to?(:effective_resource) && klass.effective_resource)
       end
 
       def model_attributes
@@ -16,8 +16,10 @@ module Effective
       end
 
       def permitted_attributes
-        bts = ([klass.primary_key.to_sym] + belong_tos_ids).inject({}) { |h, ass| h[ass] = [:integer]; h }
-        bts.merge(model_attributes)
+        id = {klass.primary_key.to_sym => [:integer]}
+        bts = belong_tos_ids.inject({}) { |h, ass| h[ass] = [:integer]; h }
+
+        id.merge(bts).merge(model_attributes)
       end
 
     end
