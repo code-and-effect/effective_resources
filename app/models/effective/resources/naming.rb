@@ -4,7 +4,7 @@ module Effective
       SPLIT = /\/|::/  # / or ::
 
       def name # 'post'
-        @name ||= (klass.try(:name).to_s.split(SPLIT).last || '').singularize.underscore
+        @name ||= ((klass.present? ? klass.name : initialized_name).to_s.split(SPLIT).last || '').singularize.underscore
       end
 
       def plural_name # 'posts'
@@ -16,7 +16,7 @@ module Effective
       end
 
       def class_name # 'Effective::Post'
-        @model_klass.try(:name).to_s
+        @model_klass ? @model_klass.name : name.classify
       end
 
       def class_path # 'effective'

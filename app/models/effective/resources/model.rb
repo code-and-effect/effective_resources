@@ -5,21 +5,13 @@ module Effective
 
       def _initialize_model(&block)
         @model = ModelReader.new(&block)
+
+        # If effective_developer is in live mode, this will cause it to refresh the class
+        ActiveSupport.run_load_hooks(:effective_resource, klass)
       end
 
       def model
         @model || (klass.effective_resource.model if klass.respond_to?(:effective_resource) && klass.effective_resource)
-      end
-
-      def model_attributes
-        model ? model.attributes : {}
-      end
-
-      def permitted_attributes
-        id = {klass.primary_key.to_sym => [:integer]}
-        bts = belong_tos_ids.inject({}) { |h, ass| h[ass] = [:integer]; h }
-
-        id.merge(bts).merge(model_attributes)
       end
 
     end

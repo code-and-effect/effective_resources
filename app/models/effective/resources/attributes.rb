@@ -2,12 +2,34 @@ module Effective
   module Resources
     module Attributes
 
+      # This is the attributes as defined by ActiveRecord table
+      # { :name => [:string], ... }
       def attributes
-        (klass_attributes.presence || written_attributes.presence)
+        (klass_attributes.presence || model_attributes.presence)
       end
 
-      def attribute_names
-        attributes.map { |attribute| attribute.name }
+      # The attributes for each belongs_to
+      # { :client_id => [:integer], ... }
+      def belong_tos_attributes
+        belong_tos.inject({}) do |h, ass|
+          unless ass.foreign_key == 'site_id' && ass.respond_to?(:acts_as_site_specific)
+            h[ass.foreign_key.to_sym] = [:integer]
+          end; h
+        end
+      end
+
+      # This is the attributes as defined by the effective_resources do .. end block
+      # { :name => [:string, { permitted: false }], ... }
+      def model_attributes
+        model ? model.attributes : {}
+      end
+
+      # Used by effective_crud_controller to generate the permitted params
+      def permitted_attributes
+        id = {klass.primary_key.to_sym => [:integer]}
+        bts = belong_tos_ids.inject({}) { |h, ass| h[ass] = [:integer]; h }
+
+        id.merge(bts).merge(model_attributes)
       end
 
       # All attributes from the klass, sorted as per attributes block.
@@ -19,46 +41,37 @@ module Effective
         names = attributes.keys - belong_tos.map { |reference| reference.foreign_key }
         names = names - [klass.primary_key, 'created_at', 'updated_at'] unless all
 
-        attributes = names.map do |name|
+        attributes = names.inject({}) do |h, name|
           if klass.respond_to?(:column_for_attribute) # Rails 4+
-            Effective::Attribute.new(name, klass.column_for_attribute(name).type)
+            h[name.to_sym] = [klass.column_for_attribute(name).type]
           else
-            Effective::Attribute.new(name, klass.columns_hash[name].type)
-          end
+            h[name.to_sym] = [klass.columns_hash[name].type]
+          end; h
         end
 
-        sort_by_written_attributes(attributes)
-      end
-
-      def belong_tos_attributes
-        belong_tos.map do |reference|
-          unless reference.foreign_key == 'site_id' && klass.respond_to?(:acts_as_site_specific)
-            Effective::Attribute.new(reference.foreign_key, :integer)
-          end
-        end.compact.sort
-      end
-
-      def written_attributes
-        _initialize_written if @written_attributes.nil?
-        @written_attributes
+        sort_by_model_attributes(attributes)
       end
 
       private
 
-      def sort_by_written_attributes(attributes)
-        attributes.sort do |a, b|
+      def sort_by_model_attributes(attributes)
+        return attributes unless model_attributes.present?
+
+        keys = model_attributes.keys
+
+        attributes.sort do |(a, _), (b, _)|
           index = nil
 
-          index ||= if written_attributes.include?(a) && written_attributes.include?(b)
-            written_attributes.index(a) <=> written_attributes.index(b)
-          elsif written_attributes.include?(a) && !written_attributes.include?(b)
+          index ||= if model_attributes.key?(a) && model_attributes.key?(b)
+            keys.index(a) <=> keys.index(b)
+          elsif model_attributes.key?(a) && !model_attributes.include?(b)
             -1
-          elsif !written_attributes.include?(a) && written_attributes.include?(b)
+          elsif !model_attributes.key?(a) && model_attributes.key?(b)
             1
           end
 
           index || a <=> b
-        end
+        end.to_h
       end
 
     end

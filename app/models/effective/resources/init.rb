@@ -5,6 +5,8 @@ module Effective
       private
 
       def _initialize_input(input, namespace: nil)
+        @initialized_name = input
+
         @model_klass = case input
         when String, Symbol
           _klass_by_name(input)
