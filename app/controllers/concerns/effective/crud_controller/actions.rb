@@ -145,6 +145,10 @@ module Effective
       def destroy
         Rails.logger.info 'Processed by Effective::CrudController#destroy'
 
+        if params[:ids].present?
+          return collection_action(:destroy)
+        end
+
         self.resource = resource_scope.find(params[:id])
         action = :destroy
 
