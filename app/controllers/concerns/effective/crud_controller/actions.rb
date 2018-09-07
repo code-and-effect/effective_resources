@@ -103,6 +103,12 @@ module Effective
         @page_title ||= "Edit #{resource}"
 
         run_callbacks(:resource_render)
+
+        respond_to do |format|
+          format.html { }
+          format.js { render('edit.js') }
+        end
+
       end
 
       def update
