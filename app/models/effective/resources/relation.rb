@@ -236,7 +236,7 @@ module Effective
         # Order the target model for its matching records / keys
         sort_column = (sort unless sort == true) || resource.sort_column
 
-        relation = resource.order(sort_column, direction, limit: limit, reorder: true).limit([limit, 1000].compact.min)
+        relation = resource.order(sort_column, direction, limit: limit, reorder: true).limit(nil)
 
         if association.options[:as] # polymorphic
           relation = relation.where(association.type => klass.name)
