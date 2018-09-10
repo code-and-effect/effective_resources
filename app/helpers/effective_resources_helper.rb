@@ -62,11 +62,18 @@ module EffectiveResourcesHelper
 
     locals = atts.delete(:locals) || {}
     partial = atts.delete(:partial)
+    remote = atts.delete(:remote)
     spacer_template = locals.delete(:spacer_template)
 
     effective_resource = (atts.delete(:effective_resource) || find_effective_resource)
-    actions = atts.delete(:actions) || effective_resource.resource_actions
     namespace = atts.delete(:namespace) || (effective_resource.namespace.to_sym if effective_resource.namespace)
+
+    actions = atts.delete(:actions)
+    actions ||= (resource.kind_of?(Class) ? effective_resource.resource_klass_actions : effective_resource.resource_actions)
+
+    if atts.delete(:remote)
+      actions.each { |_, v| v['data-remote'] = true }
+    end
 
     # Filter Actions
     action_keys = actions.map { |_, v| v[:action] }

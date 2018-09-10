@@ -44,6 +44,11 @@ module Effective
         @page_title ||= "New #{resource_name.titleize}"
 
         run_callbacks(:resource_render)
+
+        respond_to do |format|
+          format.html { }
+          format.js { render('new.js') }
+        end
       end
 
       def create
@@ -63,17 +68,17 @@ module Effective
             request.format = :html if specific_redirect_path?
 
             format.html do
-              flash[:success] ||= resource_flash(:success, resource, action)
+              flash[:success] ||= resource_flash(:success, resource, (action == :save ? :create : action))
               redirect_to(resource_redirect_path)
             end
 
             format.js do
-              flash.now[:success] ||= resource_flash(:success, resource, action)
+              flash.now[:success] ||= resource_flash(:success, resource, (action == :save ? :create : action))
               reload_resource # create.js.erb
             end
           else
             flash.delete(:success)
-            flash.now[:danger] ||= resource_flash(:danger, resource, action)
+            flash.now[:danger] ||= resource_flash(:danger, resource, (action == :save ? :create : action))
 
             run_callbacks(:resource_render)
 
