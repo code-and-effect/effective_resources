@@ -22,18 +22,9 @@ module EffectiveResourcesPrivateHelper
         data.each { |k, v| opts["data-#{k}"] ||= v }
       end
 
-      # Assign data method and confirm
-      if effective_resource.member_post_actions.include?(action)
-        opts['data-method'] ||= :post
-        opts['data-confirm'] ||= "Really #{action} @resource?"
-      elsif effective_resource.member_delete_actions.include?(action)
-        opts['data-method'] ||= :delete
-        opts['data-confirm'] ||= "Really #{action == :destroy ? 'delete' : action.to_s.titleize} @resource?"
-      end
-
       # Assign class
       opts[:class] ||= (
-        if opts['data-method'] == :delete
+        if opts['data-method'].to_s == 'delete'
           'btn btn-danger'
         elsif index == 0
           'btn btn-primary'

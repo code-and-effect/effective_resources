@@ -29,11 +29,15 @@ module Effective
           end
 
           (member_post_actions - crud_actions).each do |action| # default true means it will be overwritten by dsl methods
-            buttons[action.to_s.titleize] = { action: action, default: true }
+            buttons[action.to_s.titleize] = { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action} @reource?"}
           end
 
           member_delete_actions.each do |action|
-            buttons[action == :destroy ? 'Delete' : action.to_s.titleize] = { action: action, default: true }
+            if action == :destroy
+              buttons['Delete'] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really delete @resource?" }
+            else
+              buttons[action.to_s.titleize] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really #{action} @resource?" }
+            end
           end
 
           if collection_get_actions.find { |a| a == :index }
@@ -63,11 +67,15 @@ module Effective
           end
 
           (member_post_actions - crud_actions).each do |action|
-            actions[action.to_s.titleize] = { action: action, default: true }
+            actions[action.to_s.titleize] = { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
           end
 
           member_delete_actions.each do |action|
-            actions[action == :destroy ? 'Delete' : action.to_s.titleize] = { action: action, default: true }
+            if action == :destroy
+              actions['Delete'] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really delete @resource?" }
+            else
+              actions[action.to_s.titleize] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really #{action} @resource?" }
+            end
           end
         end
       end

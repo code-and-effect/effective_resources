@@ -62,7 +62,6 @@ module EffectiveResourcesHelper
 
     locals = atts.delete(:locals) || {}
     partial = atts.delete(:partial)
-    remote = atts.delete(:remote)
     spacer_template = locals.delete(:spacer_template)
 
     effective_resource = (atts.delete(:effective_resource) || find_effective_resource)
@@ -71,12 +70,8 @@ module EffectiveResourcesHelper
     actions = atts.delete(:actions)
     actions ||= (resource.kind_of?(Class) ? effective_resource.resource_klass_actions : effective_resource.resource_actions)
 
-    if atts.delete(:remote)
-      actions.each { |_, v| v['data-remote'] = true }
-    end
-
     # Filter Actions
-    action_keys = actions.map { |_, v| v[:action] }
+    action_keys = effective_resource.actions #actions.map { |_, v| v[:action] }
     raise "unknown action for #{effective_resource.name}: #{(atts.keys - action_keys).join(' ')}." if (atts.keys - action_keys).present?
     actions = actions.select { |_, v| atts[v[:action]].respond_to?(:call) ? instance_exec(&atts[v[:action]]) : (atts[v[:action]] != false) }
 

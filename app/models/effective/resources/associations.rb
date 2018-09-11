@@ -44,15 +44,15 @@ module Effective
       def belongs_to(name)
         if name.kind_of?(String) || name.kind_of?(Symbol)
           name = (name.to_s.end_with?('_id') ? name.to_s[0...-3] : name).to_sym
-          belong_tos.find { |ass| ass.name == name && !ass.options[:polymorphic] }
+          belong_tos.find { |ass| !ass.options[:polymorphic] && ass.name == name }
         else
-          belong_tos.find { |ass| ass.klass == name.class && !ass.options[:polymorphic] }
+          belong_tos.find { |ass| !ass.options[:polymorphic] && ass.klass == name.class }
         end
       end
 
       def belongs_to_polymorphic(name)
         name = (name.to_s.end_with?('_id') ? name.to_s[0...-3] : name).to_sym
-        belong_tos.find { |ass| ass.name == name && ass.options[:polymorphic] }
+        belong_tos.find { |ass| ass.options[:polymorphic] && ass.name == name }
       end
 
       def has_and_belongs_to_many(name)
