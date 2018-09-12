@@ -48,7 +48,9 @@ module Effective
               (effective_resource.namespaces & Array(permitted).map(&:to_s)).present?
             end
           end
-        end.keys
+        end
+
+        permitted_params = permitted_params.map { |k, v| v.first == :array ? { k => [] } : k }
 
         # Recursively add any accepts_nested_resources
         effective_resource.nested_resources.each do |nested|

@@ -28,8 +28,12 @@ module Effective
       def permitted_attributes
         id = {klass.primary_key.to_sym => [:integer]}
         bts = belong_tos_ids.inject({}) { |h, ass| h[ass] = [:integer]; h }
+        has_manys = has_manys_ids.inject({}) { |h, ass| h[ass] = [:array]; h }
+        has_manys.each { |k, _| has_manys[k] = model_attributes[k] if model_attributes.key?(k) }
 
-        id.merge(bts).merge(model_attributes)
+        # Not nested, as they are added recursively elsewhere
+
+        id.merge(bts).merge(model_attributes).merge(has_manys)
       end
 
       # All attributes from the klass, sorted as per attributes block.
