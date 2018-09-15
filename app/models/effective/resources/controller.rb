@@ -13,11 +13,11 @@ module Effective
           end
 
           if actions.find { |a| a == :index }
-            submits['Continue'] = { action: :save, redirect: :index, default: true }
+            submits['Continue'] = { action: :save, redirect: :index, default: true, unless: -> { params[:_datatable_id] } }
           end
 
           if actions.find { |a| a == :new }
-            submits['Add New'] = { action: :save, redirect: :new, default: true }
+            submits['Add New'] = { action: :save, redirect: :new, default: true, unless: -> { params[:_datatable_id] } }
           end
         end
       end

@@ -35,16 +35,16 @@ module Effective
         if all # Probably being called by permitted_attributes
           primary_key_attribute.merge(belong_tos_attributes).merge(has_manys_attributes).merge(atts)
         else  # This is the migrator. This should match table_attributes
-          primary_key_attribute.merge(belong_tos_attributes).merge(atts.reject { |_, v| v[0] == :permitted_param })
+          belong_tos_attributes.merge(atts.reject { |_, v| v[0] == :permitted_param })
         end
       end
 
       # All table attributes. includes primary_key and belongs_tos
       def table_attributes
         attributes = (klass.new().attributes rescue nil)
-        return [] unless attributes
+        return {} unless attributes
 
-        attributes.keys.inject({}) do |h, name|
+        (attributes.keys - [klass.primary_key]).inject({}) do |h, name|
           if klass.respond_to?(:column_for_attribute) # Rails 4+
             h[name.to_sym] = [klass.column_for_attribute(name).type]
           else

@@ -23,10 +23,20 @@ module Effective
 
         self.resource ||= resource_scope.new
 
-        self.resource.assign_attributes(
-          params.to_unsafe_h.except(:controller, :action, :id).select { |k, v| resource.respond_to?("#{k}=") }
-        )
+        # Assign any passed params
+        to_assign = if params[:_datatable_id].present?
+          inline_datatable = EffectiveDatatables.find(params[:_datatable_id])
+          inline_datatable.view = view_context
+          inline_datatable.attributes
+        elsif params.present?
+          params.to_unsafe_h.except(:controller, :action, :id, :duplicate_id)
+        end
 
+        if to_assign.present?
+          resource.assign_attributes(to_assign.select { |k, v| resource.respond_to?("#{k}=") })
+        end
+
+        # Duplicate if possible
         if params[:duplicate_id]
           duplicate = resource_scope.find(params[:duplicate_id])
           EffectiveResources.authorize!(self, :show, duplicate)
