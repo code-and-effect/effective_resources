@@ -1,6 +1,6 @@
 module Effective
   class ModelReader
-    DATATYPES = [:binary, :boolean, :date, :datetime, :decimal, :float, :hstore, :inet, :integer, :string, :text]
+    DATATYPES = [:binary, :boolean, :date, :datetime, :decimal, :float, :hstore, :inet, :integer, :string, :text, :permitted_param]
 
     attr_reader :attributes
 
@@ -17,6 +17,9 @@ module Effective
         attributes[:updated_at] = [:datetime]
         return
       end
+
+      # Not really an attribute, just a permitted param.
+      args.unshift(:permitted_param) if args.first.kind_of?(Hash) && args.first.key?(:permitted)
 
       unless DATATYPES.include?(args.first)
         raise "expected first argument to be a datatype. Try name :string"

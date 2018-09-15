@@ -8,35 +8,64 @@ module Effective
         (klass_attributes.presence || model_attributes.presence)
       end
 
+      def primary_key_attribute
+        {klass.primary_key.to_sym => [:integer]}
+      end
+
       # The attributes for each belongs_to
       # { :client_id => [:integer], ... }
       def belong_tos_attributes
         belong_tos.inject({}) do |h, ass|
           unless ass.foreign_key == 'site_id' && ass.respond_to?(:acts_as_site_specific)
-            h[ass.foreign_key.to_sym] = [:integer]
+            h[ass.foreign_key.to_sym] = [:integer, :index => true]
           end; h
         end
       end
 
+      def has_manys_attributes
+        has_manys_ids.inject({}) { |h, ass| h[ass] = [:array]; h }
+      end
+
+      # All will include primary_key, created_at, updated_at and belongs_tos
       # This is the attributes as defined by the effective_resources do .. end block
       # { :name => [:string, { permitted: false }], ... }
-      def model_attributes
-        model ? model.attributes : {}
+      def model_attributes(all: false)
+        atts = (model ? model.attributes : {})
+
+        if all # Probably being called by permitted_attributes
+          primary_key_attribute.merge(belong_tos_attributes).merge(has_manys_attributes).merge(atts)
+        else  # This is the migrator. This should match table_attributes
+          primary_key_attribute.merge(belong_tos_attributes).merge(atts.reject { |_, v| v[0] == :permitted_param })
+        end
+      end
+
+      # All table attributes. includes primary_key and belongs_tos
+      def table_attributes
+        attributes = (klass.new().attributes rescue nil)
+        return [] unless attributes
+
+        attributes.keys.inject({}) do |h, name|
+          if klass.respond_to?(:column_for_attribute) # Rails 4+
+            h[name.to_sym] = [klass.column_for_attribute(name).type]
+          else
+            h[name.to_sym] = [klass.columns_hash[name].type]
+          end; h
+        end
       end
 
       # Used by effective_crud_controller to generate the permitted params
       def permitted_attributes
-        id = {klass.primary_key.to_sym => [:integer]}
-        bts = belong_tos_ids.inject({}) { |h, ass| h[ass] = [:integer]; h }
-        has_manys = has_manys_ids.inject({}) { |h, ass| h[ass] = [:array]; h }
-        has_manys.each { |k, _| has_manys[k] = model_attributes[k] if model_attributes.key?(k) }
+        # id = {klass.primary_key.to_sym => [:integer]}
+        # bts = belong_tos_ids.inject({}) { |h, ass| h[ass] = [:integer]; h }
+        # has_manys = has_manys_ids.inject({}) { |h, ass| h[ass] = [:array]; h }
+        # has_manys.each { |k, _| has_manys[k] = model_attributes[k] if model_attributes.key?(k) }
+        # Does not include nested, as they are added recursively elsewhere
+        # id.merge(bts).merge(model_attributes).merge(has_manys)
 
-        # Not nested, as they are added recursively elsewhere
-
-        id.merge(bts).merge(model_attributes).merge(has_manys)
+        model_attributes(all: true)
       end
 
-      # All attributes from the klass, sorted as per attributes block.
+      # All attributes from the klass, sorted as per model attributes block.
       # Does not include :id, :created_at, :updated_at unless all is passed
       def klass_attributes(all: false)
         attributes = (klass.new().attributes rescue nil)
