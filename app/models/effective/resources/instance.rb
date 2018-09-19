@@ -9,8 +9,8 @@ module Effective
         @instance || klass.new
       end
 
-      # called by effective_trash as defaults, and effective_logging sometimes with true or false
-      def instance_attributes(include_associated: true)
+      # called by effective_trash and effective_logging
+      def instance_attributes(include_associated: true, include_nested: true)
         return {} unless instance.present?
 
         attributes = { attributes: instance.attributes }
@@ -20,16 +20,22 @@ module Effective
           belong_tos.each do |association|
             attributes[association.name] = instance.send(association.name).to_s
           end
+        end
 
+        if include_associated || include_nested
           nested_resources.each do |association|
             attributes[association.name] ||= {}
 
+            next if association.options[:through]
+
             Array(instance.send(association.name)).each_with_index do |child, index|
               resource = Effective::Resource.new(child)
-              attributes[association.name][index] = resource.instance_attributes
+              attributes[association.name][index] = resource.instance_attributes(include_associated: include_associated, include_nested: include_nested)
             end
           end
+        end
 
+        if include_associated
           has_ones.each do |association|
             attributes[association.name] = instance.send(association.name).to_s
           end
