@@ -269,7 +269,7 @@ module Effective
           self.resources ||= resource_scope.where(id: params[:ids])
         end
 
-        if effective_resource.scope?(action)
+        if request.get? && effective_resource.scope?(action)
           self.resources ||= resource_scope.public_send(action)
         end
 
