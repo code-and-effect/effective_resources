@@ -18,12 +18,26 @@ module Effective
         belong_tos.inject({}) do |h, ass|
           unless ass.foreign_key == 'site_id' && ass.respond_to?(:acts_as_site_specific)
             h[ass.foreign_key.to_sym] = [:integer, :index => true]
+
+            if ass.options[:polymorphic]
+              h[ass.foreign_type.to_sym] = [:integer, :index => true]
+            end
+
           end; h
         end
       end
 
       def has_manys_attributes
         has_manys_ids.inject({}) { |h, ass| h[ass] = [:array]; h }
+      end
+
+      def has_ones_attributes
+        has_ones_ids.inject({}) { |h, ass| h[ass] = [:array]; h }
+      end
+
+      def effective_addresses_attributes
+        return {} unless instance.respond_to?(:effective_address_names)
+        instance.effective_address_names.inject({}) { |h, name| h[name] = [:effective_address]; h }
       end
 
       # All will include primary_key, created_at, updated_at and belongs_tos
@@ -33,7 +47,12 @@ module Effective
         atts = (model ? model.attributes : {})
 
         if all # Probably being called by permitted_attributes
-          primary_key_attribute.merge(belong_tos_attributes).merge(has_manys_attributes).merge(atts)
+          primary_key_attribute
+            .merge(belong_tos_attributes)
+            .merge(has_manys_attributes)
+            .merge(has_ones_attributes)
+            .merge(effective_addresses_attributes)
+            .merge(atts)
         else  # This is the migrator. This should match table_attributes
           belong_tos_attributes.merge(atts.reject { |_, v| v[0] == :permitted_param })
         end
@@ -46,7 +65,8 @@ module Effective
 
         (attributes.keys - [klass.primary_key]).inject({}) do |h, name|
           if klass.respond_to?(:column_for_attribute) # Rails 4+
-            h[name.to_sym] = [klass.column_for_attribute(name).type]
+            column = klass.column_for_attribute(name)
+            h[name.to_sym] = [column.type] if column.table_name # Rails 5 attributes API
           else
             h[name.to_sym] = [klass.columns_hash[name].type]
           end; h
