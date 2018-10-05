@@ -50,7 +50,17 @@ module Effective
           end
         end
 
-        permitted_params = permitted_params.map { |k, v| v.first == :array ? { k => [] } : k }
+        permitted_params = permitted_params.map do |k, (datatype, v)|
+          if datatype == :array
+            { k => [] }
+          elsif datatype == :permitted_param && k.to_s.ends_with?('_ids')
+            { k => [] }
+          elsif datatype == :effective_address
+            { k => EffectiveAddresses.permitted_params }
+          else
+            k
+          end
+        end
 
         # Recursively add any accepts_nested_resources
         effective_resource.nested_resources.each do |nested|
