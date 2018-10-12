@@ -25,13 +25,16 @@ module Effective
 
         ActiveRecord::Base.transaction do
           begin
+            run_callbacks(:resource_before_save)
+
             if resource.public_send("#{action}!") == false
               raise("failed to #{action} #{resource}")
             end
 
             yield if block_given?
 
-            run_callbacks(:resource_save)
+            run_callbacks(:resource_after_save)
+
             return true
           rescue => e
             Rails.logger.info "Failed to #{action}: #{e.message}" if Rails.env.development?

@@ -7,8 +7,12 @@ module Effective
         _insert_callbacks(names, blk) { |name, options| set_callback(:resource_render, :before, name, options) }
       end
 
+      def before_save(*names, &blk)
+        _insert_callbacks(names, blk) { |name, options| set_callback(:resource_before_save, :after, name, options) }
+      end
+
       def after_save(*names, &blk)
-        _insert_callbacks(names, blk) { |name, options| set_callback(:resource_save, :after, name, options) }
+        _insert_callbacks(names, blk) { |name, options| set_callback(:resource_after_save, :after, name, options) }
       end
 
       def after_error(*names, &blk)
