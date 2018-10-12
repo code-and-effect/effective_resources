@@ -136,7 +136,6 @@ module Effective
         @page_title ||= "Edit #{resource}"
 
         resource.assign_attributes(send(resource_params_method_name))
-        resource.current_user = current_user if resource.respond_to?(:current_user=)
 
         respond_to do |format|
           if save_resource(resource, action)
@@ -215,8 +214,6 @@ module Effective
 
         to_assign = (send(resource_params_method_name) rescue {})
         resource.assign_attributes(to_assign) if to_assign.present? && to_assign.permitted?
-
-        resource.current_user = current_user if resource.respond_to?(:current_user=)
 
         respond_to do |format|
           if save_resource(resource, action)
