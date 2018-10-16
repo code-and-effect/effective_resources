@@ -7,19 +7,16 @@ module Effective
         config = (['create', 'update'].include?(params[:action]) ? self.class.submits : self.class.buttons)
         ons = self.class.ons
 
-        case action
-        when nil
-          commit = config[params[:commit].to_s] || config.find { |_, v| v[:action] == :save }.try(:last) || { action: :save }
-          on = ons[params[:commit].to_s] || ons[commit[:action]]
-        when [:create, :update]
-          commit = config[action.to_s] || config.find { |_, v| v[:action] == action }.try(:last) || config.find { |_, v| v[:action] == :save }.try(:last) || { action: action }
-          on = ons[action] || ons[action.to_s] || ons[commit[:action]]
-        else
-          commit = config[action.to_s] || config.find { |_, v| v[:action] == action }.try(:last) || { action: action }
-          on = ons[action] || ons[action.to_s] || ons[commit[:action]]
-        end
+        commit = config[params[:commit].to_s]
+        commit ||= config.find { |_, v| v[:action] == action }.try(:last)
+        commit ||= config.find { |_, v| v[:action] == :save }.try(:last) if [nil, :create, :update].include?(action)
+        commit ||= { action: (action || :save) }
 
-        commit.reverse_merge(on || {})
+        on = ons[params[:commit].to_s] || ons[action] || ons[commit[:action]]
+
+        commit.reverse_merge!(on) if on.present?
+
+        commit
       end
 
       # This calls the appropriate member action, probably save!, on the resource.

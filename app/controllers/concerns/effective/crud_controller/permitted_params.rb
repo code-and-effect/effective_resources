@@ -35,6 +35,10 @@ module Effective
         permitted_params = effective_resource.permitted_attributes.select do |name, (_, atts)|
           if BLACKLIST.include?(name)
             false
+          elsif name == :token # has_secure_token
+            resource.respond_to?("regenerate_#{name}") == false
+          elsif name == :site_id # acts_as_site_specific
+            resource.class.respond_to?(:site_specific?) == false
           elsif atts.blank? || !atts.key?(:permitted)
             true # Default is true
           else
@@ -57,6 +61,8 @@ module Effective
             { k => [] }
           elsif datatype == :effective_address
             { k => EffectiveAddresses.permitted_params }
+          elsif datatype == :effective_assets
+            EffectiveAssets.permitted_params
           else
             k
           end

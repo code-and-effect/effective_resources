@@ -36,8 +36,13 @@ module Effective
       end
 
       def effective_addresses_attributes
-        return {} unless instance.respond_to?(:effective_address_names)
+        return {} unless defined?(EffectiveAddresses) && instance.respond_to?(:effective_address_names)
         instance.effective_address_names.inject({}) { |h, name| h[name] = [:effective_address]; h }
+      end
+
+      def effective_assets_attributes
+        return {} unless defined?(EffectiveAssets) && instance.respond_to?(:asset_boxes)
+        { effective_assets: [:effective_assets] }
       end
 
       # All will include primary_key, created_at, updated_at and belongs_tos
@@ -52,6 +57,7 @@ module Effective
             .merge(has_manys_attributes)
             .merge(has_ones_attributes)
             .merge(effective_addresses_attributes)
+            .merge(effective_assets_attributes)
             .merge(atts)
         else  # This is the migrator. This should match table_attributes
           belong_tos_attributes.merge(atts.reject { |_, v| v[0] == :permitted_param })
