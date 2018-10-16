@@ -65,30 +65,30 @@ module Effective
         Rails.logger.info 'Processed by Effective::CrudController#create'
 
         self.resource ||= resource_scope.new
-        action = commit_action[:action]
+        action = (commit_action[:action] == :save ? :create : commit_action[:action])
 
         resource.assign_attributes(send(resource_params_method_name))
         resource.created_by = current_user if resource.respond_to?(:created_by=)
 
-        EffectiveResources.authorize!(self, (action == :save ? :create : action), resource)
+        EffectiveResources.authorize!(self, action, resource)
         @page_title ||= "New #{resource_name.titleize}"
 
         respond_to do |format|
           if save_resource(resource, action)
-            request.format = :html if specific_redirect_path?
+            request.format = :html if specific_redirect_path?(action)
 
             format.html do
-              flash[:success] ||= resource_flash(:success, resource, (action == :save ? :create : action))
-              redirect_to(resource_redirect_path)
+              flash[:success] ||= resource_flash(:success, resource, action)
+              redirect_to(resource_redirect_path(action))
             end
 
             format.js do
-              flash.now[:success] ||= resource_flash(:success, resource, (action == :save ? :create : action))
+              flash.now[:success] ||= resource_flash(:success, resource, action)
               reload_resource # create.js.erb
             end
           else
             flash.delete(:success)
-            flash.now[:danger] ||= resource_flash(:danger, resource, (action == :save ? :create : action))
+            flash.now[:danger] ||= resource_flash(:danger, resource, action)
 
             run_callbacks(:resource_render)
 
@@ -130,20 +130,20 @@ module Effective
         Rails.logger.info 'Processed by Effective::CrudController#update'
 
         self.resource ||= resource_scope.find(params[:id])
-        action = commit_action[:action]
+        action = (commit_action[:action] == :save ? :update : commit_action[:action])
 
-        EffectiveResources.authorize!(self, (action == :save ? :update : action), resource)
+        EffectiveResources.authorize!(self, action, resource)
         @page_title ||= "Edit #{resource}"
 
         resource.assign_attributes(send(resource_params_method_name))
 
         respond_to do |format|
           if save_resource(resource, action)
-            request.format = :html if specific_redirect_path?
+            request.format = :html if specific_redirect_path?(action)
 
             format.html do
               flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path)
+              redirect_to(resource_redirect_path(action))
             end
 
             format.js do

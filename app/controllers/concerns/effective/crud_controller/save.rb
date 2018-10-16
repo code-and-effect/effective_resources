@@ -5,21 +5,28 @@ module Effective
       # Based on the incoming params[:commit] or passed action. Merges all options.
       def commit_action(action = nil)
         config = (['create', 'update'].include?(params[:action]) ? self.class.submits : self.class.buttons)
+        ons = self.class.ons
 
-        commit = if action.present?
-          config[action.to_s] || config.find { |_, v| v[:action] == action }.try(:last) || { action: action }
+        case action
+        when nil
+          commit = config[params[:commit].to_s] || config.find { |_, v| v[:action] == :save }.try(:last) || { action: :save }
+          on = ons[params[:commit].to_s] || ons[commit[:action]]
+        when [:create, :update]
+          commit = config[action.to_s] || config.find { |_, v| v[:action] == action }.try(:last) || config.find { |_, v| v[:action] == :save }.try(:last) || { action: action }
+          on = ons[action] || ons[action.to_s] || ons[commit[:action]]
         else
-          config[params[:commit].to_s] || config.find { |_, v| v[:action] == :save }.try(:last) || { action: :save }
+          commit = config[action.to_s] || config.find { |_, v| v[:action] == action }.try(:last) || { action: action }
+          on = ons[action] || ons[action.to_s] || ons[commit[:action]]
         end
 
-        commit.reverse_merge!(self.class.ons[commit[:action]]) if self.class.ons[commit[:action]]
-
-        commit
+        commit.reverse_merge(on || {})
       end
 
       # This calls the appropriate member action, probably save!, on the resource.
       def save_resource(resource, action = :save, &block)
-        raise "expected @#{resource_name} to respond to #{action}!" unless resource.respond_to?("#{action}!")
+        save_action = ([:create, :update].include?(action) ? :save : action)
+
+        raise "expected @#{resource_name} to respond to #{save_action}!" unless resource.respond_to?("#{save_action}!")
 
         resource.current_user ||= current_user if resource.respond_to?(:current_user=)
 
@@ -27,7 +34,7 @@ module Effective
           begin
             run_callbacks(:resource_before_save)
 
-            if resource.public_send("#{action}!") == false
+            if resource.public_send("#{save_action}!") == false
               raise("failed to #{action} #{resource}")
             end
 
