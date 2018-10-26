@@ -20,7 +20,7 @@ module Effective
             h[ass.foreign_key.to_sym] = [:integer, :index => true]
 
             if ass.options[:polymorphic]
-              h[ass.foreign_type.to_sym] = [:integer, :index => true]
+              h[ass.foreign_type.to_sym] = [:string, :index => true]
             end
 
           end; h

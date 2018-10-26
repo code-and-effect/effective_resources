@@ -1,4 +1,4 @@
-- permitted_resource_actions(resource, actions, effective_resource).each do |label, opts|
+- permitted_resource_actions(resource, actions).each do |label, opts|
   = link_to(label, (effective_resource.action_path(opts[:action], resource) || '#'), opts.except(:action))
 
 = instance_exec(resource, &format_block) if local_assigns[:format_block]

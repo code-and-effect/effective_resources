@@ -71,7 +71,7 @@ module EffectiveResourcesHelper
     actions ||= (resource.kind_of?(Class) ? effective_resource.resource_klass_actions : effective_resource.resource_actions)
 
     # Filter Actions
-    action_keys = effective_resource.actions #actions.map { |_, v| v[:action] }
+    action_keys = effective_resource.actions
     raise "unknown action for #{effective_resource.name}: #{(atts.keys - action_keys).join(' ')}." if (atts.keys - action_keys).present?
     actions = actions.select { |_, v| atts[v[:action]].respond_to?(:call) ? instance_exec(&atts[v[:action]]) : (atts[v[:action]] != false) }
 

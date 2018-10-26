@@ -1,9 +1,9 @@
+# frozen_sting_literals: true
+
 module EffectiveResourcesPrivateHelper
   REPLACE_PAGE_ACTIONS = {'update' => :edit, 'create' => :new}
 
-  def permitted_resource_actions(resource, actions, effective_resource = nil)
-    effective_resource ||= find_effective_resource
-
+  def permitted_resource_actions(resource, actions)
     page_action = REPLACE_PAGE_ACTIONS[params[:action]] || params[:action]&.to_sym || :save
 
     actions.select do |commit, args|
@@ -14,17 +14,22 @@ module EffectiveResourcesPrivateHelper
       (args.key?(:if) ? controller.instance_exec(&args[:if]) : true) &&
       (args.key?(:unless) ? !controller.instance_exec(&args[:unless]) : true) &&
       EffectiveResources.authorized?(controller, action, resource)
-    end.transform_values.with_index do |opts, index|
-      action = opts[:action]
+    end.transform_values!.with_index do |defaults, index|
+      opts = defaults.except(:default, :only, :except, :if, :unless, :redirect, :success, :danger)
 
       # Transform data: { ... } hash into 'data-' keys
-      if (data = opts.delete(:data))
-        data.each { |k, v| opts["data-#{k}"] ||= v }
+      if opts.key?(:data)
+        opts.delete(:data).each { |k, v| opts["data-#{k}"] ||= v }
+      end
+
+      # Replace resource name in any token strings
+      if opts.key?('data-confirm')
+        opts['data-confirm'].gsub!('@resource', (resource.to_s.presence || resource.class.name.gsub('::', ' ').underscore.gsub('_', ' ')).to_s)
       end
 
       # Assign class
       opts[:class] ||= (
-        if opts['data-method'].to_s == 'delete'
+        if opts['data-method'] == 'delete'
           'btn btn-danger'
         elsif index == 0
           'btn btn-primary'
@@ -36,22 +41,16 @@ module EffectiveResourcesPrivateHelper
       )
 
       # Assign title
-      unless action == :save
-        opts[:title] ||= case action
-          when :edit then "Edit #{resource}"
-          when :show then "#{resource}"
-          when :destroy then "Delete #{resource}"
-          when :index then "All #{effective_resource.human_plural_name.titleize}"
-          else "#{action.to_s.titleize} #{resource}"
-        end
+      opts[:title] ||= case opts[:action]
+        when :save then nil
+        when :edit then "Edit #{resource}"
+        when :show then "#{resource}"
+        when :destroy then "Delete #{resource}"
+        when :index then "All #{resource.class.name.gsub('::', ' ').underscore.gsub('_', ' ').titleize.pluralize}"
+        else "#{opts[:action].to_s.titleize} #{resource}"
       end
 
-      # Replace resource name in any token strings
-      if opts['data-confirm']
-        opts['data-confirm'].gsub!('@resource', (resource.to_s.presence || effective_resource.human_name).to_s)
-      end
-
-      opts.except(:default, :only, :except, :if, :unless, :redirect, :success, :danger)
+      opts
     end
   end
 

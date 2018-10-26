@@ -1,4 +1,4 @@
-- permitted_resource_actions(resource, actions, effective_resource).each do |label, opts|
+- permitted_resource_actions(resource, actions).each do |label, opts|
   = glyphicon_to(opts[:action], (effective_resource.action_path(opts[:action], resource) || '#'), opts.except(:action, :class))
 
 = instance_exec(resource, &format_block) if local_assigns[:format_block]
