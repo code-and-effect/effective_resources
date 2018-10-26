@@ -14,8 +14,8 @@ module EffectiveResourcesPrivateHelper
       (args.key?(:if) ? controller.instance_exec(&args[:if]) : true) &&
       (args.key?(:unless) ? !controller.instance_exec(&args[:unless]) : true) &&
       EffectiveResources.authorized?(controller, action, resource)
-    end.transform_values!.with_index do |defaults, index|
-      opts = defaults.except(:default, :only, :except, :if, :unless, :redirect, :success, :danger)
+    end.inject({}) do |h, (commit, args)|
+      opts = args.except(:default, :only, :except, :if, :unless, :redirect, :success, :danger)
 
       # Transform data: { ... } hash into 'data-' keys
       if opts.key?(:data)
@@ -31,7 +31,7 @@ module EffectiveResourcesPrivateHelper
       opts[:class] ||= (
         if opts['data-method'] == 'delete'
           'btn btn-danger'
-        elsif index == 0
+        elsif h.length == 0
           'btn btn-primary'
         elsif defined?(EffectiveBootstrap)
           'btn btn-secondary'
@@ -42,7 +42,7 @@ module EffectiveResourcesPrivateHelper
 
       # Assign title
       opts[:title] ||= case opts[:action]
-        when :save then nil
+        when :save then commit
         when :edit then "Edit #{resource}"
         when :show then "#{resource}"
         when :destroy then "Delete #{resource}"
@@ -50,7 +50,7 @@ module EffectiveResourcesPrivateHelper
         else "#{opts[:action].to_s.titleize} #{resource}"
       end
 
-      opts
+      h[commit] = opts; h
     end
   end
 
