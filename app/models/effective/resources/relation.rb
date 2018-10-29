@@ -79,7 +79,9 @@ module Effective
         when :belongs_to_polymorphic
           (type, id) = term.split('_')
 
-          if type.present? && id.present?
+          if term == 'nil'
+            relation.where(is_null("#{sql_column}_id")).where(is_null("#{sql_column}_type"))
+          elsif type.present? && id.present?
             relation.where("#{sql_column}_id = ?", id).where("#{sql_column}_type = ?", type)
           else
             id ||= Effective::Attribute.new(:integer).parse(term)
@@ -193,7 +195,11 @@ module Effective
           key = sql_column(klass.primary_key)
           values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact
 
-          keys = klass.joins(association.name)
+          if value == 'nil'
+            keys = klass.where.not(klass.primary_key => klass.joins(association.name)).pluck(klass.primary_key)
+          end
+
+          keys ||= klass.joins(association.name)
             .where(association.name => { association.source_reflection.klass.primary_key => values })
             .pluck(klass.primary_key)
         elsif association.options[:through].present?
@@ -221,7 +227,13 @@ module Effective
           end
         elsif association.macro == :has_many
           key = sql_column(klass.primary_key)
-          keys = relation.pluck(association.foreign_key)
+
+          if value == 'nil'
+            keys = klass.where.not(klass.primary_key => resource.klass.pluck(association.foreign_key)).pluck(klass.primary_key)
+          end
+
+          keys ||= relation.pluck(association.foreign_key)
+
         elsif association.macro == :has_one
           key = sql_column(klass.primary_key)
           keys = relation.pluck(association.foreign_key)
