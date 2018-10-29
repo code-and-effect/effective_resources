@@ -8,8 +8,16 @@ module Effective
         when :belongs_to
           { as: :select }.merge(search_form_field_collection(belongs_to(name)))
         when :belongs_to_polymorphic
-          #{ as: :select, grouped: true, polymorphic: true, collection: nil}
-          { as: :string }
+          constant_pluralized = name.to_s.upcase
+          constant = name.to_s.pluralize.upcase
+
+          if defined?("#{klass.name}::#{constant}")
+            { as: :select, polymorphic: true, collection: klass.const_get(constant) }
+          elsif defined?("#{klass.name}::#{constant_pluralized}")
+            { as: :select, polymorphic: true, collection: klass.const_get(constant_pluralized) }
+          else
+            { as: :string }
+          end
         when :has_and_belongs_to_many
           { as: :select }.merge(search_form_field_collection(has_and_belongs_to_many(name)))
         when :has_many

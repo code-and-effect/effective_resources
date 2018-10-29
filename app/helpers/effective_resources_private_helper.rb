@@ -29,7 +29,7 @@ module EffectiveResourcesPrivateHelper
 
       # Assign class
       opts[:class] ||= (
-        if opts['data-method'] == 'delete'
+        if opts['data-method'].to_s == 'delete'
           'btn btn-danger'
         elsif h.length == 0
           'btn btn-primary'
