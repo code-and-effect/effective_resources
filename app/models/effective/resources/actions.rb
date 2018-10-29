@@ -36,6 +36,10 @@ module Effective
       # Effective::Resource.new('admin/posts').action_path(:edit, Post.last) => '/admin/posts/3/edit'
       # Will work for any action. Returns the real path
       def action_path(action, resource = nil, opts = {})
+        if klass.nil? && resource.present? && initialized_name.kind_of?(ActiveRecord::Reflection::BelongsToReflection)
+          return Effective::Resource.new(resource, namespace: namespace).action_path(action, resource, opts)
+        end
+
         return unless routes[action]
 
         if resource.kind_of?(Hash)
@@ -43,7 +47,7 @@ module Effective
         end
 
         # edge case: Effective::Resource.new('admin/comments').action_path(:new, @post)
-        if resource.present? && !resource.kind_of?(klass)
+        if resource && klass && !resource.kind_of?(klass)
           if (bt = belongs_to(resource)).present? && instance.respond_to?("#{bt.name}=")
             return routes[action].format(klass.new(bt.name => resource)).presence
           end
