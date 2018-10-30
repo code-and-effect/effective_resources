@@ -203,27 +203,27 @@ module Effective
               .pluck(klass.primary_key)
           end
         elsif association.options[:through].present?
-          key = sql_column(klass.primary_key)
+          scope = association.through_reflection.klass.all
 
           if association.source_reflection.options[:polymorphic]
             reflected_klass = association.klass
+            scope = scope.where(association.source_reflection.foreign_type => reflected_klass.name)
           else
             reflected_klass = association.source_reflection.klass
           end
 
-          values = relation.pluck(reflected_klass.primary_key).uniq.compact
-
-          scope = association.through_reflection.klass.where(association.source_reflection.foreign_key => values)
-
-          if association.source_reflection.options[:polymorphic]
-            scope = scope.where(association.source_reflection.foreign_type => reflected_klass.name)
-          end
-
           if association.through_reflection.macro == :belongs_to
             key = association.through_reflection.foreign_key
-            keys = scope.pluck(association.through_reflection.klass.primary_key)
+            pluck_key = association.through_reflection.klass.primary_key
           else
-            keys = scope.pluck(association.through_reflection.foreign_key)
+            key = sql_column(klass.primary_key)
+            pluck_key = association.through_reflection.foreign_key
+          end
+
+          if value == 'nil'
+            keys = klass.where.not(klass.primary_key => scope).pluck(klass.primary_key)
+          else
+            keys = scope.where(association.source_reflection.foreign_key => relation).pluck(pluck_key)
           end
 
         elsif association.macro == :has_many
