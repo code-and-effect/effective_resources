@@ -195,13 +195,13 @@ module Effective
           key = sql_column(klass.primary_key)
           values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact
 
-          if value == 'nil'
-            keys = klass.where.not(klass.primary_key => klass.joins(association.name)).pluck(klass.primary_key)
+          keys = if value == 'nil'
+            klass.where.not(klass.primary_key => klass.joins(association.name)).pluck(klass.primary_key)
+          else
+            klass.joins(association.name)
+              .where(association.name => { association.source_reflection.klass.primary_key => values })
+              .pluck(klass.primary_key)
           end
-
-          keys ||= klass.joins(association.name)
-            .where(association.name => { association.source_reflection.klass.primary_key => values })
-            .pluck(klass.primary_key)
         elsif association.options[:through].present?
           key = sql_column(klass.primary_key)
 
@@ -225,18 +225,24 @@ module Effective
           else
             keys = scope.pluck(association.through_reflection.foreign_key)
           end
+
         elsif association.macro == :has_many
           key = sql_column(klass.primary_key)
 
-          if value == 'nil'
-            keys = klass.where.not(klass.primary_key => resource.klass.pluck(association.foreign_key)).pluck(klass.primary_key)
+          keys = if value == 'nil'
+            klass.where.not(klass.primary_key => resource.klass.pluck(association.foreign_key)).pluck(klass.primary_key)
+          else
+            relation.pluck(association.foreign_key)
           end
-
-          keys ||= relation.pluck(association.foreign_key)
 
         elsif association.macro == :has_one
           key = sql_column(klass.primary_key)
-          keys = relation.pluck(association.foreign_key)
+
+          keys = if value == 'nil'
+            klass.where.not(klass.primary_key => resource.klass.pluck(association.foreign_key)).pluck(klass.primary_key)
+          else
+            relation.pluck(association.foreign_key)
+          end
         end
 
         "#{key} IN (#{(keys.uniq.compact.presence || [0]).join(',')})"
