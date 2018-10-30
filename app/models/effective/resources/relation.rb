@@ -135,8 +135,8 @@ module Effective
           end
         when :integer
           relation.where("#{sql_column} = ?", term)
-        when :percentage
-          relation.where("#{sql_column} = ?", sql_type(name) == :integer ? (term * 100).to_i : term)
+        when :percent
+          relation.where("#{sql_column} = ?", term)
         when :price
           relation.where("#{sql_column} = ?", term)
         when :string, :text, :email

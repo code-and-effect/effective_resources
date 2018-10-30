@@ -34,7 +34,8 @@ module Effective
         when :duration    ; :duration
         when :email       ; :email
         when :integer     ; :integer
-        when :percentage  ; :percentage
+        when :percent     ; :percent
+        when :percentage  ; :percent
         when :phone       ; :phone
         when :price       ; :price
         when :nil         ; :nil
@@ -101,14 +102,8 @@ module Effective
         EffectiveRoles.roles.include?(value.to_sym) ? value : EffectiveRoles.roles_for(value)
       when :integer
         (value.kind_of?(String) ? value.gsub(/\D/, '') : value).to_i
-      when :percentage
-        # We want this to return 0.81 when we type 81% or 0.81 or 81.5
-        if value.to_s.include?('.')
-          value = value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f
-          value >= 1.0 ? (value / 100.0) : value
-        else
-          (value.to_s.gsub(/\D/, '').to_f / 100.0)
-        end
+      when :percent
+        value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f * 100.0).round
       when :phone
         digits = value.to_s.gsub(/\D/, '').chars
         digits = (digits.first == '1' ? digits[1..10] : digits[0..9]) # Throw away a leading 1
@@ -121,7 +116,7 @@ module Effective
       when :nil
         value.presence
       when :price
-        (value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f * 100.0)).to_i
+        value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f * 100.0).round
       when :string, :text, :email
         value.to_s
       when :belongs_to_polymorphic
