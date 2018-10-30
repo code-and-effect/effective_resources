@@ -72,7 +72,7 @@ module Effective
         effective_resource.nested_resources.each do |nested|
           if (nested_params = permitted_params_for(nested.klass)).present?
             nested_params.insert(nested_params.rindex { |obj| !obj.kind_of?(Hash)} + 1, :_destroy)
-            permitted_params << { "#{nested.plural_name}_attributes".to_sym => nested_params }
+            permitted_params << { "#{nested.name}_attributes".to_sym => nested_params }
           end
         end
 

@@ -45,7 +45,8 @@ module Effective
 
       def nested_resources
         return [] unless klass.respond_to?(:reflect_on_all_associations)
-        klass.reflect_on_all_associations(:has_many).select { |ass| ass.options[:autosave] }
+        klass.reflect_on_all_associations(:has_many).select { |ass| ass.options[:autosave] } +
+        klass.reflect_on_all_associations(:has_one).select { |ass| ass.options[:autosave] }
       end
 
       def associated(name)
