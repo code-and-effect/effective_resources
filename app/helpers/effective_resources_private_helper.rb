@@ -24,7 +24,7 @@ module EffectiveResourcesPrivateHelper
 
       # Replace resource name in any token strings
       if opts.key?('data-confirm')
-        opts['data-confirm'].gsub!('@resource', (resource.to_s.presence || resource.class.name.gsub('::', ' ').underscore.gsub('_', ' ')).to_s)
+        opts['data-confirm'] = opts['data-confirm'].gsub('@resource', (resource.to_s.presence || resource.class.name.gsub('::', ' ').underscore.gsub('_', ' ')).to_s)
       end
 
       # Assign class
