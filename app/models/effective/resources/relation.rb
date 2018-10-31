@@ -221,7 +221,7 @@ module Effective
           end
 
           if value == 'nil'
-            keys = klass.where.not(klass.primary_key => scope).pluck(klass.primary_key)
+            keys = klass.where.not(klass.primary_key => scope.pluck(pluck_key)).pluck(klass.primary_key)
           else
             keys = scope.where(association.source_reflection.foreign_key => relation).pluck(pluck_key)
           end
