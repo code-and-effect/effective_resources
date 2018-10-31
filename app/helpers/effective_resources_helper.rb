@@ -60,6 +60,7 @@ module EffectiveResourcesHelper
     raise 'expected first argument to be an ActiveRecord::Base object or Array of objects' unless resource.kind_of?(ActiveRecord::Base) || resource.kind_of?(Class) || resource.kind_of?(Array)
     raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
 
+    btn_class = atts.delete(:btn_class)
     locals = atts.delete(:locals) || {}
     partial = atts.delete(:partial)
     spacer_template = locals.delete(:spacer_template)
@@ -80,7 +81,7 @@ module EffectiveResourcesHelper
     partial = (partial.presence || 'effective/resource/actions') + '.html'
 
     # Assign Locals
-    locals = { resource: resource, effective_resource: effective_resource, namespace: namespace, actions: actions }.compact.merge(locals)
+    locals = { resource: resource, effective_resource: effective_resource, namespace: namespace, actions: actions, btn_class: btn_class.to_s }.compact.merge(locals)
 
     # Render
     if resource.kind_of?(Array)

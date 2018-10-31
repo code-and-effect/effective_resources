@@ -1,6 +1,6 @@
-= dropdown(variation: :dropleft) do
+= dropdown(variation: :dropleft, btn_class: btn_class) do
   - permitted_resource_actions(resource, actions).each do |label, opts|
-    = dropdown_link_to(label, (effective_resource.action_path(opts[:action], resource) || '#'), opts.except(:action, :class))
+    = dropdown_link_to(label, (effective_resource.action_path(opts[:action], resource) || '#'), opts.except(:action, :class).merge(btn_class: btn_class))
 
   = instance_exec(resource, &format_block) if local_assigns[:format_block]
   = yield(resource) if block_given?

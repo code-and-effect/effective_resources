@@ -102,7 +102,7 @@ module Effective
         EffectiveRoles.roles.include?(value.to_sym) ? value : EffectiveRoles.roles_for(value)
       when :integer
         (value.kind_of?(String) ? value.gsub(/\D/, '') : value).to_i
-      when :percent
+      when :percent # Integer * 1000. Percentage to 3 digits.
         value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f * 1000.0).round
       when :phone
         digits = value.to_s.gsub(/\D/, '').chars
@@ -115,7 +115,7 @@ module Effective
         (value.kind_of?(String) ? value.gsub(/\D/, '') : value).to_i
       when :nil
         value.presence
-      when :price
+      when :price # Integer * 100. Number of cents.
         value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f * 100.0).round
       when :string, :text, :email
         value.to_s
