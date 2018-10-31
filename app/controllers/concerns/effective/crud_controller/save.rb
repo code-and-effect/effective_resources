@@ -14,9 +14,7 @@ module Effective
 
         on = ons[params[:commit].to_s] || ons[action] || ons[commit[:action]]
 
-        commit.reverse_merge!(on) if on.present?
-
-        commit
+        on.present? ? commit.reverse_merge(on) : commit
       end
 
       # This calls the appropriate member action, probably save!, on the resource.
