@@ -103,7 +103,7 @@ module Effective
       when :integer
         (value.kind_of?(String) ? value.gsub(/\D/, '') : value).to_i
       when :percent
-        value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f * 100.0).round
+        value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f * 1000.0).round
       when :phone
         digits = value.to_s.gsub(/\D/, '').chars
         digits = (digits.first == '1' ? digits[1..10] : digits[0..9]) # Throw away a leading 1
