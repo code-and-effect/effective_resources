@@ -6,6 +6,9 @@ module Effective
 
     def initialize(&block)
       @attributes = {}
+    end
+
+    def read(&block)
       instance_exec(&block)
     end
 

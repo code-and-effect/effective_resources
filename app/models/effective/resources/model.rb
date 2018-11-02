@@ -4,7 +4,8 @@ module Effective
       attr_accessor :model  # As defined by effective_resource do block in a model file
 
       def _initialize_model(&block)
-        @model = ModelReader.new(&block)
+        @model = (model || ModelReader.new)
+        @model.read(&block)
 
         # If effective_developer is in live mode, this will cause it to refresh the class
         ActiveSupport.run_load_hooks(:effective_resource, self)
