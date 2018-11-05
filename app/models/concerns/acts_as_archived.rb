@@ -1,8 +1,12 @@
 # ActsAsArchived
 #
-# Implements the stupid archived pattern
-# All archived really means is it shouldn't be included in the default index or new views
-# It should still be editable, deletable, etc
+# Implements the archived pattern
+# An archived object should not be present on any index screens or in any new record collections
+# Works with effective_select (from the effective_bootstrap gem) to have .unarchived and .archived called appropriately
+#
+# class Thing < ApplicationRecord
+#   has_many :comments
+#   acts_as_archivable cascade: :comments
 
 # To use the routes concern, In your routes.rb:
 #
@@ -15,8 +19,17 @@ module ActsAsArchived
   extend ActiveSupport::Concern
 
   module ActiveRecord
-    def acts_as_archived(options = nil)
-      raise 'must respond to archived' unless new().respond_to?(:archived)
+    def acts_as_archived(cascade: [])
+      resource = new()
+
+      # Make sure we respond to archived attribute
+      raise 'must respond to archived' unless resource.respond_to?(:archived)
+
+      # Parse options
+      cascade = Array(cascade).compact
+      raise 'expected cascade to be an Array of has_many symbols' if cascade.any? { |obj| !resource.respond_to?(obj) }
+
+      @acts_as_archived_options = { cascade: cascade }
 
       include ::ActsAsArchived
     end
@@ -38,6 +51,9 @@ module ActsAsArchived
     effective_resource do
       archived :boolean, permitted: false
     end
+
+    acts_as_archived_options = @acts_as_archived_options
+    self.send(:define_method, :acts_as_archived_options) { acts_as_archived_options }
   end
 
   module ClassMethods
@@ -46,11 +62,25 @@ module ActsAsArchived
 
   # Instance methods
   def archive!
-    update_column(:archived, true)
+    transaction do
+      update!(archived: true) # Runs validations
+      acts_as_archived_options[:cascade].each { |obj| public_send(obj).update_all(archived: true) }
+    end
   end
 
   def unarchive!
-    update_column(:archived, false)
+    transaction do
+      update_column(:archived, false) # Does not run validations
+      acts_as_archived_options[:cascade].each { |obj| public_send(obj).update_all(archived: false) }
+    end
+  end
+
+  def destroy
+    archive!
+  end
+
+  def readonly?
+    (archived? && archived_was)
   end
 
 end
