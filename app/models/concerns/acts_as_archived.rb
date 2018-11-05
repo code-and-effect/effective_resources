@@ -1,19 +1,29 @@
 # ActsAsArchived
 #
-# Implements the archived pattern
-# An archived object should not be present on any index screens or in any new record collections
-# Works with effective_select (from the effective_bootstrap gem) to have .unarchived and .archived called appropriately
+# Implements the dumb archived pattern
+# Its children object, if any, can have archived attribute cascaded
+
+# An archived object should not be displayed on index screens, or any related resource's #new pages
+# effective_select (from the effective_bootstrap gem) is aware of this concern, and calls .unarchived and .archived appropriately when passed an ActiveRecord relation
 #
 # class Thing < ApplicationRecord
 #   has_many :comments
 #   acts_as_archivable cascade: :comments
+# end
 
-# To use the routes concern, In your routes.rb:
+# Each controller needs its own archive and unarchive action.
+# To simplify this, use the following route concern.
+#
+# In your routes.rb:
 #
 # Rails.application.routes.draw do
-#   acts_as_archivable
-#   resource :things, concern: :archivable
+#   acts_as_archived
+#
+#   resource :things, concern: :acts_as_archived
+#   resource :comments, concern: :acts_as_archived
 # end
+#
+# and include Effective::CrudController in your resource controller
 
 module ActsAsArchived
   extend ActiveSupport::Concern
