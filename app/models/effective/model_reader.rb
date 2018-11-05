@@ -13,8 +13,6 @@ module Effective
     end
 
     def method_missing(m, *args, &block)
-      raise "#{m} has already been defined" if attributes[m]
-
       if m == :timestamps
         attributes[:created_at] = [:datetime]
         attributes[:updated_at] = [:datetime]

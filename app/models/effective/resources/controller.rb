@@ -13,11 +13,11 @@ module Effective
           end
 
           if actions.find { |a| a == :index }
-            submits['Continue'] = { action: :save, redirect: :index, default: true, unless: -> { params[:_datatable_id] } }
+            submits['Continue'] = { action: :save, redirect: :index, default: true, unless: -> (resource) { params[:_datatable_id] } }
           end
 
           if actions.find { |a| a == :new }
-            submits['Add New'] = { action: :save, redirect: :new, default: true, unless: -> { params[:_datatable_id] } }
+            submits['Add New'] = { action: :save, redirect: :new, default: true, unless: -> (resource) { params[:_datatable_id] } }
           end
         end
       end
@@ -29,11 +29,19 @@ module Effective
           end
 
           (member_post_actions - crud_actions).each do |action| # default true means it will be overwritten by dsl methods
-            buttons[action.to_s.titleize] = { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action} @reource?"}
+            buttons[action.to_s.titleize] = case action
+            when :archive
+              { action: action, default: true, if: -> (resource) { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?"}
+            when :unarchive
+              { action: action, default: true, if: -> (resource) { resource.archived? }, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
+            else
+              { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?"}
+            end
           end
 
           member_delete_actions.each do |action|
             if action == :destroy
+              next if buttons.values.find { |v| v[:action] == :archive }.present?
               buttons['Delete'] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really delete @resource?" }
             else
               buttons[action.to_s.titleize] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really #{action} @resource?" }
@@ -68,10 +76,20 @@ module Effective
 
           (member_post_actions - crud_actions).each do |action|
             actions[action.to_s.titleize] = { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
+
+            actions[action.to_s.titleize] = case action
+            when :archive
+              { action: action, default: true, if: -> (resource) { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?"}
+            when :unarchive
+              { action: action, default: true, if: -> (resource) { resource.archived? }, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
+            else
+              { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
+            end
           end
 
           member_delete_actions.each do |action|
             if action == :destroy
+              next if actions.values.find { |v| v[:action] == :archive }.present?
               actions['Delete'] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really delete @resource?" }
             else
               actions[action.to_s.titleize] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really #{action} @resource?" }
