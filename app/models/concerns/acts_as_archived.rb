@@ -1,10 +1,9 @@
 # ActsAsArchived
 #
 # Implements the dumb archived pattern
-# Its children object, if any, can have archived attribute cascaded
-
 # An archived object should not be displayed on index screens, or any related resource's #new pages
 # effective_select (from the effective_bootstrap gem) is aware of this concern, and calls .unarchived and .archived appropriately when passed an ActiveRecord relation
+# Use the cascade argument to cascade archived changes to any has_manys
 #
 # class Thing < ApplicationRecord
 #   has_many :comments
