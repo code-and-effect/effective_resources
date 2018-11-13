@@ -9,8 +9,6 @@ module ActsAsSlugged
 
   module ActiveRecord
     def acts_as_slugged(options = nil)
-      raise 'must respond to slug' unless new().respond_to?(:slug)
-
       include ::ActsAsSlugged
     end
   end

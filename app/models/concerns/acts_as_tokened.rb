@@ -8,8 +8,6 @@ module ActsAsTokened
 
   module ActiveRecord
     def acts_as_tokened(options = nil)
-      raise 'must respond to token' unless new().respond_to?(:token)
-
       include ::ActsAsTokened
     end
   end

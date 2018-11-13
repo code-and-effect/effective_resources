@@ -29,18 +29,11 @@ module ActsAsArchived
 
   module ActiveRecord
     def acts_as_archived(cascade: [])
-      # Make sure we respond to archived attribute
-      # puts "WARNING: (acts_as_archived) expected #{name} to respond to archived" unless resource.respond_to?(:archived)
 
-      # Parse options
       cascade = Array(cascade).compact
 
       if cascade.any? { |obj| !obj.kind_of?(Symbol) }
         raise 'expected cascade to be an Array of has_many symbols'
-      end
-
-      cascade.reject { |cascade| cascade.respond_to?(cascade) }.each do |cascade|
-        puts "WARNING: (acts_as_archived) expected #{name} to respond to #{cascade}."
       end
 
       @acts_as_archived_options = { cascade: cascade }
