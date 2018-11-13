@@ -29,8 +29,6 @@ module ActsAsArchived
 
   module ActiveRecord
     def acts_as_archived(cascade: [])
-      resource = new()
-
       # Make sure we respond to archived attribute
       # puts "WARNING: (acts_as_archived) expected #{name} to respond to archived" unless resource.respond_to?(:archived)
 
