@@ -32,11 +32,18 @@ module ActsAsArchived
       resource = new()
 
       # Make sure we respond to archived attribute
-      raise 'must respond to archived' unless resource.respond_to?(:archived)
+      # puts "WARNING: (acts_as_archived) expected #{name} to respond to archived" unless resource.respond_to?(:archived)
 
       # Parse options
       cascade = Array(cascade).compact
-      raise 'expected cascade to be an Array of has_many symbols' if cascade.any? { |obj| !resource.respond_to?(obj) }
+
+      if cascade.any? { |obj| !obj.kind_of?(Symbol) }
+        raise 'expected cascade to be an Array of has_many symbols'
+      end
+
+      cascade.reject { |cascade| cascade.respond_to?(cascade) }.each do |cascade|
+        puts "WARNING: (acts_as_archived) expected #{name} to respond to #{cascade}."
+      end
 
       @acts_as_archived_options = { cascade: cascade }
 
@@ -58,7 +65,7 @@ module ActsAsArchived
     scope :unarchived, -> { where(archived: false) }
 
     effective_resource do
-      archived :boolean, permitted: false
+      archived :boolean,  permitted: false
     end
 
     acts_as_archived_options = @acts_as_archived_options
@@ -86,10 +93,6 @@ module ActsAsArchived
 
   def destroy
     archive!
-  end
-
-  def readonly?
-    (archived? && archived_was)
   end
 
 end
