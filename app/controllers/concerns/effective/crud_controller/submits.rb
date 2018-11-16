@@ -36,11 +36,11 @@ module Effective
           end
 
           if args.key?(:if) && args[:if].respond_to?(:call) == false
-            raise "expected if: to be callable. Try submit :approve, 'Save and Approve', if: -> { finished? }"
+            raise "expected if: to be callable. Try submit :approve, 'Save and Approve', if: -> (resource) { resource.finished? }"
           end
 
           if args.key?(:unless) && args[:unless].respond_to?(:call) == false
-            raise "expected unless: to be callable. Try submit :approve, 'Save and Approve', unless: -> { declined? }"
+            raise "expected unless: to be callable. Try submit :approve, 'Save and Approve', unless: -> (resource) { resource.declined? }"
           end
 
           if args.key?(:only)
@@ -78,11 +78,11 @@ module Effective
           end
 
           if args.key?(:if) && args[:if].respond_to?(:call) == false
-            raise "expected if: to be callable. Try button :approve, 'Approve', if: -> { finished? }"
+            raise "expected if: to be callable. Try button :approve, 'Approve', if: -> (resource) { resource.finished? }"
           end
 
           if args.key?(:unless) && args[:unless].respond_to?(:call) == false
-            raise "expected unless: to be callable. Try button :approve, 'Approve', unless: -> { declined? }"
+            raise "expected unless: to be callable. Try button :approve, 'Approve', unless: -> (resource) { resource.declined? }"
           end
 
           if args.key?(:only)
