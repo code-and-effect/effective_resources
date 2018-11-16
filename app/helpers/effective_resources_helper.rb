@@ -60,20 +60,23 @@ module EffectiveResourcesHelper
     raise 'expected first argument to be an ActiveRecord::Base object or Array of objects' unless resource.kind_of?(ActiveRecord::Base) || resource.kind_of?(Class) || resource.kind_of?(Array)
     raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
 
-    btn_class = atts.delete(:btn_class)
-    locals = atts.delete(:locals) || {}
-    partial = atts.delete(:partial)
-    spacer_template = locals.delete(:spacer_template)
+    btn_class = atts[:btn_class]
+    locals = atts[:locals] || {}
+    partial = atts[:partial]
+    spacer_template = locals[:spacer_template]
 
-    effective_resource = (atts.delete(:effective_resource) || find_effective_resource)
-    namespace = atts.delete(:namespace) || (effective_resource.namespace.to_sym if effective_resource.namespace)
+    effective_resource = (atts[:effective_resource] || find_effective_resource)
+    namespace = atts[:namespace] || (effective_resource.namespace.to_sym if effective_resource.namespace)
 
-    actions = atts.delete(:actions)
-    actions ||= (resource.kind_of?(Class) ? effective_resource.resource_klass_actions : effective_resource.resource_actions)
+    # Assign actions
+    actions = if atts.key?(:actions) # We filter out any actions passed to us that aren't supported
+      available = effective_resource.actions # [:new, :edit, ...]
+      atts[:actions].inject({}) { |h, (commit, opts)| h[commit] = opts if available.include?(opts[:action]); h }
+    else
+      (resource.kind_of?(Class) ? effective_resource.resource_klass_actions : effective_resource.resource_actions)
+    end
 
-    # Filter Actions
-    action_keys = effective_resource.actions
-    raise "unknown action for #{effective_resource.name}: #{(atts.keys - action_keys).join(' ')}." if (atts.keys - action_keys).present?
+    # Filter out false and proc false
     actions = actions.select { |_, v| atts[v[:action]].respond_to?(:call) ? instance_exec(&atts[v[:action]]) : (atts[v[:action]] != false) }
 
     # Select Partial
