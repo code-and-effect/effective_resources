@@ -5,6 +5,7 @@ module Effective
     include Effective::CrudController::Actions
     include Effective::CrudController::Paths
     include Effective::CrudController::PermittedParams
+    include Effective::CrudController::Respond
     include Effective::CrudController::Save
     include Effective::CrudController::Submits
 

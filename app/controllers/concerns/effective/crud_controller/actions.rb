@@ -75,25 +75,9 @@ module Effective
 
         respond_to do |format|
           if save_resource(resource, action)
-            request.format = :html if specific_redirect_path?(action)
-
-            format.html do
-              flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path(action))
-            end
-
-            format.js do
-              flash.now[:success] ||= resource_flash(:success, resource, action)
-              reload_resource # create.js.erb
-            end
+            respond_with_success(format, resource, action)
           else
-            flash.delete(:success)
-            flash.now[:danger] ||= resource_flash(:danger, resource, action)
-
-            run_callbacks(:resource_render)
-
-            format.html { render :new }
-            format.js {} # create.js.erb
+            respond_with_error(format, resource, action)
           end
         end
       end
@@ -139,25 +123,9 @@ module Effective
 
         respond_to do |format|
           if save_resource(resource, action)
-            request.format = :html if specific_redirect_path?(action)
-
-            format.html do
-              flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path(action))
-            end
-
-            format.js do
-              flash.now[:success] ||= resource_flash(:success, resource, action)
-              reload_resource # update.js.erb
-            end
+            respond_with_success(format, resource, action)
           else
-            flash.delete(:success)
-            flash.now[:danger] ||= resource_flash(:danger, resource, action)
-
-            run_callbacks(:resource_render)
-
-            format.html { render :edit }
-            format.js { } # update.js.erb
+            respond_with_error(format, resource, action)
           end
         end
       end
@@ -177,17 +145,7 @@ module Effective
 
         respond_to do |format|
           if save_resource(resource, action)
-            request.format = :html if specific_redirect_path?(action)
-
-            format.html do
-              flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path(action))
-            end
-
-            format.js do
-              flash.now[:success] ||= resource_flash(:success, resource, action)
-              # destroy.js.erb
-            end
+            respond_with_success(format, resource, action)
           else
             flash.delete(:success)
             request.format = :html  # Don't run destroy.js.erb
@@ -217,18 +175,7 @@ module Effective
 
         respond_to do |format|
           if save_resource(resource, action)
-            request.format = :html if specific_redirect_path?(action)
-
-            format.html do
-              flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path(action))
-            end
-
-            format.js do
-              flash.now[:success] ||= resource_flash(:success, resource, action)
-              reload_resource
-              render_member_action(action)
-            end
+            respond_with_success(format, resource, action) || render_member_action(action)
           else
             flash.delete(:success)
             flash.now[:danger] ||= resource_flash(:danger, resource, action)
