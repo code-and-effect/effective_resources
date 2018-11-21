@@ -147,13 +147,7 @@ module Effective
           if save_resource(resource, action)
             respond_with_success(format, resource, action)
           else
-            flash.delete(:success)
-            request.format = :html  # Don't run destroy.js.erb
-
-            format.html do
-              flash[:danger] = (flash.now[:danger].presence || resource_flash(:danger, resource, action))
-              redirect_to(resource_redirect_path(action))
-            end
+            respond_with_error(format, resource, action)
           end
         end
       end
@@ -175,31 +169,9 @@ module Effective
 
         respond_to do |format|
           if save_resource(resource, action)
-            respond_with_success(format, resource, action) || render_member_action(action)
+            respond_with_success(format, resource, action)
           else
-            flash.delete(:success)
-            flash.now[:danger] ||= resource_flash(:danger, resource, action)
-
-            run_callbacks(:resource_render)
-
-            format.html do
-              if resource_edit_path && (referer_redirect_path || '').end_with?(resource_edit_path)
-                @page_title ||= "Edit #{resource}"
-                render :edit
-              elsif resource_new_path && (referer_redirect_path || '').end_with?(resource_new_path)
-                @page_title ||= "New #{resource_name.titleize}"
-                render :new
-              elsif resource_show_path && (referer_redirect_path || '').end_with?(resource_show_path)
-                @page_title ||= resource_name.titleize
-                render :show
-              else
-                @page_title ||= resource.to_s
-                flash[:danger] = flash.now[:danger]
-                redirect_to(referer_redirect_path || resource_redirect_path(action))
-              end
-            end
-
-            format.js { render_member_action(action) }
+            respond_with_error(format, resource, action)
           end
         end
       end
@@ -244,14 +216,6 @@ module Effective
 
         render json: { status: 200, message: "Successfully #{action_verb(action)} #{successes} / #{resources.length} selected #{resource_plural_name}" }
       end
-    end
-
-    private
-
-    # Which member javascript view to render: #{action}.js or effective_resources member_action.js
-    def render_member_action(action)
-      view = lookup_context.template_exists?(action, _prefixes) ? action : :member_action
-      render(view, locals: { action: action })
     end
 
   end
