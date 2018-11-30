@@ -15,13 +15,13 @@ module Effective
         elsif lookup_context.template_exists?(action, _prefixes)
           format.html do
             flash.now[:success] ||= resource_flash(:success, resource, action)
-            # action.html.haml
+            render(action) # action.html.haml
           end
 
           format.js do
             flash.now[:success] ||= resource_flash(:success, resource, action)
-            reload_resource
-            # action.js.erb
+            reload_resource unless action == :destroy
+            render(action) # action.js.erb
           end
         else # Default
           format.html do
@@ -42,18 +42,16 @@ module Effective
 
         run_callbacks(:resource_render)
 
-        case params[:action]
-        when 'create'
+        # HTML responder
+        case action.to_sym
+        when :create
           format.html { render :new }
-        when 'update'
+        when :update
           format.html { render :edit }
-        when 'destroy'
-          # We always need to redirect here
+        when :destroy
           flash[:danger] = flash.now.delete(:danger)
-
           format.html { redirect_to(resource_redirect_path(action)) }
-          format.js { redirect_to(resource_redirect_path(action)) }
-        else # member_action
+        else # member action
           format.html do
             if lookup_context.template_exists?(action, _prefixes)
               @page_title ||= "#{action.to_s.titleize} #{resource}"
@@ -75,24 +73,16 @@ module Effective
           end
         end
 
-        format.js do
-          view = lookup_context.template_exists?(action, _prefixes) ? action : :member_action
-          render(view, locals: { action: action })
-        end
-      end
-
-      # For destroy.js
-      def respond_with_error_and_redirect(format, resource, action)
-        flash.delete(:success)
-        flash[:danger] ||= resource_flash(:danger, resource, action)
-
-        format.html do
-          redirect_to(resource_redirect_path(action))
+        # Javascript responder
+        if action.to_sym == :destroy
+          format.js { redirect_to(resource_redirect_path(action)) }
+        else
+          format.js do
+            view = lookup_context.template_exists?(action, _prefixes) ? action : :member_action
+            render(view, locals: { action: action }) #
+          end
         end
 
-        format.js do
-          redirect_to(resource_redirect_path(action))
-        end
       end
 
     end

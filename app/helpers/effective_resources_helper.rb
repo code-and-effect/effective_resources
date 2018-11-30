@@ -3,6 +3,7 @@ module EffectiveResourcesHelper
   # effective_bootstrap
   def effective_submit(form, options = {}, &block)
     actions = (controller.respond_to?(:effective_resource) ? controller.class : find_effective_resource).submits
+    actions = actions.select { |k, v| v[:default] != true } if options.delete(:defaults) == false
     actions = permitted_resource_actions(form.object, actions)
 
     submits = actions.map { |name, opts| form.save(name, opts.except(:action, :title, 'data-method', 'data-confirm')) }.join.html_safe
