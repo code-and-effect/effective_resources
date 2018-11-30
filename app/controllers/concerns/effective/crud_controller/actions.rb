@@ -9,11 +9,7 @@ module Effective
         @page_title ||= resource_plural_name.titleize
 
         self.resources ||= resource_scope.all
-
-        if (datatable = resource_datatable_class).present?
-          @datatable ||= datatable.new(resource_datatable_attributes)
-          @datatable.view = view_context
-        end
+        @datatable = resource_datatable(:index)
 
         run_callbacks(:resource_render)
       end
@@ -195,7 +191,12 @@ module Effective
         @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
 
         if request.get?
-          run_callbacks(:resource_render); return
+          @datatable = resource_datatable(action)
+          run_callbacks(:resource_render)
+
+          view = lookup_context.template_exists?(action, _prefixes) ? action : :index
+          render(view, locals: { action: action })
+          return
         end
 
         raise "expected all #{resource_name} objects to respond to #{action}!" if resources.to_a.present? && !resources.all? { |resource| resource.respond_to?("#{action}!") }

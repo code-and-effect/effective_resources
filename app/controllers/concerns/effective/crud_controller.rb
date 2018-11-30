@@ -101,8 +101,21 @@ module Effective
       resource_scope.where_values_hash.symbolize_keys
     end
 
-    def resource_datatable_class
-      effective_resource.datatable_klass
+    def resource_datatable(action)
+      datatable_klass = if action == :index
+        effective_resource.datatable_klass
+      else # Admin::ActionDatatable.new
+        "#{[effective_resource.namespace.to_s.classify.presence, action.to_s.classify].compact.join('::')}Datatable".safe_constantize ||
+        "#{[effective_resource.namespace.to_s.classify.presence, action.to_s.pluralize.classify].compact.join('::')}Datatable".safe_constantize ||
+        "#{[effective_resource.namespace.to_s.classify.presence, action.to_s.singularize.classify].compact.join('::')}Datatable".safe_constantize
+      end
+
+      return unless datatable_klass.present?
+
+      datatable = datatable_klass.new(resource_datatable_attributes)
+      datatable.view = view_context
+
+      datatable
     end
 
     def resource_params_method_name
