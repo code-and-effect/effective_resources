@@ -49,7 +49,9 @@ module Effective
         when :update
           format.html { render :edit }
         when :destroy
-          flash[:danger] = flash.now.delete(:danger)
+          flash.now[:danger] = nil
+          flash[:danger] = resource_flash(:danger, resource, action)
+
           format.html { redirect_to(resource_redirect_path(action)) }
         else # member action
           format.html do
@@ -67,7 +69,9 @@ module Effective
               render :show
             else
               @page_title ||= resource.to_s
-              flash[:danger] = flash.now.delete(:danger)
+              flash.now[:danger] = nil
+              flash[:danger] = resource_flash(:danger, resource, action)
+
               redirect_to(referer_redirect_path || resource_redirect_path(action))
             end
           end
@@ -75,6 +79,9 @@ module Effective
 
         # Javascript responder
         if action.to_sym == :destroy
+          flash.now[:danger] = nil
+          flash[:danger] = resource_flash(:danger, resource, action)
+
           format.js { redirect_to(resource_redirect_path(action)) }
         else
           format.js do
