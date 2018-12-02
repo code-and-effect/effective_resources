@@ -49,10 +49,11 @@ module Effective
         when :update
           format.html { render :edit }
         when :destroy
-          flash.now[:danger] = nil
-          flash[:danger] = resource_flash(:danger, resource, action)
-
-          format.html { redirect_to(resource_redirect_path(action)) }
+          format.html do
+            flash.now[:danger] = nil
+            flash[:danger] = resource_flash(:danger, resource, action)
+            redirect_to(resource_redirect_path(action))
+          end
         else # member action
           format.html do
             if lookup_context.template_exists?(action, _prefixes)
@@ -77,17 +78,9 @@ module Effective
           end
         end
 
-        # Javascript responder
-        if action.to_sym == :destroy
-          flash.now[:danger] = nil
-          flash[:danger] = resource_flash(:danger, resource, action)
-
-          format.js { redirect_to(resource_redirect_path(action)) }
-        else
-          format.js do
-            view = lookup_context.template_exists?(action, _prefixes) ? action : :member_action
-            render(view, locals: { action: action }) #
-          end
+        format.js do
+          view = lookup_context.template_exists?(action, _prefixes) ? action : :member_action
+          render(view, locals: { action: action }) # action.js.erb
         end
 
       end
