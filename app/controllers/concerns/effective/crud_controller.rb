@@ -58,7 +58,7 @@ module Effective
     end
 
     def effective_resource
-      @_effective_resource ||= self.class.effective_resource
+      self.class.effective_resource
     end
 
     private

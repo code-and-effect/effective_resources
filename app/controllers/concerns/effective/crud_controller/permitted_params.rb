@@ -9,7 +9,7 @@ module Effective
       def resource_permitted_params
         raise 'expected resource class to have effective_resource do .. end' if effective_resource.model.blank?
 
-        permitted_params = permitted_params_for(resource)
+        permitted_params = permitted_params_for(resource, effective_resource.namespaces)
 
         if Rails.env.development?
           Rails.logger.info "Effective::CrudController#resource_permitted_params:"
@@ -21,7 +21,7 @@ module Effective
 
       private
 
-      def permitted_params_for(resource)
+      def permitted_params_for(resource, namespaces = [])
         effective_resource = if resource.kind_of?(Class)
           resource.effective_resource if resource.respond_to?(:effective_resource)
         else
@@ -47,9 +47,9 @@ module Effective
             if permitted == true || permitted == false
               permitted
             elsif permitted == nil || permitted == :blank
-              effective_resource.namespaces.length == 0
+              namespaces.length == 0
             else # A symbol, string, or array of, representing the namespace
-              (effective_resource.namespaces & Array(permitted).map(&:to_s)).present?
+              (namespaces & Array(permitted).map(&:to_s)).present?
             end
           end
         end
@@ -70,7 +70,7 @@ module Effective
 
         # Recursively add any accepts_nested_resources
         effective_resource.nested_resources.each do |nested|
-          if (nested_params = permitted_params_for(nested.klass)).present?
+          if (nested_params = permitted_params_for(nested.klass, namespaces)).present?
             nested_params.insert(nested_params.rindex { |obj| !obj.kind_of?(Hash)} + 1, :_destroy)
             permitted_params << { "#{nested.name}_attributes".to_sym => nested_params }
           end
