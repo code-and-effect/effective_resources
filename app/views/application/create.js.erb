@@ -3,3 +3,8 @@
 
 EffectiveForm.remote_form_payload = "<%= j render_resource_form(@resource) %>";
 EffectiveForm.remote_form_flash = <%= raw flash.to_json %>;
+
+<% if @resource.respond_to?(:refresh_datatables) && @resource.refresh_datatables.present? %>
+  EffectiveForm.remote_form_refresh_datatables = <%= raw @resource.refresh_datatables.uniq.compact.map(&:to_s) %>;
+<% end %>
+
