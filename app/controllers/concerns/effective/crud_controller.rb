@@ -37,6 +37,10 @@ module Effective
         if effective_resource.model.present?
           define_method(:effective_resource_permitted_params) { resource_permitted_params } # save.rb
         end
+
+        if effective_resource.active_model?
+          define_method(:effective_resource_permitted_params) { resource_active_model_permitted_params } # save.rb
+        end
       end
 
     end
@@ -86,12 +90,14 @@ module Effective
         when Symbol
           effective_resource.klass.send(@_effective_resource_scope)
         when nil
-          effective_resource.klass.all
+          effective_resource.klass.respond_to?(:all) ? effective_resource.klass.all : effective_resource.klass
         else
           raise "expected resource_scope method to return an ActiveRecord::Relation or Hash"
         end
 
-        raise("unable to build resource_scope for #{effective_resource.klass || 'unknown klass'}.") unless relation.kind_of?(ActiveRecord::Relation)
+        unless relation.kind_of?(ActiveRecord::Relation) || effective_resource.active_model?
+          raise("unable to build resource_scope for #{effective_resource.klass || 'unknown klass'}.")
+        end
 
         relation
       )

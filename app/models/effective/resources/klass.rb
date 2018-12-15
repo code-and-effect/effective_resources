@@ -29,6 +29,10 @@ module Effective
         klass.ancestors.include?(ActiveRecord::Base)
       end
 
+      def active_model?
+        klass.ancestors.include?(ActiveModel::Model)
+      end
+
     end
   end
 end

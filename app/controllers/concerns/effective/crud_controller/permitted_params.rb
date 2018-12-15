@@ -19,6 +19,17 @@ module Effective
         params.require(effective_resource.name).permit(*permitted_params)
       end
 
+      # If the resource is ActiveModel, just permit all
+      # This can still be overridden by a controller
+      def resource_active_model_permitted_params
+        if Rails.env.development?
+          Rails.logger.info "Effective::CrudController#resource_permitted_params:"
+          Rails.logger.info "params.require(:#{effective_resource.name}).permit!"
+        end
+
+        params.require(effective_resource.name).permit!
+      end
+
       private
 
       def permitted_params_for(resource, namespaces = [])
