@@ -40,7 +40,15 @@ module Effective
         flash.delete(:success)
         flash.now[:danger] ||= resource_flash(:danger, resource, action)
 
+        redirect_flash if specific_redirect_path?(:error)
+
         run_callbacks(:resource_render)
+
+        if specific_redirect_path?(:error)
+          format.html { redirect_to resource_redirect_path(:error) }
+          format.js { redirect_to resource_redirect_path(:error) }
+          return
+        end
 
         # HTML responder
         case action.to_sym
@@ -50,8 +58,7 @@ module Effective
           format.html { render :edit }
         when :destroy
           format.html do
-            flash.now[:danger] = nil
-            flash[:danger] = resource_flash(:danger, resource, action)
+            redirect_flash
             redirect_to(resource_redirect_path(action))
           end
         else # member action
@@ -70,9 +77,7 @@ module Effective
               render :show
             else
               @page_title ||= resource.to_s
-              flash.now[:danger] = nil
-              flash[:danger] = resource_flash(:danger, resource, action)
-
+              redirect_flash
               redirect_to(referer_redirect_path || resource_redirect_path(action))
             end
           end
@@ -82,7 +87,16 @@ module Effective
           view = lookup_context.template_exists?(action, _prefixes) ? action : :member_action
           render(view, locals: { action: action }) # action.js.erb
         end
+      end
 
+      private
+
+      def redirect_flash
+        return unless flash.now[:danger].present?
+
+        danger = flash.now[:danger]
+        flash.now[:danger] = nil
+        flash[:danger] ||= danger
       end
 
     end
