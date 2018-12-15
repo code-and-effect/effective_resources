@@ -11,13 +11,11 @@ module Effective
           constant_pluralized = name.to_s.upcase
           constant = name.to_s.pluralize.upcase
 
-          if defined?("#{klass.name}::#{constant}")
-            { as: :select, polymorphic: true, collection: klass.const_get(constant) }
-          elsif defined?("#{klass.name}::#{constant_pluralized}")
-            { as: :select, polymorphic: true, collection: klass.const_get(constant_pluralized) }
-          else
-            { as: :string }
-          end
+          collection = (klass.const_get(constant) rescue nil) if defined?("#{klass.name}::#{constant}")
+          collection ||= (klass.const_get(constant_pluralized) rescue nil) if defined?("#{klass.name}::#{constant_pluralized}")
+          collection ||= {}
+
+          { as: :select, polymorphic: true, collection: collection }
         when :has_and_belongs_to_many
           { as: :select }.merge(search_form_field_collection(has_and_belongs_to_many(name)))
         when :has_many
