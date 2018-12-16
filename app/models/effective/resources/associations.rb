@@ -26,7 +26,7 @@ module Effective
 
       def has_ones
         return [] unless klass.respond_to?(:reflect_on_all_associations)
-        klass.reflect_on_all_associations(:has_one)
+        klass.reflect_on_all_associations(:has_one).reject { |ass| ass.class_name.to_s.start_with?('ActiveStorage::') }
       end
 
       def has_ones_ids
@@ -35,12 +35,30 @@ module Effective
 
       def has_manys
         return [] unless klass.respond_to?(:reflect_on_all_associations)
-        klass.reflect_on_all_associations(:has_many).reject { |ass| ass.options[:autosave] }
+        klass.reflect_on_all_associations(:has_many).reject { |ass| ass.options[:autosave] || ass.class_name.to_s.start_with?('ActiveStorage::') }
       end
 
       def has_and_belongs_to_manys
         return [] unless klass.respond_to?(:reflect_on_all_associations)
         klass.reflect_on_all_associations(:has_and_belongs_to_many)
+      end
+
+      def active_storage_has_manys
+        return [] unless klass.respond_to?(:reflect_on_all_associations)
+        klass.reflect_on_all_associations(:has_many).select { |ass| ass.class_name == 'ActiveStorage::Attachment' }
+      end
+
+      def active_storage_has_manys_ids
+        active_storage_has_manys.map { |ass| ass.name.to_s.gsub(/_attachments\z/, '').to_sym }
+      end
+
+      def active_storage_has_ones
+        return [] unless klass.respond_to?(:reflect_on_all_associations)
+        klass.reflect_on_all_associations(:has_one).select { |ass| ass.class_name == 'ActiveStorage::Attachment' }
+      end
+
+      def active_storage_has_ones_ids
+        active_storage_has_ones.map { |ass| ass.name.to_s.gsub(/_attachment\z/, '').to_sym }
       end
 
       def nested_resources

@@ -45,6 +45,13 @@ module Effective
         { effective_assets: [:effective_assets] }
       end
 
+      def active_storage_attributes
+        {}.tap do |retval|
+          active_storage_has_ones_ids.each { |k, v| retval[k] = [:string] }
+          active_storage_has_manys_ids.each { |k, v| retval[k] = [:array] }
+        end
+      end
+
       # All will include primary_key, created_at, updated_at and belongs_tos
       # This is the attributes as defined by the effective_resources do .. end block
       # { :name => [:string, { permitted: false }], ... }
@@ -58,6 +65,7 @@ module Effective
             .merge(has_ones_attributes)
             .merge(effective_addresses_attributes)
             .merge(effective_assets_attributes)
+            .merge(active_storage_attributes)
             .merge(atts)
         else  # This is the migrator. This should match table_attributes
           belong_tos_attributes.merge(atts.reject { |_, v| v[0] == :permitted_param })
@@ -81,19 +89,12 @@ module Effective
 
       # Used by effective_crud_controller to generate the permitted params
       def permitted_attributes
-        # id = {klass.primary_key.to_sym => [:integer]}
-        # bts = belong_tos_ids.inject({}) { |h, ass| h[ass] = [:integer]; h }
-        # has_manys = has_manys_ids.inject({}) { |h, ass| h[ass] = [:array]; h }
-        # has_manys.each { |k, _| has_manys[k] = model_attributes[k] if model_attributes.key?(k) }
-        # Does not include nested, as they are added recursively elsewhere
-        # id.merge(bts).merge(model_attributes).merge(has_manys)
-
         model_attributes(all: true)
       end
 
       # All attributes from the klass, sorted as per model attributes block.
       # Does not include :id, :created_at, :updated_at unless all is passed
-      def klass_attributes(all: false)
+      def klass_attributes(all: false, sort: false)
         attributes = (klass.new().attributes rescue nil)
         return [] unless attributes
 
@@ -108,7 +109,7 @@ module Effective
           end; h
         end
 
-        sort_by_model_attributes(attributes)
+        sort ? sort_by_model_attributes(attributes) : attributes
       end
 
       private
