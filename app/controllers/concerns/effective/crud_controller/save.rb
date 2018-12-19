@@ -45,8 +45,7 @@ module Effective
               resource.restore_attributes(['status', 'state'])
             end
 
-            flash.delete(:success)
-            flash.now[:danger] = flash_danger(resource, action, e: e)
+            flash.now[:danger] = resource_flash(:danger, resource, action, e: e)
             raise ActiveRecord::Rollback
           end
         end
@@ -55,14 +54,14 @@ module Effective
         false
       end
 
-      def resource_flash(status, resource, action)
+      def resource_flash(status, resource, action, e: nil)
         submit = commit_action(action)
         message = submit[status].respond_to?(:call) ? instance_exec(&submit[status]) : submit[status]
-        return message if message.present?
+        return message.gsub('@resource', resource.to_s) if message.present?
 
         case status
         when :success then flash_success(resource, action)
-        when :danger then flash_danger(resource, action)
+        when :danger then flash_danger(resource, action, e: e)
         else
           raise "unknown resource flash status: #{status}"
         end

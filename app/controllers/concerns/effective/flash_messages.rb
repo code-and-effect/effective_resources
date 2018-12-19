@@ -6,9 +6,7 @@ module Effective
     def flash_success(resource, action = nil, name: nil)
       raise 'expected an ActiveRecord resource' unless (name || resource.class.respond_to?(:model_name))
 
-      name ||= resource.class.model_name.human.downcase
-
-      "Successfully #{action_verb(action)} #{name}"
+      "Successfully #{action_verb(action)} #{name || resource}".html_safe
     end
 
     # flash.now[:danger] = flash_danger(@post)
@@ -18,10 +16,11 @@ module Effective
       action ||= resource.respond_to?(:new_record?) ? (resource.new_record? ? :create : :update) : :save
       action = action.to_s.gsub('_', ' ')
 
-      name ||= resource.class.model_name.human.downcase
       messages = flash_errors(resource, e: e)
 
-      ["Unable to #{action} #{name}", (": #{messages}." if messages)].compact.join.html_safe
+      name ||= resource.to_s.presence
+
+      ["Unable to #{action}", (" #{name}" if name), (": #{messages}." if messages)].compact.join.html_safe
     end
 
     # flash.now[:danger] = "Unable to accept: #{flash_errors(@post)}"
@@ -32,7 +31,7 @@ module Effective
         if message[0] == message[0].upcase # If the error begins with a capital letter
           message
         elsif attribute == :base
-          "#{resource.class.model_name.human.downcase} #{message}"
+          message
         elsif attribute.to_s.end_with?('_ids')
           "#{resource.class.human_attribute_name(attribute.to_s[0..-5].pluralize).downcase} #{message}"
         else

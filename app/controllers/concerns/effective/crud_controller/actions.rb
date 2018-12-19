@@ -8,7 +8,7 @@ module Effective
         EffectiveResources.authorize!(self, :index, resource_klass)
         @page_title ||= resource_plural_name.titleize
 
-        self.resources ||= resource_scope.all
+        self.resources ||= resource_scope.all if resource_scope.respond_to?(:all)
         @datatable = resource_datatable(:index)
 
         run_callbacks(:resource_render)

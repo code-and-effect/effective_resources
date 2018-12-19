@@ -100,7 +100,10 @@ module EffectiveResourcesHelper
 
   # When called from /admin/things/new.html.haml this will render 'admin/things/form', or 'things/form', or 'thing/form'
   def render_resource_form(resource, atts = {})
-    raise 'expected first argument to be an ActiveRecord::Base object' unless resource.kind_of?(ActiveRecord::Base)
+    unless resource.kind_of?(ActiveRecord::Base) || resource.class.ancestors.include?(ActiveModel::Model)
+      raise 'expected first argument to be an ActiveRecord or ActiveModel object'
+    end
+
     raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
 
     effective_resource = (atts.delete(:effective_resource) || find_effective_resource)
