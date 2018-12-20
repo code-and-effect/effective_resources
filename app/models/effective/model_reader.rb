@@ -20,7 +20,17 @@ module Effective
       end
 
       # Not really an attribute, just a permitted param.
-      args.unshift(:permitted_param) if args.first.kind_of?(Hash) && args.first.key?(:permitted)
+      # something permitted: true
+      if args.first.kind_of?(Hash) && args.first.key?(:permitted)
+        args.unshift(:permitted_param)
+      end
+
+      # Specifying permitted param attributes
+      # invitation [:name, :email], permitted: true
+      if args.first.kind_of?(Array)
+        options = args.find { |arg| arg.kind_of?(Hash) } || { permitted: true }
+        args = [:permitted_param, options.merge(permitted_attributes: args.first)]
+      end
 
       unless DATATYPES.include?(args.first)
         raise "expected first argument to be a datatype. Try name :string"

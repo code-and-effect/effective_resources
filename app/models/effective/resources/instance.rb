@@ -29,6 +29,8 @@ module Effective
             next if association.options[:through]
 
             Array(instance.send(association.name)).each_with_index do |child, index|
+              next unless child.present?
+
               resource = Effective::Resource.new(child)
               attributes[association.name][index] = resource.instance_attributes(include_associated: include_associated, include_nested: include_nested)
             end
@@ -54,9 +56,9 @@ module Effective
 
       # used by effective_logging
       def instance_changes
-        return {} unless (instance.present? && instance.changes.present?)
+        return {} unless (instance.present? && instance.previous_changes.present?)
 
-        changes = instance.changes.delete_if do |attribute, (before, after)|
+        changes = instance.previous_changes.dup.delete_if do |attribute, (before, after)|
           begin
             (before.kind_of?(ActiveSupport::TimeWithZone) && after.kind_of?(ActiveSupport::TimeWithZone) && before.to_i == after.to_i) ||
             (before == nil && after == false) || (before == nil && after == ''.freeze)

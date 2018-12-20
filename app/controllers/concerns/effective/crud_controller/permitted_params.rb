@@ -70,6 +70,8 @@ module Effective
             { k => [] }
           elsif datatype == :permitted_param && k.to_s.ends_with?('_ids')
             { k => [] }
+          elsif datatype == :permitted_param && v.key?(:permitted_attributes)
+            { k => v[:permitted_attributes] }
           elsif datatype == :effective_address
             { k => EffectiveAddresses.permitted_params }
           elsif datatype == :effective_assets
