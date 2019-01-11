@@ -96,7 +96,7 @@ module Effective
         end
 
         unless relation.kind_of?(ActiveRecord::Relation) || effective_resource.active_model?
-          raise("unable to build resource_scope for #{effective_resource.klass || 'unknown klass'}.")
+          raise("unable to build resource_scope for #{effective_resource.klass || 'unknown klass'}. Please name your controller to match an existing model, or manually define a resource_scope.")
         end
 
         relation
@@ -125,7 +125,7 @@ module Effective
     end
 
     def resource_params_method_name
-      ["#{resource_name}_params", "#{resource_plural_name}_params", 'permitted_params', 'effective_resource_permitted_params'].find { |name| respond_to?(name, true) } || 'params'
+      ["#{resource_name}_params", "#{resource_plural_name}_params", 'permitted_params', 'effective_resource_permitted_params', ('resource_permitted_params' if effective_resource.model.present?)].compact.find { |name| respond_to?(name, true) } || 'params'
     end
 
   end
