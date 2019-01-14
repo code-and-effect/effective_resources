@@ -87,6 +87,12 @@ module Effective
         @page_title ||= resource.to_s
 
         run_callbacks(:resource_render)
+
+        respond_to do |format|
+          format.html { }
+          format.js { render('show.js') }
+        end
+
       end
 
       def edit
