@@ -12,7 +12,7 @@ module Effective
             flash[:success] ||= resource_flash(:success, resource, action)
             redirect_to(resource_redirect_path(action))
           end
-        elsif lookup_context.template_exists?(action, _prefixes)
+        elsif template_present?(action)
           format.html do
             flash.now[:success] ||= resource_flash(:success, resource, action)
             render(action) # action.html.haml
@@ -63,16 +63,16 @@ module Effective
           end
         else # member action
           format.html do
-            if lookup_context.template_exists?(action, _prefixes)
-              @page_title ||= "#{action.to_s.titleize} #{resource}"
-              render(action, locals: { action: action })
-            elsif resource_edit_path && (referer_redirect_path || '').end_with?(resource_edit_path)
+            if resource_edit_path && referer_redirect_path.to_s.end_with?(resource_edit_path)
               @page_title ||= "Edit #{resource}"
               render :edit
-            elsif resource_new_path && (referer_redirect_path || '').end_with?(resource_new_path)
+            elsif resource_new_path && referer_redirect_path.to_s.end_with?(resource_new_path)
               @page_title ||= "New #{resource_name.titleize}"
               render :new
-            elsif resource_show_path && (referer_redirect_path || '').end_with?(resource_show_path)
+            elsif resource_action_path(action) && referer_redirect_path.to_s.end_with?(resource_action_path(action)) && template_present?(action)
+              @page_title ||= "#{action.to_s.titleize} #{resource}"
+              render(action, locals: { action: action })
+            elsif resource_show_path && referer_redirect_path.to_s.end_with?(resource_show_path)
               @page_title ||= resource_name.titleize
               render :show
             else
@@ -84,7 +84,7 @@ module Effective
         end
 
         format.js do
-          view = lookup_context.template_exists?(action, _prefixes) ? action : :member_action
+          view = template_present?(action) ? action : :member_action
           render(view, locals: { action: action }) # action.js.erb
         end
       end
@@ -97,6 +97,10 @@ module Effective
         danger = flash.now[:danger]
         flash.now[:danger] = nil
         flash[:danger] ||= danger
+      end
+
+      def template_present?(action)
+        lookup_context.template_exists?("#{action}.#{request.format.symbol || 'html'}", _prefixes)
       end
 
     end
