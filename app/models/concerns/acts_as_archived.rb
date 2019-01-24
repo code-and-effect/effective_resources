@@ -42,6 +42,15 @@ module ActsAsArchived
     end
   end
 
+  module CanCan
+    def acts_as_archived(klass)
+      raise "klass does not implement acts_as_archived" unless klass.acts_as_archived?
+
+      can(:archive, klass) { |obj| !obj.archived? }
+      can(:unarchive, klass) { |obj| obj.archived? }
+    end
+  end
+
   module RoutesConcern
     def acts_as_archived
       concern :acts_as_archived do

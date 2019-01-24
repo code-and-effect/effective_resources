@@ -24,6 +24,67 @@ module ActsAsStatused
     end
   end
 
+  module CanCan
+    # The idea here is you can go forward but you can't go back.
+    def acts_as_statused(klass, only: nil, except: nil)
+      raise "klass does not implement acts_as_statused" unless klass.acts_as_statused?
+
+      statuses = klass.const_get(:STATUSES)
+
+      only = Array(only).compact
+      except = Array(except).compact
+
+      statuses.each_with_index do |status, index|
+        action = status_active_verb(status).to_sym
+
+        next if only.present? && !only.include?(action)
+        next if except.present? && except.include?(action)
+
+        if index == 0
+          can(action, klass) and next
+        end
+
+        if status == :approved && statuses.include?(:declined)
+          if (position = statuses.index { |status| (status == :approved || status == :declined) }) > 0
+            can(action, klass) { |obj| obj.public_send("#{statuses[position-1]}?") || obj.declined? }
+            next
+          end
+        end
+
+        if status == :declined && statuses.include?(:approved)
+          if (position = statuses.index { |status| (status == :approved || status == :declined) }) > 0
+            can(action, klass) { |obj| obj.public_send("#{statuses[position-1]}?") }
+            next
+          end
+        end
+
+        can(action, klass) { |obj| obj.public_send("#{statuses[index-1]}?") }
+      end
+    end
+
+    private
+
+    # requested -> request, approved -> approve, declined -> decline, pending -> pending
+    def status_active_verb(status)
+      action = status.to_s.strip
+
+      if action.end_with?('ied')
+        return action[0...-3] + 'y'
+      end
+
+      if action.end_with?('ed')
+        singular = action[0...-2]
+        return singular if (singular.pluralize.singularize == singular)
+      end
+
+      if action.end_with?('d')
+        return action[0...-1]
+      end
+
+      action
+    end
+  end
+
   included do
     acts_as_statused_options = @acts_as_statused_options
 

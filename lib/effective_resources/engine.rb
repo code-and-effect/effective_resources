@@ -33,5 +33,20 @@ module EffectiveResources
       end
     end
 
+    initializer 'effective_resources.cancancan' do |app|
+      if defined?(CanCan::Ability)
+        CanCan::Ability.module_eval do
+          CRUD_ACTIONS = [:index, :new, :create, :edit, :update, :show, :destroy]
+
+          def crud
+            CRUD_ACTIONS
+          end
+        end
+
+        CanCan::Ability.include(ActsAsArchived::CanCan)
+        CanCan::Ability.include(ActsAsStatused::CanCan)
+      end
+    end
+
   end
 end
