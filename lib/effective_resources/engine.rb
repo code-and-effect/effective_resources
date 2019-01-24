@@ -28,6 +28,7 @@ module EffectiveResources
         ActiveRecord::Base.extend(ActsAsArchived::ActiveRecord)
         ActiveRecord::Base.extend(ActsAsTokened::ActiveRecord)
         ActiveRecord::Base.extend(ActsAsSlugged::ActiveRecord)
+        ActiveRecord::Base.extend(ActsAsStatused::ActiveRecord)
         ActiveRecord::Base.extend(EffectiveResource::ActiveRecord)
       end
     end
