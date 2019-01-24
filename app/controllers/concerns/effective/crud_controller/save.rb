@@ -39,7 +39,10 @@ module Effective
 
             return true
           rescue => e
-            Rails.logger.info "Failed to #{action}: #{e.message}" if Rails.env.development?
+            if Rails.env.development?
+              Rails.logger.info "Failed to #{action}: #{e.message}"
+              e.backtrace.first(4).each { |line| Rails.logger.info(line) }
+            end
 
             if resource.respond_to?(:restore_attributes) && resource.persisted?
               resource.restore_attributes(['status', 'state'])
