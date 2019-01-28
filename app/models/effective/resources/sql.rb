@@ -96,7 +96,9 @@ module Effective
         @_search_columns = names
       end
 
-      private
+      def ilike
+        @ilike ||= (postgres? ? 'ILIKE' : 'LIKE')  # Only Postgres supports ILIKE, Mysql and Sqlite3 use LIKE
+      end
 
       def postgres?
         return @postgres unless @postgres.nil?
@@ -106,10 +108,6 @@ module Effective
       def mysql?
         return @mysql unless @mysql.nil?
         @mysql ||= (klass.connection.kind_of?(ActiveRecord::ConnectionAdapters::Mysql2Adapter) rescue false)
-      end
-
-      def ilike
-        @ilike ||= (postgres? ? 'ILIKE' : 'LIKE')  # Only Postgres supports ILIKE, Mysql and Sqlite3 use LIKE
       end
 
       def is_null(sql_column)
