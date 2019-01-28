@@ -4,6 +4,7 @@ module Effective
       attr_accessor :instance
 
       # This is written for use by effective_logging and effective_trash
+      BLACKLIST = [:logged_changes, :trash]
 
       def instance
         @instance || klass.new
@@ -18,12 +19,15 @@ module Effective
         # Collect to_s representations of all belongs_to associations
         if include_associated
           belong_tos.each do |association|
+            next if BLACKLIST.include?(association.name)
             attributes[association.name] = instance.send(association.name).to_s
           end
         end
 
         if include_associated || include_nested
           nested_resources.each do |association|
+            next if BLACKLIST.include?(association.name)
+
             attributes[association.name] ||= {}
 
             next if association.options[:through]
@@ -39,14 +43,17 @@ module Effective
 
         if include_associated
           has_ones.each do |association|
+            next if BLACKLIST.include?(association.name)
             attributes[association.name] = instance.send(association.name).to_s
           end
 
           has_manys.each do |association|
+            next if BLACKLIST.include?(association.name)
             attributes[association.name] = instance.send(association.name).map { |obj| obj.to_s }
           end
 
           has_and_belongs_to_manys.each do |association|
+            next if BLACKLIST.include?(association.name)
             attributes[association.name] = instance.send(association.name).map { |obj| obj.to_s }
           end
         end

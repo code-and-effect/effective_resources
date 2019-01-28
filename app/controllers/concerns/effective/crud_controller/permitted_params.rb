@@ -1,7 +1,7 @@
 module Effective
   module CrudController
     module PermittedParams
-      BLACKLIST = [:created_at, :updated_at]
+      BLACKLIST = [:created_at, :updated_at, :logged_change_ids]
 
       # This is only available to models that use the effective_resource do ... end attributes block
       # It will be called last, and only for those resources

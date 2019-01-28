@@ -50,8 +50,7 @@ module EffectiveResourcesHelper
   end
 
   # Renders the effective/resource view partial for this resource
-  # resource is an Effective::Resource
-  # instance is an ActiveRecord thing, an Array of ActiveRecord things, or nil
+  # resource is an ActiveRecord thing, an Array of ActiveRecord things, or nil
   # Atts are everything else. Interesting ones include:
 
   # partial: :dropleft|:glyphicons|string
