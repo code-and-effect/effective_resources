@@ -30,13 +30,15 @@ module ActsAsStatused
       raise "klass does not implement acts_as_statused" unless klass.acts_as_statused?
 
       statuses = klass.const_get(:STATUSES)
+      instance = klass.new
 
       only = Array(only).compact
       except = Array(except).compact
 
       statuses.each_with_index do |status, index|
-        action = status_active_verb(status).to_sym
+        action = status_active_verb(status, instance)
 
+        next if action.blank?
         next if only.present? && !only.include?(action)
         next if except.present? && except.include?(action)
 
@@ -65,23 +67,21 @@ module ActsAsStatused
     private
 
     # requested -> request, approved -> approve, declined -> decline, pending -> pending
-    def status_active_verb(status)
-      action = status.to_s.strip
+    def status_active_verb(status, instance)
+      status = status.to_s.strip
 
-      if action.end_with?('ied')
-        return action[0...-3] + 'y'
+      if status.end_with?('ied')
+        action = status[0...-3] + 'y'
+        return action.to_sym if instance.respond_to?(action + '!')
       end
 
-      if action.end_with?('ed')
-        singular = action[0...-2]
-        return singular if (singular.pluralize.singularize == singular)
+      # ed, e, ing
+      [-1, -2, -3].each do |index|
+        action = status[0...index]
+        return action.to_sym if instance.respond_to?(action + '!')
       end
 
-      if action.end_with?('d')
-        return action[0...-1]
-      end
-
-      action
+      nil
     end
   end
 
