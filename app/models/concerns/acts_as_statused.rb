@@ -138,6 +138,8 @@ module ActsAsStatused
 
         status_steps.delete("#{sym}_at".to_sym)
         status_steps.delete("#{sym}_by".to_sym)
+
+        true
       end
 
       scope(sym, -> { where(status: sym.to_s) })

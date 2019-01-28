@@ -30,7 +30,7 @@ module Effective
             run_callbacks(:resource_before_save)
 
             if resource.public_send("#{save_action}!") == false
-              raise("failed to #{action} #{resource}")
+              raise Effective::ActionFailed.new("failed to #{action}")
             end
 
             yield if block_given?
@@ -40,8 +40,9 @@ module Effective
             return true
           rescue => e
             if Rails.env.development?
-              Rails.logger.info "Failed to #{action}: #{e.message}"
-              e.backtrace.first(4).each { |line| Rails.logger.info(line) }
+              Rails.logger.info "  \e[31m\e[1mFAILED\e[0m\e[22m" # bold red
+              Rails.logger.info "  Unable to #{action} #{resource} - #{e.class} #{e}"
+              e.backtrace.first(5).each { |line| Rails.logger.info('  ' + line) }
             end
 
             if resource.respond_to?(:restore_attributes) && resource.persisted?
@@ -49,7 +50,14 @@ module Effective
             end
 
             flash.now[:danger] = resource_flash(:danger, resource, action, e: e)
-            raise ActiveRecord::Rollback
+
+            case e
+            when Effective::ActionFailed, ActiveRecord::RecordInvalid, RuntimeError
+              raise(ActiveRecord::Rollback) # This is a soft error, we want to display the flash message to user
+            else
+              raise(e) # This is a real error that should be sent to 500. Client should not see the message.
+            end
+
           end
         end
 
