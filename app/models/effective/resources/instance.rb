@@ -11,61 +11,78 @@ module Effective
       end
 
       # called by effective_trash and effective_logging
-      def instance_attributes(include_associated: true, include_nested: true)
+      def instance_attributes(only: nil, except: nil)
         return {} unless instance.present?
 
-        attributes = { attributes: instance.attributes }
+        # Build up our only and except
+        only = Array(only).map(&:to_sym)
+        except = Array(except).map(&:to_sym) + BLACKLIST
+
+        # Simple Attributes
+        attributes = { attributes: instance.attributes.symbolize_keys }
+
+        attributes[:attributes] = attributes[:attributes].except(*except) if except.present?
+        attributes[:attributes] = attributes[:attributes].slice(*only) if only.present?
 
         # Collect to_s representations of all belongs_to associations
-        if include_associated
-          belong_tos.each do |association|
-            next if BLACKLIST.include?(association.name)
-            attributes[association.name] = instance.send(association.name).to_s
+        belong_tos.each do |association|
+          next if except.present? && except.include?(association.name)
+          next unless only.blank? || only.include?(association.name)
+
+          attributes[association.name] = instance.send(association.name).to_s
+        end
+
+        # Grab the instance attributes of each nested resource
+        nested_resources.each do |association|
+          next if except.present? && except.include?(association.name)
+          next unless only.blank? || only.include?(association.name)
+
+          next if association.options[:through]
+
+          attributes[association.name] ||= {}
+
+          Array(instance.send(association.name)).each_with_index do |child, index|
+            next unless child.present?
+
+            resource = Effective::Resource.new(child)
+            attributes[association.name][index] = resource.instance_attributes(only: only, except: except)
           end
         end
 
-        if include_associated || include_nested
-          nested_resources.each do |association|
-            next if BLACKLIST.include?(association.name)
+        has_ones.each do |association|
+          next if except.present? && except.include?(association.name)
+          next unless only.blank? || only.include?(association.name)
 
-            attributes[association.name] ||= {}
-
-            next if association.options[:through]
-
-            Array(instance.send(association.name)).each_with_index do |child, index|
-              next unless child.present?
-
-              resource = Effective::Resource.new(child)
-              attributes[association.name][index] = resource.instance_attributes(include_associated: include_associated, include_nested: include_nested)
-            end
-          end
+          attributes[association.name] = instance.send(association.name).to_s
         end
 
-        if include_associated
-          has_ones.each do |association|
-            next if BLACKLIST.include?(association.name)
-            attributes[association.name] = instance.send(association.name).to_s
-          end
+        has_manys.each do |association|
+          next if except.present? && except.include?(association.name)
+          next unless only.blank? || only.include?(association.name)
 
-          has_manys.each do |association|
-            next if BLACKLIST.include?(association.name)
-            attributes[association.name] = instance.send(association.name).map { |obj| obj.to_s }
-          end
+          next if BLACKLIST.include?(association.name)
+          attributes[association.name] = instance.send(association.name).map { |obj| obj.to_s }
+        end
 
-          has_and_belongs_to_manys.each do |association|
-            next if BLACKLIST.include?(association.name)
-            attributes[association.name] = instance.send(association.name).map { |obj| obj.to_s }
-          end
+        has_and_belongs_to_manys.each do |association|
+          next if except.present? && except.include?(association.name)
+          next unless only.blank? || only.include?(association.name)
+
+          attributes[association.name] = instance.send(association.name).map { |obj| obj.to_s }
         end
 
         attributes.delete_if { |_, value| value.blank? }
       end
 
       # used by effective_logging
-      def instance_changes
+      def instance_changes(only: nil, except: nil)
         return {} unless (instance.present? && instance.previous_changes.present?)
 
-        changes = instance.previous_changes.dup.delete_if do |attribute, (before, after)|
+        # Build up our only and except
+        only = Array(only).map(&:to_sym)
+        except = Array(except).map(&:to_sym) + BLACKLIST
+
+        changes = instance.previous_changes.symbolize_keys.delete_if do |attribute, (before, after)|
           begin
             (before.kind_of?(ActiveSupport::TimeWithZone) && after.kind_of?(ActiveSupport::TimeWithZone) && before.to_i == after.to_i) ||
             (before == nil && after == false) || (before == nil && after == ''.freeze)
@@ -74,8 +91,14 @@ module Effective
           end
         end
 
+        changes = changes.except(*except) if except.present?
+        changes = changes.slice(*only) if only.present?
+
         # Log to_s changes on all belongs_to associations
         belong_tos.each do |association|
+          next if except.present? && except.include?(association.name)
+          next unless only.blank? || only.include?(association.name)
+
           if (change = changes.delete(association.foreign_key)).present?
             changes[association.name] = [(association.klass.find_by_id(change.first) if changes.first), instance.send(association.name)]
           end
