@@ -66,7 +66,7 @@ module Effective
       # It is used by datatables
       def resource_actions
         {}.tap do |actions|
-          (member_get_actions & crud_actions).each do |action|
+          (member_get_actions & crud_actions).reverse_each do |action|
             actions[action.to_s.titleize] = { action: action, default: true }
           end
 
