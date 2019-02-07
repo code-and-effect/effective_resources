@@ -48,11 +48,13 @@ module Effective
       action = action.to_s.gsub('_', ' ')
       word = action.split(' ').first.to_s
 
-      if word == 'undo'
+      if word == 'destroy'
+        'deleted'
+      elsif word == 'undo'
         'undid'
       elsif word.end_with?('e')
         action.sub(word, word + 'd')
-      elsif ['a', 'i', 'o', 'u', 'y'].include?(word[-1])
+      elsif ['a', 'i', 'o', 'u'].include?(word[-1])
         action
       else
         action.sub(word, word + 'ed')
