@@ -86,7 +86,7 @@ module ActsAsArchived
 
   def unarchive!
     transaction do
-      update_column(:archived, false) # Does not run validations
+      update!(archived: false)
       acts_as_archived_options[:cascade].each { |obj| public_send(obj).update_all(archived: false) }
     end
   end
