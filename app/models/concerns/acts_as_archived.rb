@@ -44,7 +44,7 @@ module ActsAsArchived
 
   module CanCan
     def acts_as_archived(klass)
-      raise "klass does not implement acts_as_archived" unless klass.acts_as_archived?
+      raise "klass does not implement acts_as_archived" unless klass.respond_to?(:acts_as_archived?)
 
       can(:archive, klass) { |obj| !obj.archived? }
       can(:unarchive, klass) { |obj| obj.archived? }
