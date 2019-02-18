@@ -53,7 +53,7 @@ module Effective
           elsif atts.blank? || !atts.key?(:permitted)
             true # Default is true
           else
-            permitted = (atts[:permitted].respond_to?(:call) ? instance_exec(&atts[:permitted]) : atts[:permitted])
+            permitted = (atts[:permitted].respond_to?(:call) ? Effective::ResourceExec.new(self, resource).instance_exec(&atts[:permitted]) : atts[:permitted])
 
             if permitted == true || permitted == false
               permitted

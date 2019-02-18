@@ -77,7 +77,7 @@ module EffectiveResourcesHelper
     end
 
     # Filter out false and proc false
-    actions = actions.select { |_, v| atts[v[:action]].respond_to?(:call) ? instance_exec(&atts[v[:action]]) : (atts[v[:action]] != false) }
+    actions = actions.select { |_, v| atts[v[:action]].respond_to?(:call) ? Effective::ResourceExec.new(self, resource).instance_exec(&atts[v[:action]]) : (atts[v[:action]] != false) }
 
     # Select Partial
     partial = ['effective/resource/actions', partial.to_s].join('_') if partial.kind_of?(Symbol)

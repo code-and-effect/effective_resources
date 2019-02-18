@@ -13,11 +13,11 @@ module Effective
           end
 
           if actions.find { |a| a == :index }
-            submits['Continue'] = { action: :save, redirect: :index, default: true, unless: -> (resource) { params[:_datatable_id] } }
+            submits['Continue'] = { action: :save, redirect: :index, default: true, unless: -> { params[:_datatable_id] } }
           end
 
           if actions.find { |a| a == :new }
-            submits['Add New'] = { action: :save, redirect: :new, default: true, unless: -> (resource) { params[:_datatable_id] } }
+            submits['Add New'] = { action: :save, redirect: :new, default: true, unless: -> { params[:_datatable_id] } }
           end
         end
       end
@@ -31,9 +31,9 @@ module Effective
           (member_post_actions - crud_actions).each do |action| # default true means it will be overwritten by dsl methods
             buttons[action.to_s.titleize] = case action
             when :archive
-              { action: action, default: true, if: -> (resource) { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?"}
+              { action: action, default: true, if: -> { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?"}
             when :unarchive
-              { action: action, default: true, if: -> (resource) { resource.archived? }, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
+              { action: action, default: true, if: -> { resource.archived? }, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
             else
               { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?"}
             end
@@ -79,9 +79,9 @@ module Effective
 
             actions[action.to_s.titleize] = case action
             when :archive
-              { action: action, default: true, if: -> (resource) { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?"}
+              { action: action, default: true, if: -> { resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?"}
             when :unarchive
-              { action: action, default: true, if: -> (resource) { resource.archived? }, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
+              { action: action, default: true, if: -> { resource.archived? }, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
             else
               { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
             end

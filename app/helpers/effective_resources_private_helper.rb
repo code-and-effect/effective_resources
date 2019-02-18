@@ -5,14 +5,15 @@ module EffectiveResourcesPrivateHelper
 
   def permitted_resource_actions(resource, actions)
     page_action = REPLACE_PAGE_ACTIONS[params[:action]] || params[:action]&.to_sym || :save
+    executor = Effective::ResourceExec.new(self, resource)
 
     actions.select do |commit, args|
       action = (args[:action] == :save ? (resource.new_record? ? :create : :update) : args[:action])
 
       (args.key?(:only) ? args[:only].include?(page_action) : true) &&
       (args.key?(:except) ? !args[:except].include?(page_action) : true) &&
-      (args.key?(:if) ? controller.instance_exec(resource, &args[:if]) : true) &&
-      (args.key?(:unless) ? !controller.instance_exec(resource, &args[:unless]) : true) &&
+      (args.key?(:if) ? executor.instance_exec(&args[:if]) : true) &&
+      (args.key?(:unless) ? !executor.instance_exec(&args[:unless]) : true) &&
       EffectiveResources.authorized?(controller, action, resource)
     end.inject({}) do |h, (commit, args)|
       opts = args.except(:default, :only, :except, :if, :unless, :redirect, :success, :danger)
