@@ -1,3 +1,4 @@
+# Makes sure resource in any instance_execs is the correct resource
 module Effective
   class ResourceExec
 
@@ -11,7 +12,7 @@ module Effective
     end
 
     def method_missing(method, *args, &block)
-      instance.send(method, *args)
+      @instance.send(method, *args)
     end
 
   end
