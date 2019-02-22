@@ -55,7 +55,7 @@ module Effective
           else
             permitted = (atts[:permitted].respond_to?(:call) ? Effective::ResourceExec.new(self, resource).instance_exec(&atts[:permitted]) : atts[:permitted])
 
-            if permitted == true || permitted == false
+            if permitted == true || permitted == false || permitted == :array
               permitted
             elsif permitted == nil || permitted == :blank
               namespaces.length == 0
@@ -70,7 +70,9 @@ module Effective
             { k => [] }
           elsif datatype == :permitted_param && k.to_s.ends_with?('_ids')
             { k => [] }
-          elsif datatype == :permitted_param && v.key?(:permitted_attributes)
+          elsif v.present? && v[:permitted] == :array
+            { k => [] }
+          elsif datatype == :permitted_param && v.present? && v.key?(:permitted_attributes)
             { k => v[:permitted_attributes] }
           elsif datatype == :effective_address
             { k => EffectiveAddresses.permitted_params }
