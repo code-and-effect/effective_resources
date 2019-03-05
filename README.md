@@ -2,9 +2,9 @@
 
 The goal of this gem is to reduce the amount of code that needs to be written when developing a ruby on rails website.
 
-It is ruby on rails, on effective rails.
+It's ruby on rails, on effective rails.
 
-A rails developer will always need to maintain and write:
+A rails developer will **always** need to maintain and write:
 
 - The `routes.rb` as it's the single most important file in an entire app.
 - The `ability.rb` or other authorization.
@@ -12,20 +12,20 @@ A rails developer will always need to maintain and write:
 - A corresponding form.
 - Any javascripts, etc, and unique resource actions.
 
-However, all other patterns and a lot of code can be automated.
+However, all other areas of code should be automated.
 
 This gem replaces the following work a rails developer would normally do:
-
-- Controllers.
-- permitted params. This gem implements a model dsl to define and blacklist params. It's not the rails way.
 
 - Any file named index/edit/show/new.html. We use rails application templates and powerful defaults views so these files need never be written.
 - Figure out actions available to the `current_user` to each `resource` on the fly, based on controller namespace, the routes.rb and ability.rb
 - Powerful helpers to render the correct resource action links.
-- Collection of concern files.
+- Controllers.
+- permitted params. This gem implements a model dsl to define and blacklist params. It's not the rails way.
 
 Make your controller an effective resource controller.
+
 Implements the 7 RESTful actions as a one-liner on any controller.
+
 Reads the `routes.rb` and serves collection and member actions.
 
 ## Getting Started
@@ -48,7 +48,13 @@ rails generate effective_resources:install
 
 The generator will install an initializer which describes all configuration options.
 
-## Usage
+# Quick Start
+
+This gem was built to quickly build CRUD interfaces. Automate all the actions, and submit buttons.
+
+It uses the `params[:commit]` message to call the appropriate action, or `save` on the given resource.
+
+Tries to do the right thing in all situations.
 
 Add to your `app/models/post.rb`:
 
@@ -57,7 +63,6 @@ class Post < ApplicationRecord
   belongs_to :author, class_name: 'User'
 
   # The only thing this block is used for - right now - is permitted_params
-  # So yo
   effective_resource do
     category      :string
     title         :string
@@ -70,23 +75,16 @@ class Post < ApplicationRecord
 
   # The approve! action will be called by Effective::CrudController when submitted on a create/update or member action
   def approve!
-    raise 'already approved' if approved?
+    raise 'already approved' if approved?s
     update!(approved: true)
   end
-
 end
 ```
 
 Add to your `routes.rb`:
 
 ```ruby
-resources :posts, only: [:index, :show] do
-  get :approve, on: :member
-  post :approve, on: :member
-
-  get :approved, on: :collection
-  post :bulk_approve, on: :collection
-end
+resources :posts
 ```
 
 Add to your contoller:
@@ -95,8 +93,57 @@ Add to your contoller:
 class PostsController < ApplicationController
   include Effective::CrudController
 
+  submit :approve, 'Approve'
+end
+```
+
+and in your view:
+
+```ruby
+  = form_with(model: post) do
+    = f.input :text
+    = effective_submit(f)  # Will make a Save and an Approve. Rails 5 forms.
+    = simple_form_submit(f) # Ditto.
+```
+
+and in your authorization:
+
+```ruby
+  can :approve, Post
+  # can(:approve, Post) { |post| !post.approved? }
+```
+
+## Controller
+
+Implements the 7 RESTful actions: `index`, `new`, `create`, `show`, `edit`, `update`, `destroy`.
+
+- Loads an appropriate `@posts` or `@post` type instance variable.
+- Sets a `@page_title` (effective_pages).
+- Calls authorize as per the configured `EffectiveResources.authorization_method` (flow through to CanCan or Pundit)
+- Does the create/update save
+- Sets a `flash[:success]` and redirects on success, or sets a `flash.now[:danger]` and renders on error.
+- Does the right thing with member and collection actions
+- Intelligently redirects based on commit message
+
+You can override individual methods on the CrudController.
+
+Here is a more advanced example:
+
+```ruby
+class PostsController < ApplicationController
+  include Effective::CrudController
   # Sets the @page_title in a before_filter
   page_title 'My Posts', only: [:index]
+
+  # Callbacks: before_save, after_save, resource_error
+  before_render(only: :new) do
+    resource.client = current_user.clients.first
+  end
+
+  submit :accept, 'Accept',
+    if: -> { !resource.approved? }, # Imho this check should be kept in ability.rb, but you could do it here.
+    redirect: -> { accepted_posts_path },
+    success: 'The @resource has been approved' # Any @resource will be replaced with @resource.to_s
 
   # All queries and objects will be built with this scope
   resource_scope -> { current_user.posts }
@@ -133,122 +180,39 @@ class PostsController < ApplicationController
   def duplicate_resource(resource)
     resource_klass.new(resource.attributes.slice('job_site', 'address'))
   end
-
 end
 ```
 
-## What it does
+## Helpers
 
-Implements the 7 RESTful actions: `index`, `new`, `create`, `show`, `edit`, `update`, `destroy`.
+### effective_submit & simple_form_submit
 
-- Loads an appropriate `@posts` or `@post` type instance variable.
-- Sets a `@page_title` (effective_pages).
-- Calls authorize as per the configured `EffectiveResources.authorization_method` (flow through to CanCan or Pundit)
-- Does the create/update save
-- Sets a `flash[:success]` and redirects on success, or sets a `flash.now[:danger]` and renders on error.
-- Does the right thing with member and collection actions
-- Intelligently redirects based on commit message
-
-## Bootstrap3 Helpers
-
-### nav_link_to
-
-Use `nav_link_to` and `nav_dropdown` to create bootstrap3 menus.
-
-The helper automatically assigns the `active` class based on the request path.
-
-```haml
-%nav.navbar.navbar-default
-  .container
-    .navbar-header
-      = link_to(image_tag('logo.png', alt: 'Logo'), '/', class: 'navbar-brand')
-      %button.navbar-toggle.collapsed{data: {toggle: 'collapse', target: '.navbar-collapse', 'aria-expanded': false}}
-        %span.icon-bar
-        %span.icon-bar
-        %span.icon-bar
-    .collapse.navbar-collapse
-      %ul.nav.navbar-nav.navbar-right
-        - if current_user.present?
-          - if can?(:index, Things)
-            = nav_link_to 'Things', things_path
-
-          = nav_dropdown 'Settings' do
-            = nav_link_to 'Account Settings', user_settings_path
-            %li.divider
-            = nav_link_to 'Sign Out', destroy_user_session_path, method: :delete
-        - else
-          = nav_link_to 'Sign In', new_user_session_path
-```
-
-### tabs
-
-Use `tabs do` and `tabs` to create bootstrap3 tabs.
-
-The helper inserts both the tablist and the tabpanel, and assigns the `active` class.
-
-```haml
-= tabs do
-  = tab 'Imports' do
-    %p Imports
-
-  = tab 'Exports' do
-    %p Exports
-```
-
-You can also call `tabs(active: 'Exports') do` to set the active tab.
-
-## Simple Form Helpers
-
-### simple_form_submit
-
-Call `simple_form_submit(f)` like follows:
-
-```haml
-= simple_form_for(post) do |f|
-  = f.input :title
-  = f.input :body
-
+```rails
+= form_with(model: post) do |f|
+  = effective_submit(f)
   = simple_form_submit(f)
 ```
 
-to render 3 submit buttons: `Save`, `Save and Continue`, and `Save and Add New`.
+These helpers output the `= f.submit 'Save'` based on the controllers `submits`, the `current_user` and `ability.rb`.
 
-### simple_form_save
+They try to add good `data-confirm` options for `delete` buttons and sort by `btn-primary`, `btn-secondary` and `btn-danger`.
 
-Call `simple_form_save(f)` like follows:
+### Application Templates
 
-```haml
-= simple_form_for(post) do |f|
-  ...
-  = simple_form_save(f)
-```
+When you installed the gem, it should make some `views/application/index.html.haml`, `new.html.haml`, etc.
 
-to render just the `Save` button, with appropriate data-disable, title, etc.
+If you're not using haml, you should be, go install `haml`. Or convert to slim, you sly devils.
 
-### Effective Form with
+These files, possibly customized to your app, should replace almost all resource specific views.
 
-```ruby
+Just create a `_form.html.haml` and `_post.html.haml` for each resource.
 
-= effective_form_with(model: user, url: user_settings_path) do |f|
-  = effective_submit(f)
-  = effective_save(f)
+Just put another `app/views/posts/index.html.haml` in the posts directory to override the default template.
 
-  = effective_save(f) do
-    = f.save 'Save'
-    = f.save 'Another'
 
-  = effective_save(f, 'Save It')
+## Concerns
 
-  = effective_submit(f) do
-    = f.save 'Will be appended'
-```
-
-### Remote Delete will automatically fade out the closest match
-
-```
-= link_to 'Delete', post_path(post), remote: true,
-  data: { confirm: "Really delete #{post}?", method: :delete, closest: '.post' }
-```
+Sure why not. These don't really fit into my code base anywhere else.
 
 ### acts_as_tokened
 
