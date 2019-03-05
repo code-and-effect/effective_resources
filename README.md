@@ -8,25 +8,20 @@ A rails developer will **always** need to maintain and write:
 
 - The `routes.rb` as it's the single most important file in an entire app.
 - The `ability.rb` or other authorization.
-- A normal active record model file for each model / form object / interaction / resource, whatever.
-- A corresponding form.
-- Any javascripts, etc, and unique resource actions.
+- A normal ApplicationRecord model file for each model, `/app/models/post.rb`.
+- Its corresponding form, `/app/views/posts/_form.html.haml` and `_post.html.haml`
+- Any javascript and css
 
 However, all other areas of code should be automated.
 
-This gem replaces the following work a rails developer would normally do:
+This gem **replaces** the following work a rails developer would normally do:
 
-- Any file named index/edit/show/new.html. We use rails application templates and powerful defaults views so these files need never be written.
-- Figure out actions available to the `current_user` to each `resource` on the fly, based on controller namespace, the routes.rb and ability.rb
-- Powerful helpers to render the correct resource action links.
 - Controllers.
-- permitted params. This gem implements a model dsl to define and blacklist params. It's not the rails way.
+- Any file named `index/edit/show/new.html`. We use rails application templates and powerful defaults views so these files need never be written.
+- Writing `permitted params`. This gem implements a model dsl to define and blacklist params.
+- Manually checking which actions are available to the `current_user` on each `resource` all the time.
+- Writing submit buttons
 
-Make your controller an effective resource controller.
-
-Implements the 7 RESTful actions as a one-liner on any controller.
-
-Reads the `routes.rb` and serves collection and member actions.
 
 ## Getting Started
 
@@ -48,11 +43,19 @@ rails generate effective_resources:install
 
 The generator will install an initializer which describes all configuration options.
 
+Check the `config/initializer/effective_resources.rb` and make sure it's calling your authentication library correctly.
+
+```
+config.authorization_method = Proc.new { |controller, action, resource| authorize!(action, resource) } # CanCanCan
+```
+
 # Quick Start
 
 This gem was built to quickly build CRUD interfaces. Automate all the actions, and submit buttons.
 
 It uses the `params[:commit]` message to call the appropriate action, or `save` on the given resource.
+
+It reads the `routes.rb` to serve `collection` and `member` actions, and considers `current_user` and `ability.rb`
 
 Tries to do the right thing in all situations.
 
