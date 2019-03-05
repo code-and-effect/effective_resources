@@ -65,13 +65,13 @@ module Effective
           end
         end
 
-        permitted_params = permitted_params.map do |k, (datatype, v)|
+        permitted_params = permitted_params.flat_map do |k, (datatype, v)|
           if datatype == :array
-            { k => [] }
+            [k, { k => [] }]
           elsif datatype == :permitted_param && k.to_s.ends_with?('_ids')
             { k => [] }
           elsif v.present? && v[:permitted] == :array
-            { k => [] }
+            [k, { k => [] }]
           elsif datatype == :permitted_param && v.present? && v.key?(:permitted_attributes)
             { k => v[:permitted_attributes] }
           elsif datatype == :effective_address
