@@ -20,7 +20,7 @@ module Effective
 
       name ||= resource.to_s.presence
 
-      ["Unable to #{action}", (" #{name}" if name), (": #{messages}." if messages)].compact.join.html_safe
+      ["Unable to #{action}", (" #{name}" if name), (": #{messages}" if messages)].compact.join.html_safe
     end
 
     # flash.now[:danger] = "Unable to accept: #{flash_errors(@post)}"

@@ -52,6 +52,9 @@ module Effective
             flash.now[:danger] = resource_flash(:danger, resource, action, e: e)
 
             case e
+            when ActiveRecord::StaleObjectError
+              flash.now[:danger] = "#{flash.now[:danger]} <a href='#', class='alert-link' onclick='window.location.reload(true); return false;'>reload page and try again</a>"
+              raise(ActiveRecord::Rollback) # This is a soft error, we want to display the flash message to user
             when Effective::ActionFailed, ActiveRecord::RecordInvalid, RuntimeError
               raise(ActiveRecord::Rollback) # This is a soft error, we want to display the flash message to user
             else
