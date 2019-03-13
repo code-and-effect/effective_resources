@@ -6,6 +6,7 @@ module Effective
         submit = commit_action(action)
         redirect = submit[:redirect].respond_to?(:call) ? instance_exec(&submit[:redirect]) : submit[:redirect]
 
+        # If we have a specific redirect for it
         commit_action_redirect = case redirect
           when :index     ; resource_index_path
           when :edit      ; resource_edit_path
@@ -14,29 +15,42 @@ module Effective
           when :duplicate ; resource_duplicate_path
           when :back      ; referer_redirect_path
           when :save      ; [resource_edit_path, resource_show_path].compact.first
-          when Symbol     ; resource_action_path(submit[:action])
+          when Symbol     ; resource_action_path(redirect)
           when String     ; redirect
           else            ; nil
         end
 
         return commit_action_redirect if commit_action_redirect.present?
 
-        if action == :destroy
-          return [referer_redirect_path, resource_index_path, root_path].compact.first
-        end
+        # If we have a magic name
+        commit_name_redirect = case params[:commit].to_s
+          when 'Save and Add New', 'Add New'
+            [resource_new_path, resource_index_path]
+          when 'Duplicate'
+            [resource_duplicate_path, resource_index_path]
+          when 'Continue', 'Save and Continue'
+            [resource_index_path]
+          else
+            []
+        end.compact.first
 
-        case params[:commit].to_s
-        when 'Save'
+        return commit_name_redirect if commit_name_redirect.present?
+
+        # Otherwise consider the action
+        commit_default_redirect = case action
+        when :create
+          [resource_show_path, resource_edit_path, resource_index_path]
+        when :update
           [resource_edit_path, resource_show_path, resource_index_path]
-        when 'Save and Add New', 'Add New'
-          [resource_new_path, resource_index_path]
-        when 'Duplicate'
-          [resource_duplicate_path, resource_index_path]
-        when 'Continue', 'Save and Continue'
-          [resource_index_path]
+        when :destroy
+          [referer_redirect_path, resource_index_path]
         else
           [referer_redirect_path, resource_edit_path, resource_show_path, resource_index_path]
-        end.compact.first.presence || root_path
+        end.compact.first
+
+        return commit_default_redirect if commit_default_redirect.present?
+
+        root_path
       end
 
       def referer_redirect_path
