@@ -6,7 +6,7 @@ module EffectiveResourcesHelper
     actions = actions.select { |k, v| v[:default] != true } if options.delete(:defaults) == false
     actions = permitted_resource_actions(form.object, actions)
 
-    submits = actions.map { |name, opts| form.save(name, opts.except(:action, :title, 'data-method', 'data-confirm')) }.join.html_safe
+    submits = actions.map { |name, opts| form.save(name, opts.except(:action, :title, 'data-method') }.join.html_safe
 
     form.submit('', options) do
       (block_given? ? capture(&block) : ''.html_safe) + submits
