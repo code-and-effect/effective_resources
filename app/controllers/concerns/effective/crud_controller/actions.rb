@@ -163,7 +163,14 @@ module Effective
         @page_title ||= "#{action.to_s.titleize} #{resource}"
 
         if request.get?
-          run_callbacks(:resource_render); return
+          run_callbacks(:resource_render)
+
+          respond_to do |format|
+            format.html { }
+            format.js { render(template_present?(action) ? action : 'member_action.js', locals: { action: action }) }
+          end
+
+          return
         end
 
         to_assign = (send(resource_params_method_name) rescue {})
