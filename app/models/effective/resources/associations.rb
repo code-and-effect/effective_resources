@@ -67,6 +67,11 @@ module Effective
         klass.reflect_on_all_associations(:has_one).select { |ass| ass.options[:autosave] }
       end
 
+      def accepts_nested_attributes
+        return [] unless klass.respond_to?(:reflect_on_all_associations)
+        klass.reflect_on_all_associations.select { |ass| ass.options[:autosave] }
+      end
+
       def associated(name)
         name = (name.to_s.end_with?('_id') ? name.to_s[0...-3] : name).to_sym
         klass.reflect_on_all_associations.find { |ass| ass.name == name } || effective_addresses(name)

@@ -84,7 +84,7 @@ module Effective
         end
 
         # Recursively add any accepts_nested_resources
-        effective_resource.nested_resources.each do |nested|
+        effective_resource.accepts_nested_attributes.each do |nested|
           if (nested_params = permitted_params_for(nested.klass, namespaces)).present?
             nested_params.insert(nested_params.rindex { |obj| !obj.kind_of?(Hash)} + 1, :_destroy)
             permitted_params << { "#{nested.name}_attributes".to_sym => nested_params }
