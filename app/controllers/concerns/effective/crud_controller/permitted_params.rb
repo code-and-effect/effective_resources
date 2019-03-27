@@ -42,6 +42,9 @@ module Effective
         # That class doesn't implement effective_resource do .. end block
         return [] unless effective_resource.present?
 
+        @permitted_params_for_seen_klasses ||= []
+        @permitted_params_for_seen_klasses << effective_resource.klass
+
         # This is :id, all belongs_to ids, and model attributes
         permitted_params = effective_resource.permitted_attributes.select do |name, (_, atts)|
           if BLACKLIST.include?(name)
@@ -85,6 +88,8 @@ module Effective
 
         # Recursively add any accepts_nested_resources
         effective_resource.accepts_nested_attributes.each do |nested|
+          next if @permitted_params_for_seen_klasses.include?(nested.klass)
+
           if (nested_params = permitted_params_for(nested.klass, namespaces)).present?
             nested_params.insert(nested_params.rindex { |obj| !obj.kind_of?(Hash)} + 1, :_destroy)
             permitted_params << { "#{nested.name}_attributes".to_sym => nested_params }
