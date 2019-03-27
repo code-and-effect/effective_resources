@@ -40,15 +40,7 @@ module Effective
         flash.delete(:success)
         flash.now[:danger] ||= resource_flash(:danger, resource, action)
 
-        redirect_flash if specific_redirect_path?(:error)
-
         run_callbacks(:resource_render)
-
-        if specific_redirect_path?(:error)
-          format.html { redirect_to resource_redirect_path(:error) }
-          format.js { redirect_to resource_redirect_path(:error) }
-          return
-        end
 
         # HTML responder
         case action.to_sym
