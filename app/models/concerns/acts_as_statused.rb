@@ -120,26 +120,44 @@ module ActsAsStatused
 
     # Create an received scope and approved? method for each status
     acts_as_statused_options[:statuses].each do |sym|
-      define_method("#{sym}?") { status == sym.to_s }
-      define_method("#{sym}_at") { status_steps["#{sym}_at".to_sym] }
-      define_method("#{sym}_by") { acts_as_statused_by_user(sym) }
-      define_method("#{sym}_by_id") { status_steps["#{sym}_by".to_sym] }
-      define_method("was_#{sym}?") { send("#{sym}_at").present? }
+      unless respond_to?("#{sym}?")
+        define_method("#{sym}?") { status == sym.to_s }
+      end
+
+      unless respond_to?("#{sym}_at")
+        define_method("#{sym}_at") { status_steps["#{sym}_at".to_sym] }
+      end
+
+      unless respond_to?("#{sym}_by")
+        define_method("#{sym}_by") { acts_as_statused_by_user(sym) } 
+      end
+
+      unless respond_to?("#{sym}_by_id")
+        define_method("#{sym}_by_id") { status_steps["#{sym}_by".to_sym] } 
+      end
+
+      unless respond_to?("was_#{sym}?")
+        define_method("was_#{sym}?") { send("#{sym}_at").present? } 
+      end
 
       # approved!
-      define_method("#{sym}!") do |atts = {}|
-        raise 'expected a Hash of passed attributes' unless atts.kind_of?(Hash)
-        update!(atts.merge(status: sym))
+      unless respond_to?("#{sym}!")
+        define_method("#{sym}!") do |atts = {}|
+          raise 'expected a Hash of passed attributes' unless atts.kind_of?(Hash)
+          update!(atts.merge(status: sym))
+        end
       end
 
       # unapproved!
-      define_method("un#{sym}!") do
-        self.status = nil if (status == sym.to_s)
+      unless respond_to?("un#{sym}!")
+        define_method("un#{sym}!") do
+          self.status = nil if (status == sym.to_s)
 
-        status_steps.delete("#{sym}_at".to_sym)
-        status_steps.delete("#{sym}_by".to_sym)
-
-        true
+          status_steps.delete("#{sym}_at".to_sym)
+          status_steps.delete("#{sym}_by".to_sym)
+          
+          true
+        end
       end
 
       scope(sym, -> { where(status: sym.to_s) })
