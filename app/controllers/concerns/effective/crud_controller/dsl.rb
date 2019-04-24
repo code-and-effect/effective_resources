@@ -15,6 +15,10 @@ module Effective
         _insert_callbacks(names, blk) { |name, options| set_callback(:resource_after_save, :after, name, options) }
       end
 
+      def after_commit(*names, &blk)
+        _insert_callbacks(names, blk) { |name, options| set_callback(:resource_after_commit, :after, name, options) }
+      end
+
       def after_error(*names, &blk)
         _insert_callbacks(names, blk) { |name, options| set_callback(:resource_error, :after, name, options) }
       end

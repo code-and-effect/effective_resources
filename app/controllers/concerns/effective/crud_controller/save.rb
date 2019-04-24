@@ -20,10 +20,11 @@ module Effective
       # This calls the appropriate member action, probably save!, on the resource.
       def save_resource(resource, action = :save, &block)
         save_action = ([:create, :update].include?(action) ? :save : action)
-
         raise "expected @#{resource_name} to respond to #{save_action}!" unless resource.respond_to?("#{save_action}!")
 
         resource.current_user ||= current_user if resource.respond_to?(:current_user=)
+
+        success = false
 
         ActiveRecord::Base.transaction do
           begin
@@ -37,7 +38,7 @@ module Effective
 
             run_callbacks(:resource_after_save)
 
-            return true
+            success = true
           rescue => e
             if Rails.env.development?
               Rails.logger.info "  \e[31m\e[1mFAILED\e[0m\e[22m" # bold red
@@ -60,12 +61,13 @@ module Effective
             else
               raise(e) # This is a real error that should be sent to 500. Client should not see the message.
             end
-
           end
         end
 
-        run_callbacks(:resource_error)
-        false
+        run_callbacks(:resource_error) unless success
+        run_callbacks(:resource_after_commit)
+
+        success
       end
 
       def resource_flash(status, resource, action, e: nil)

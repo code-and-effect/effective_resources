@@ -12,7 +12,7 @@ module Effective
     included do
       define_actions_from_routes
       define_permitted_params_from_model
-      define_callbacks :resource_render, :resource_before_save, :resource_after_save, :resource_error
+      define_callbacks :resource_render, :resource_before_save, :resource_after_save, :resource_after_commit, :resource_error
     end
 
     module ClassMethods
