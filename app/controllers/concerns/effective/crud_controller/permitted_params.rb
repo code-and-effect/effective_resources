@@ -27,7 +27,11 @@ module Effective
           Rails.logger.info "params.require(:#{effective_resource.name}).permit!"
         end
 
-        params.require(effective_resource.name).permit!
+        if params[effective_resource.name].present?
+          params.require(effective_resource.name).permit!
+        else
+          params.require((effective_resource.namespaces + [effective_resource.name]).join('_')).permit!
+        end
       end
 
       private

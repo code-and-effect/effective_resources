@@ -57,7 +57,10 @@ module EffectiveResourcesHelper
   # locals: {} render locals
   # you can also pass all action names and true/false such as edit: true, show: false
   def render_resource_actions(resource, atts = {}, &block)
-    raise 'expected first argument to be an ActiveRecord::Base object or Array of objects' unless resource.kind_of?(ActiveRecord::Base) || resource.kind_of?(Class) || resource.kind_of?(Array)
+    unless resource.kind_of?(ActiveRecord::Base) || resource.kind_of?(Class) || resource.kind_of?(Array) || resource.class.ancestors.include?(ActiveModel::Model)
+      raise 'expected first argument to be an ActiveRecord::Base object or Array of objects' 
+    end
+    
     raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
 
     btn_class = atts[:btn_class]
