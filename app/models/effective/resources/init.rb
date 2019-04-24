@@ -49,9 +49,13 @@ module Effective
         names = input.split('/')
 
         0.upto(names.length-1) do |index|
-          class_name = (names[index..-1].map { |name| name.classify } * '::')
-
+          class_name = names[index..-1].map { |name| name.classify } * '::'
           klass = class_name.safe_constantize
+
+          if klass.blank? && index > 0
+            class_name = (names[0..index-1].map { |name| name.classify.pluralize } + names[index..-1].map { |name| name.classify }) * '::'
+            klass = class_name.safe_constantize
+          end
 
           if klass.present?
             @namespaces ||= names[0...index]
