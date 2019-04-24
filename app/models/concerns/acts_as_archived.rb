@@ -62,7 +62,7 @@ module ActsAsArchived
 
   included do
     scope :archived, -> { where(archived: true) }
-    scope :unarchived, -> { where(archived: false) }
+    scope :unarchived, -> { where(archived: [false, nil]) }
 
     effective_resource do
       archived :boolean,  permitted: false
