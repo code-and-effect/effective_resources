@@ -23,6 +23,9 @@ module Effective
             #reload_resource unless action == :destroy # Removed.
             render(action) # action.js.erb
           end
+        elsif response_body.present? # We might have done something weird like send_data in an after_save
+          format.html { flash.now[:success] ||= resource_flash(:success, resource, action) }
+          format.js { flash.now[:success] ||= resource_flash(:success, resource, action) }
         else # Default
           format.html do
             flash[:success] ||= resource_flash(:success, resource, action)
