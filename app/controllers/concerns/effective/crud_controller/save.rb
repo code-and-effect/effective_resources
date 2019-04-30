@@ -65,7 +65,7 @@ module Effective
         end
 
         run_callbacks(:resource_error) unless success
-        run_callbacks(:resource_after_commit)
+        run_callbacks(:resource_after_commit) if success
 
         success
       end
