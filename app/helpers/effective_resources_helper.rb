@@ -94,7 +94,7 @@ module EffectiveResourcesHelper
       locals[:format_block] = block if block_given?
       render(partial: partial, collection: resource, as: :resource, locals: locals.except(:resource), spacer_template: spacer_template)
     elsif block_given?
-      render(partial, locals) { yield }
+      render(partial, locals) { capture(&block).to_s.html_safe }
     else
       render(partial, locals)
     end
