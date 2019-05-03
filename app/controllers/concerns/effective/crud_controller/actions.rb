@@ -64,7 +64,7 @@ module Effective
         action = (commit_action[:action] == :save ? :create : commit_action[:action])
 
         resource.assign_attributes(send(resource_params_method_name))
-        resource.created_by = current_user if resource.respond_to?(:created_by=)
+        resource.created_by ||= current_user if resource.respond_to?(:created_by=)
 
         EffectiveResources.authorize!(self, action, resource)
         @page_title ||= "New #{resource_name.titleize}"
