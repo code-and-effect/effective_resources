@@ -1,26 +1,15 @@
 # Effective Resources
 
+This gem looks at the current `routes.rb`, authorization `ability.rb`, `current_user` and controller context
+to metaprogram an effective CRUD website. 
+
+It automates linking to resource edit, show, delete pages, as well as member and collection actions.
+
+It totally replaces your controller, and instead provides a simple DSL to route actions based on your form `params[:commit]`.
+
 The goal of this gem is to reduce the amount of code that needs to be written when developing a ruby on rails website.
 
 It's ruby on rails, on effective rails.
-
-A rails developer will **always** need to maintain and write:
-
-- The `routes.rb` as it's the single most important file in an entire app.
-- The `ability.rb` or other authorization.
-- A normal ApplicationRecord model file for each model, `/app/models/post.rb`.
-- Its corresponding form, `/app/views/posts/_form.html.haml` and `_post.html.haml`
-- Any javascript and css
-
-However, all other areas of code should be automated.
-
-This gem **replaces** the following work a rails developer would normally do:
-
-- Controllers.
-- Any file named `index/edit/show/new.html`. We use rails application templates and powerful defaults views so these files need never be written.
-- Writing `permitted params`. This gem implements a model dsl to define and blacklist params.
-- Manually checking which actions are available to the `current_user` on each `resource` all the time.
-- Writing submit buttons
 
 
 ## Getting Started
@@ -48,6 +37,27 @@ Check the `config/initializer/effective_resources.rb` and make sure it's calling
 ```
 config.authorization_method = Proc.new { |controller, action, resource| authorize!(action, resource) } # CanCanCan
 ```
+
+## Workflow
+
+A rails developer will **always** need to maintain and write:
+
+- The `routes.rb` as it's the single most important file in an entire app.
+- The `ability.rb` or other authorization.
+- A normal ApplicationRecord model file for each model, `/app/models/post.rb`.
+- Its corresponding form, `/app/views/posts/_form.html.haml` and `_post.html.haml`
+- Any javascript and css
+
+However, all other areas of code should be automated.
+
+This gem **replaces** the following work a rails developer would normally do:
+
+- Controllers.
+- Any file named `index/edit/show/new.html`. We use rails application templates and powerful defaults views so these files need never be written.
+- Writing `permitted params`. This gem implements a model dsl to define and blacklist params.
+- Manually checking which actions are available to the `current_user` on each `resource` all the time.
+- Writing submit buttons
+
 
 # Quick Start
 
