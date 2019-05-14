@@ -69,12 +69,10 @@ module Effective
         EffectiveResources.authorize!(self, action, resource)
         @page_title ||= "New #{resource_name.titleize}"
 
-        respond_to do |format|
-          if save_resource(resource, action)
-            respond_with_success(format, resource, action)
-          else
-            respond_with_error(format, resource, action)
-          end
+        if save_resource(resource, action)
+          respond_with_success(resource, action)
+        else
+          respond_with_error(resource, action)
         end
       end
 
@@ -123,12 +121,10 @@ module Effective
 
         resource.assign_attributes(send(resource_params_method_name))
 
-        respond_to do |format|
-          if save_resource(resource, action)
-            respond_with_success(format, resource, action)
-          else
-            respond_with_error(format, resource, action)
-          end
+        if save_resource(resource, action)
+          respond_with_success(resource, action)
+        else
+          respond_with_error(resource, action)
         end
       end
 
@@ -145,12 +141,10 @@ module Effective
         EffectiveResources.authorize!(self, action, resource)
         @page_title ||= "Destroy #{resource}"
 
-        respond_to do |format|
-          if save_resource(resource, action)
-            respond_with_success(format, resource, action)
-          else
-            respond_with_error(format, resource, action)
-          end
+        if save_resource(resource, action)
+          respond_with_success(resource, action)
+        else
+          respond_with_error(resource, action)
         end
       end
 
@@ -176,12 +170,10 @@ module Effective
         to_assign = (send(resource_params_method_name) rescue {})
         resource.assign_attributes(to_assign) if to_assign.present? && to_assign.permitted?
 
-        respond_to do |format|
-          if save_resource(resource, action)
-            respond_with_success(format, resource, action)
-          else
-            respond_with_error(format, resource, action)
-          end
+        if save_resource(resource, action)
+          respond_with_success(resource, action)
+        else
+          respond_with_error(resource, action)
         end
       end
 
