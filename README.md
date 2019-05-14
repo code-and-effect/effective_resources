@@ -148,7 +148,7 @@ class PostsController < ApplicationController
   # Sets the @page_title in a before_filter
   page_title 'My Posts', only: [:index]
 
-  # Callbacks: before_save, after_save, resource_error
+  # Callbacks: before_render, before_save, after_save, after_error, after_commit
   before_render(only: :new) do
     resource.client = current_user.clients.first
   end
@@ -165,20 +165,6 @@ class PostsController < ApplicationController
   resource_scope do
     Post.active.where(user: current_user)
   end
-
-  # The following methods are discovered from the routes.rb and defined automatically.
-  # But you could also define them like this if you wanted.
-
-  # When GET request, will render the approve page
-  # When POST|PATCH|PUT request, will call @post.approve! and do the right thing
-  member_action :approve
-
-  # When GET request, will render an index page scoped to this method (if it's a scope on the model i.e. Post.approved)
-  collection_action :approved
-
-  # When POST|PATCH|PUT request, will call @post.approve! on each post as per params[:ids]
-  # Created with effective_datatables bulk actions in mind
-  collection_action :bulk_approve
 
   protected
 
