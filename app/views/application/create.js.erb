@@ -2,6 +2,7 @@
 <% @resource = instance_variable_get('@' + resource.name) if resource.name %>
 
 EffectiveForm.remote_form_payload = "<%= j render_resource_form(@resource) %>";
+EffectiveForm.remote_form_commit = "<%= params[:commit] %>";
 EffectiveForm.remote_form_flash = <%= raw flash.to_json %>;
 
 <% if @resource.respond_to?(:refresh_datatables) && @resource.refresh_datatables.present? %>
