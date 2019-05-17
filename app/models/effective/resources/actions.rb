@@ -9,7 +9,7 @@ module Effective
           matches = [[namespace, plural_name].compact.join('/'.freeze), [namespace, name].compact.join('/'.freeze)]
 
           routes_engine.routes.routes.select do |route|
-            matches.any? { |match| match == route.defaults[:controller] }
+            matches.any? { |match| match == route.defaults[:controller] } && !route.name.to_s.end_with?('root')
           end.inject({}) do |h, route|
             h[route.defaults[:action].to_sym] = route; h
           end
