@@ -9,19 +9,6 @@ module EffectiveResources
       eval File.read("#{config.root}/config/effective_resources.rb")
     end
 
-    # Register the acts_as_archived routes concern
-    # resources :things, concerns: :acts_as_archived
-    initializer 'effective_resources.routes_concern' do |app|
-      ActionDispatch::Routing::Mapper.include(ActsAsArchived::RoutesConcern)
-    end
-
-    # Register the flash_messages concern so that it can be called in ActionController
-    initializer 'effective_resources.action_controller' do |app|
-      ActiveSupport.on_load :action_controller do
-        include(Effective::FlashMessages)
-      end
-    end
-
     # Include acts_as_addressable concern and allow any ActiveRecord object to call it
     initializer 'effective_resources.active_record' do |app|
       ActiveSupport.on_load :active_record do
@@ -34,17 +21,34 @@ module EffectiveResources
     end
 
     initializer 'effective_resources.cancancan' do |app|
-      if defined?(CanCan::Ability)
-        CanCan::Ability.module_eval do
-          CRUD_ACTIONS = [:index, :new, :create, :edit, :update, :show, :destroy]
+      ActiveSupport.on_load :active_record do
+        if defined?(CanCan::Ability)
+          CanCan::Ability.module_eval do
+            CRUD_ACTIONS = [:index, :new, :create, :edit, :update, :show, :destroy]
 
-          def crud
-            CRUD_ACTIONS
+            def crud
+              CRUD_ACTIONS
+            end
           end
-        end
 
-        CanCan::Ability.include(ActsAsArchived::CanCan)
-        CanCan::Ability.include(ActsAsStatused::CanCan)
+          CanCan::Ability.include(ActsAsArchived::CanCan)
+          CanCan::Ability.include(ActsAsStatused::CanCan)
+        end
+      end
+    end
+
+    # Register the acts_as_archived routes concern
+    # resources :things, concerns: :acts_as_archived
+    initializer 'effective_resources.routes_concern' do |app|
+      ActiveSupport.on_load :active_record do
+        ActionDispatch::Routing::Mapper.include(ActsAsArchived::RoutesConcern)
+      end
+    end
+
+    # Register the flash_messages concern so that it can be called in ActionController
+    initializer 'effective_resources.action_controller' do |app|
+      ActiveSupport.on_load :action_controller do
+        include(Effective::FlashMessages)
       end
     end
 
