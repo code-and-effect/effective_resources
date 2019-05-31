@@ -68,7 +68,7 @@ module EffectiveResourcesHelper
     partial = atts[:partial]
     spacer_template = locals[:spacer_template]
 
-    effective_resource = (atts[:effective_resource] || find_effective_resource)
+    effective_resource = (atts[:effective_resource] || find_effective_resource(resource))
     namespace = atts[:namespace] || (effective_resource.namespace.to_sym if effective_resource.namespace)
 
     # Assign actions

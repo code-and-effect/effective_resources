@@ -55,8 +55,19 @@ module EffectiveResourcesPrivateHelper
     end
   end
 
-  def find_effective_resource
+  def find_effective_resource(resource = nil)
     @_effective_resource ||= (controller.respond_to?(:effective_resource) ? controller.effective_resource : Effective::Resource.new(controller_path))
+
+    # We might be calling this on a sub resource of the same page.
+    if resource.present? && @_effective_resource.present?
+      resource = Array(resource).first
+
+      if resource.kind_of?(ActiveRecord::Base) && resource.class != @_effective_resource.klass
+        return Effective::Resource.new(resource, namespace: @_effective_resource.namespace)
+      end
+    end
+
+    @_effective_resource
   end
 
 end
