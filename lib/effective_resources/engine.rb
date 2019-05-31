@@ -41,10 +41,6 @@ module EffectiveResources
     # resources :things, concerns: :acts_as_archived
     initializer 'effective_resources.routes_concern' do |app|
       ActionDispatch::Routing::Mapper.include(ActsAsArchived::RoutesConcern)
-      
-      # ActiveSupport.on_load :active_record do
-      #   ActionDispatch::Routing::Mapper.include(ActsAsArchived::RoutesConcern)
-      # end
     end
 
     # Register the flash_messages concern so that it can be called in ActionController

@@ -65,7 +65,7 @@ module ActsAsArchived
     scope :unarchived, -> { where(archived: [false, nil]) }
 
     effective_resource do
-      archived :boolean,  permitted: false
+      archived :boolean, permitted: false
     end
 
     acts_as_archived_options = @acts_as_archived_options
