@@ -67,6 +67,8 @@ module ActsAsArchived
   end
 
   included do
+    define_callbacks :archive, :unarchive  # ActiveSupport::Callbacks
+
     scope :archived, -> { where(archived: true) }
     scope :unarchived, -> { where(archived: [false, nil]) }
 
@@ -82,44 +84,20 @@ module ActsAsArchived
     def acts_as_archived?; true; end
 
     # before_archive(if: -> { persisted? })
-    def before_archive(options = {}, &block)
-      raise('unexpected argument. Try if: or unless:') if (options.keys - [:if, :unless]).present?
-
-      send :define_method, :before_archive do |opts = options| 
-        return if opts.key?(:if) && !self.instance_exec(&opts[:if])
-        return if opts.key?(:unless) && self.instance_exec(&opts[:unless])
-        self.instance_exec(&block) 
-      end
+    def before_archive(*filters, &blk)
+      set_callback(:archive, :before, *filters, &blk)
     end
 
-    def after_archive(options = {}, &block)
-      raise('unexpected argument. Try if: or unless:') if (options.keys - [:if, :unless]).present?
-
-      send :define_method, :after_archive do |opts = options| 
-        return if opts.key?(:if) && !self.instance_exec(&opts[:if])
-        return if opts.key?(:unless) && self.instance_exec(&opts[:unless])
-        self.instance_exec(&block) 
-      end
+    def after_archive(*filters, &blk)
+      set_callback(:archive, :after, *filters, &blk)
     end
 
-    def before_unarchive(options = {}, &block)
-      raise('unexpected argument. Try if: or unless:') if (options.keys - [:if, :unless]).present?
-
-      send :define_method, :before_unarchive do |opts = options| 
-        return if opts.key?(:if) && !self.instance_exec(&opts[:if])
-        return if opts.key?(:unless) && self.instance_exec(&opts[:unless])
-        self.instance_exec(&block) 
-      end
+    def before_unarchive(*filters, &blk)
+      set_callback(:unarchive, :before, *filters, &blk)
     end
 
-    def after_unarchive(options = {}, &block)
-      raise('unexpected argument. Try if: or unless:') if (options.keys - [:if, :unless]).present?
-
-      send :define_method, :after_unarchive do |opts = options| 
-        return if opts.key?(:if) && !self.instance_exec(&opts[:if])
-        return if opts.key?(:unless) && self.instance_exec(&opts[:unless])
-        self.instance_exec(&block) 
-      end
+    def after_unarchive(*filters, &blk)
+      set_callback(:unarchive, :after, *filters, &blk)
     end
 
     # after_commit(if: :just_archived?)
@@ -133,19 +111,17 @@ module ActsAsArchived
     cascade = acts_as_archived_options[:cascade]
 
     transaction do
-      before_archive if respond_to?(:before_archive)
+      run_callbacks :archive do
+        update!(archived: true) # Runs validations
 
-      update!(archived: true) # Runs validations
+        if strategy == :archive_all
+          cascade.each { |associated| public_send(associated).update_all(archived: true) }
+        end
 
-      if strategy == :archive_all
-        cascade.each { |associated| public_send(associated).update_all(archived: true) }
+        if strategy == :archive
+          cascade.each { |associated| Array(public_send(associated)).each { |resource| resource.archive! } }
+        end
       end
-
-      if strategy == :archive
-        cascade.each { |associated| Array(public_send(associated)).each { |resource| resource.archive! } }
-      end
-
-      after_archive if respond_to?(:after_archive)
     end
 
     if strategy == :active_job
@@ -162,19 +138,17 @@ module ActsAsArchived
     cascade = acts_as_archived_options[:cascade]
 
     transaction do
-      before_unarchive if respond_to?(:before_unarchive)
+      run_callbacks :unarchive do
+        update!(archived: false) # Runs validations
 
-      update!(archived: false) # Runs validations
+        if strategy == :archive_all
+          cascade.each { |associated| public_send(associated).update_all(archived: false) }
+        end
 
-      if strategy == :archive_all
-        cascade.each { |associated| public_send(associated).update_all(archived: false) }
+        if strategy == :archive
+          cascade.each { |associated| Array(public_send(associated)).each { |resource| resource.unarchive! } }
+        end
       end
-
-      if strategy == :archive
-        cascade.each { |associated| Array(public_send(associated)).each { |resource| resource.unarchive! } }
-      end
-
-      after_unarchive if respond_to?(:after_unarchive)
     end
 
     if strategy == :active_job
