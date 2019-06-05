@@ -101,6 +101,7 @@ module ActsAsArchived
     end
 
     # after_commit(if: :just_archived?)
+    # after_commit(if: :just_unarchived?)
   end
 
   # Instance methods

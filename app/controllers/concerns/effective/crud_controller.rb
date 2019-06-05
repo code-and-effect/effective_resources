@@ -82,7 +82,7 @@ module Effective
     # Returns an ActiveRecord relation based on the computed value of `resource_scope` dsl method
     def resource_scope # Thing
       @_effective_resource_relation ||= (
-        relation = case @_effective_resource_scope  # If this was initialized by the resource_scope before_filter
+        relation = case @_effective_resource_scope  # If this was initialized by the resource_scope before_action
         when ActiveRecord::Relation
           @_effective_resource_scope
         when Hash

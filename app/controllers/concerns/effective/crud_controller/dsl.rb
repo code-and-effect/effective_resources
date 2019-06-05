@@ -80,7 +80,7 @@ module Effective
         raise 'expected a proc or block' unless (obj.respond_to?(:call) || block_given?)
 
         instance_exec do
-          before_action(opts) { @_effective_resource_scope ||= instance_exec(&(block_given? ? block : obj)) }
+          prepend_before_action(opts) { @_effective_resource_scope ||= instance_exec(&(block_given? ? block : obj)) }
         end
       end
 
