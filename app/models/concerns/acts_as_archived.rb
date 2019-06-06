@@ -126,7 +126,7 @@ module ActsAsArchived
     end
 
     if strategy == :active_job
-      ActsAsArchivedArchiveJob.perform_later(self)
+      ::ActsAsArchivedArchiveJob.perform_later(self)
     end
 
     true
@@ -153,7 +153,7 @@ module ActsAsArchived
     end
 
     if strategy == :active_job
-      ActsAsArchivedUnarchiveJob.perform_later(self)
+      ::ActsAsArchivedUnarchiveJob.perform_later(self)
     end
 
     true
