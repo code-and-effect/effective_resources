@@ -19,11 +19,8 @@ module Effective
 
         self.resource ||= resource_scope.new
 
-        # Assign any passed params
-        to_assign = if params[:_datatable_id].present?
-          inline_datatable = EffectiveDatatables.find(params[:_datatable_id])
-          inline_datatable.view = view_context
-          inline_datatable.attributes
+        to_assign = if view_context.respond_to?(:inline_datatable?) && view_context.inline_datatable?
+          EffectiveDatatables.find(params[:_datatable_id], params[:_datatable_attributes]).attributes
         elsif params.present?
           params.to_unsafe_h.except(:controller, :action, :id, :duplicate_id)
         end
