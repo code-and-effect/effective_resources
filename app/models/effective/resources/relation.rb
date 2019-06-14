@@ -1,6 +1,8 @@
 module Effective
   module Resources
     module Relation
+      ROW_LIMIT = 1500
+
 
       def relation
         @relation ||= klass.where(nil)
@@ -254,7 +256,7 @@ module Effective
         # Order the target model for its matching records / keys
         sort_column = (sort unless sort == true) || resource.sort_column
 
-        relation = resource.order(sort_column, direction, limit: limit, reorder: true).limit(1500)
+        relation = resource.order(sort_column, direction, limit: limit, reorder: true).limit(ROW_LIMIT)
 
         if association.options[:as] # polymorphic
           relation = relation.where(association.type => klass.name)
@@ -273,7 +275,7 @@ module Effective
           values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact # The searched keys
 
           keys = klass.joins(association.name)
-            .order(values.uniq.compact.map { |value| "#{source}=#{value} DESC" }.join(','))
+            .order(Arel.sql(values.uniq.compact.first(ROW_LIMIT).map { |value| "#{source}=#{value} DESC" }.join(',')))
             .pluck(klass.primary_key)
         elsif association.macro == :has_many && association.options[:through].present?
           key = sql_column(klass.primary_key)
@@ -282,7 +284,7 @@ module Effective
           values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact # The searched keys
 
           keys = association.through_reflection.klass
-            .order(values.uniq.compact.map { |value| "#{source}=#{value} DESC" }.join(','))
+            .order(Arel.sql(values.uniq.compact.first(ROW_LIMIT).map { |value| "#{source}=#{value} DESC" }.join(',')))
             .pluck(association.through_reflection.foreign_key)
         elsif association.macro == :has_many
           key = sql_column(klass.primary_key)
@@ -292,7 +294,9 @@ module Effective
           keys = relation.pluck(association.foreign_key)
         end
 
-        Arel.sql(keys.uniq.compact.map { |value| "#{key}=#{value} DESC" }.join(','))
+        keys = keys.uniq.compact.first(ROW_LIMIT)
+
+        Arel.sql(keys.map { |value| "#{key}=#{value} DESC" }.join(','))
       end
 
     end
