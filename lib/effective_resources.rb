@@ -5,6 +5,7 @@ module EffectiveResources
 
   # The following are all valid config keys
   mattr_accessor :authorization_method
+  mattr_accessor :default_submits
 
   def self.setup
     yield self
@@ -26,4 +27,11 @@ module EffectiveResources
   def self.authorize!(controller, action, resource)
     raise Effective::AccessDenied.new('Access Denied', action, resource) unless authorized?(controller, action, resource)
   end
+
+  def self.default_submits
+    @_default_submits ||= begin
+      (['Save', 'Continue', 'Add New'] & Array(@@default_submits)).inject({}) { |h, v| h[v] = true; h }
+    end
+  end
+
 end

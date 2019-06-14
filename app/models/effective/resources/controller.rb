@@ -8,15 +8,15 @@ module Effective
       # Saves a list of commit actions...
       def submits
         {}.tap do |submits|
-          if (actions.find { |a| a == :create } || actions.find { |a| a == :update })
+          if actions.find { |a| a == :create || a == :update } && EffectiveResources.default_submits['Save']
             submits['Save'] = { action: :save, default: true }
           end
 
-          if actions.find { |a| a == :index }
+          if actions.find { |a| a == :index } && EffectiveResources.default_submits['Continue']
             submits['Continue'] = { action: :save, redirect: :index, default: true, unless: -> { params[:_datatable_id].present? } }
           end
 
-          if actions.find { |a| a == :new }
+          if actions.find { |a| a == :new } && EffectiveResources.default_submits['Add New']
             submits['Add New'] = { action: :save, redirect: :new, default: true, unless: -> { params[:_datatable_id].present? } }
           end
         end

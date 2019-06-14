@@ -21,4 +21,11 @@ EffectiveResources.setup do |config|
   # end
   config.authorization_method = Proc.new { |controller, action, resource| authorize!(action, resource) }
 
+  # These default submit actions will be added to each controller
+  # and rendered when calling effective_submit(f)
+  # based on the controller, and its `submits` if any.
+  #
+  # Supported values: 'Save', 'Continue', and 'Add New'
+  config.default_submits = ['Save', 'Continue', 'Add New']
+
 end
