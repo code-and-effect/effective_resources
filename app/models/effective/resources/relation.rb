@@ -272,7 +272,7 @@ module Effective
           key = sql_column(klass.primary_key)
 
           source = "#{association.join_table}.#{association.source_reflection.association_foreign_key}"
-          values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact # The searched keys
+          values = relation.limit(TARGET_LIST_LIMIT).pluck(association.source_reflection.klass.primary_key).uniq.compact # The searched keys
 
           keys = klass.joins(association.name)
             .order(order_by_array_position(values, source))
@@ -281,7 +281,7 @@ module Effective
           key = sql_column(klass.primary_key)
 
           source = association.source_reflection.foreign_key
-          values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact # The searched keys
+          values = relation.limit(TARGET_LIST_LIMIT).pluck(association.source_reflection.klass.primary_key).uniq.compact # The searched keys
 
           keys = association.through_reflection.klass
             .order(order_by_array_position(values, source))
