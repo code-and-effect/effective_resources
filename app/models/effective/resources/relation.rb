@@ -1,8 +1,8 @@
 module Effective
   module Resources
     module Relation
-      ROW_LIMIT = 1500
-
+      TARGET_LIST_LIMIT = 1500
+      TARGET_KEYS_LIMIT = 30000
 
       def relation
         @relation ||= klass.where(nil)
@@ -256,7 +256,7 @@ module Effective
         # Order the target model for its matching records / keys
         sort_column = (sort unless sort == true) || resource.sort_column
 
-        relation = resource.order(sort_column, direction, limit: limit, reorder: true).limit(ROW_LIMIT)
+        relation = resource.order(sort_column, direction, limit: limit, reorder: true)
 
         if association.options[:as] # polymorphic
           relation = relation.where(association.type => klass.name)
@@ -275,7 +275,7 @@ module Effective
           values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact # The searched keys
 
           keys = klass.joins(association.name)
-            .order(Arel.sql(values.uniq.compact.first(ROW_LIMIT).map { |value| "#{source}=#{value} DESC" }.join(',')))
+            .order(order_by_array_position(values, source))
             .pluck(klass.primary_key)
         elsif association.macro == :has_many && association.options[:through].present?
           key = sql_column(klass.primary_key)
@@ -284,7 +284,7 @@ module Effective
           values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact # The searched keys
 
           keys = association.through_reflection.klass
-            .order(Arel.sql(values.uniq.compact.first(ROW_LIMIT).map { |value| "#{source}=#{value} DESC" }.join(',')))
+            .order(order_by_array_position(values, source))
             .pluck(association.through_reflection.foreign_key)
         elsif association.macro == :has_many
           key = sql_column(klass.primary_key)
@@ -294,9 +294,18 @@ module Effective
           keys = relation.pluck(association.foreign_key)
         end
 
-        keys = keys.uniq.compact.first(ROW_LIMIT)
+        order_by_array_position(keys, key)
+      end
 
-        Arel.sql(keys.map { |value| "#{key}=#{value} DESC" }.join(','))
+      def order_by_array_position(keys, field)
+        keys = Array(keys).uniq.compact
+
+        if postgres?
+          Arel.sql("array_position(ARRAY[#{keys.first(TARGET_KEYS_LIMIT).join(',')}]::text::int[], #{field})")
+        else
+          Arel.sql(keys.first(TARGET_LIST_LIMIT).map { |value| "#{key}=#{value} DESC" }.join(','))
+        end
+
       end
 
     end
