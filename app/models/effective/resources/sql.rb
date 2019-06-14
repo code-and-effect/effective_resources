@@ -71,7 +71,7 @@ module Effective
       def sort_column
         return @_sort_column if @_sort_column
 
-        ['name', 'title', 'label', 'subject', 'full_name', 'first_name', 'email', 'description'].each do |name|
+        ['name', 'title', 'label', 'subject', 'full_name', 'first_name', 'email', 'number', 'description'].each do |name|
           return name if column_names.include?(name)
         end
 

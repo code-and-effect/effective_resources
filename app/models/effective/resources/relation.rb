@@ -301,7 +301,7 @@ module Effective
         keys = Array(keys).uniq.compact
 
         if postgres?
-          Arel.sql("array_position(ARRAY[#{keys.first(TARGET_KEYS_LIMIT).join(',')}]::text::int[], #{field})")
+          Arel.sql("array_position(ARRAY[#{keys.first(TARGET_KEYS_LIMIT).join(',')}]::text::int[], #{field}::int)")
         else
           Arel.sql(keys.first(TARGET_LIST_LIMIT).map { |value| "#{key}=#{value} DESC" }.join(','))
         end
