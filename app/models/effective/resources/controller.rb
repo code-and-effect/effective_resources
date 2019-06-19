@@ -98,6 +98,15 @@ module Effective
         end
       end
 
+      # Used by datatables
+      def fallback_resource_actions
+        {
+          'Show': { action: :show, default: true },
+          'Edit': { action: :edit, default: true },
+          'Delete': { action: :destroy, default: true, 'data-method' => :delete, 'data-confirm' => "Really delete @resource?" }
+        }
+      end
+
       # This is the fallback for render_resource_actions when no actions are specified, but a class is given
       # Used by Datatables new
       def resource_klass_actions
