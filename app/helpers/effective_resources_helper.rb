@@ -64,12 +64,14 @@ module EffectiveResourcesHelper
     raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
 
     btn_class = atts[:btn_class]
+    effective_resource = atts[:effective_resource]
+    namespace = atts[:controller_namespace] || atts[:namespace]
     locals = atts[:locals] || {}
     partial = atts[:partial]
     spacer_template = locals[:spacer_template]
 
-    effective_resource = (atts[:effective_resource] || find_effective_resource(resource))
-    namespace = atts[:namespace] || (effective_resource.namespace.to_sym if effective_resource.namespace)
+    effective_resource ||= find_effective_resource(resource)
+    namespace ||= (effective_resource.namespace.to_sym if effective_resource.namespace)
 
     # Assign actions
     actions = if atts.key?(:actions) # We filter out any actions passed to us that aren't supported
@@ -80,21 +82,30 @@ module EffectiveResourcesHelper
     end
 
     # Filter out false and proc false
-    actions = actions.select { |_, v| atts[v[:action]].respond_to?(:call) ? Effective::ResourceExec.new(self, resource).instance_exec(&atts[v[:action]]) : (atts[v[:action]] != false) }
+    actions = actions.select do |_, opts| 
+      if atts[opts[:action]].respond_to?(:call) 
+        Effective::ResourceExec.new(self, resource).instance_exec(&atts[opts[:action]]) 
+      else
+        atts[opts[:action]] != false
+      end
+    end
 
     # Select Partial
     partial = ['effective/resource/actions', partial.to_s].join('_') if partial.kind_of?(Symbol)
     partial = (partial.presence || 'effective/resource/actions') + '.html'
 
     # Assign Locals
-    locals = { resource: resource, effective_resource: effective_resource, namespace: namespace, actions: actions, btn_class: btn_class.to_s }.compact.merge(locals)
+    locals = { 
+      resource: resource, 
+      effective_resource: effective_resource, 
+      format_block: (block if block_given?),
+      namespace: namespace, 
+      actions: actions, 
+      btn_class: (btn_class || '')
+    }.compact.merge(locals)
 
-    # Render
     if resource.kind_of?(Array)
-      locals[:format_block] = block if block_given?
       render(partial: partial, collection: resource, as: :resource, locals: locals.except(:resource), spacer_template: spacer_template)
-    elsif block_given?
-      render(partial, locals) { capture(&block).to_s.html_safe }
     else
       render(partial, locals)
     end
