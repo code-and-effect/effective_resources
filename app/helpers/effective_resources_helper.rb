@@ -58,9 +58,9 @@ module EffectiveResourcesHelper
   # you can also pass all action names and true/false such as edit: true, show: false
   def render_resource_actions(resource, atts = {}, &block)
     unless resource.kind_of?(ActiveRecord::Base) || resource.kind_of?(Class) || resource.kind_of?(Array) || resource.class.ancestors.include?(ActiveModel::Model)
-      raise 'expected first argument to be an ActiveRecord::Base object or Array of objects' 
+      raise 'expected first argument to be an ActiveRecord::Base object or Array of objects'
     end
-    
+
     raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
 
     btn_class = atts[:btn_class]
@@ -75,16 +75,16 @@ module EffectiveResourcesHelper
 
     # Assign actions
     actions = if atts.key?(:actions) # We filter out any actions passed to us that aren't supported
-      available = effective_resource.actions # [:new, :edit, ...]
+      available = effective_resource.actions + atts[:actions].map { |k, v| v[:action] if v[:path] }.compact
       atts[:actions].inject({}) { |h, (commit, opts)| h[commit] = opts if available.include?(opts[:action]); h }
     else
       (resource.kind_of?(Class) ? effective_resource.resource_klass_actions : effective_resource.resource_actions)
     end
 
     # Filter out false and proc false
-    actions = actions.select do |_, opts| 
-      if atts[opts[:action]].respond_to?(:call) 
-        Effective::ResourceExec.new(self, resource).instance_exec(&atts[opts[:action]]) 
+    actions = actions.select do |_, opts|
+      if atts[opts[:action]].respond_to?(:call)
+        Effective::ResourceExec.new(self, resource).instance_exec(&atts[opts[:action]])
       else
         atts[opts[:action]] != false
       end
@@ -95,12 +95,12 @@ module EffectiveResourcesHelper
     partial = (partial.presence || 'effective/resource/actions') + '.html'
 
     # Assign Locals
-    locals = { 
-      resource: resource, 
-      effective_resource: effective_resource, 
+    locals = {
+      resource: resource,
+      effective_resource: effective_resource,
       format_block: (block if block_given?),
-      namespace: namespace, 
-      actions: actions, 
+      namespace: namespace,
+      actions: actions,
       btn_class: (btn_class || '')
     }.compact.merge(locals)
 

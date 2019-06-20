@@ -16,11 +16,19 @@ module EffectiveResourcesPrivateHelper
       (args.key?(:unless) ? !executor.instance_exec(&args[:unless]) : true) &&
       EffectiveResources.authorized?(controller, action, resource)
     end.inject({}) do |h, (commit, args)|
-      opts = args.except(:default, :only, :except, :if, :unless, :redirect, :success, :danger)
+      opts = args.except(:default, :only, :except, :if, :unless, :redirect, :success, :danger, :klass)
 
       # Transform data: { ... } hash into 'data-' keys
       if opts.key?(:data)
         opts.delete(:data).each { |k, v| opts["data-#{k}"] ||= v }
+      end
+
+      if opts.key?(:path)
+        opts[:href] = opts.delete(:path)
+      end
+
+      if opts.key?(:url)
+        opts[:href] = opts.delete(:url)
       end
 
       # Replace resource name in any token strings
