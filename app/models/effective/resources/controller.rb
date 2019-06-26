@@ -79,7 +79,7 @@ module Effective
 
             actions[action.to_s.titleize] = case action
             when :archive
-              { action: action, default: true, if: -> { resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?"}
+              { action: action, default: true, if: -> { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?"}
             when :unarchive
               { action: action, default: true, if: -> { resource.archived? }, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
             else
