@@ -128,16 +128,24 @@ module ActsAsStatused
         define_method("#{sym}_at") { status_steps["#{sym}_at".to_sym] }
       end
 
+      unless respond_to?("#{sym}_at=")
+        define_method("#{sym}_at=") { |value| status_steps["#{sym}_at".to_sym] = value }
+      end
+
       unless respond_to?("#{sym}_by")
-        define_method("#{sym}_by") { acts_as_statused_by_user(sym) } 
+        define_method("#{sym}_by") { acts_as_statused_by_user(sym) }
       end
 
       unless respond_to?("#{sym}_by_id")
-        define_method("#{sym}_by_id") { status_steps["#{sym}_by".to_sym] } 
+        define_method("#{sym}_by_id") { status_steps["#{sym}_by".to_sym] }
+      end
+
+      unless respond_to?("#{sym}_by_id=")
+        define_method("#{sym}_by_id=") { |value| status_steps["#{sym}_by".to_sym] = value }
       end
 
       unless respond_to?("was_#{sym}?")
-        define_method("was_#{sym}?") { send("#{sym}_at").present? } 
+        define_method("was_#{sym}?") { send("#{sym}_at").present? }
       end
 
       # approved!
@@ -155,7 +163,7 @@ module ActsAsStatused
 
           status_steps.delete("#{sym}_at".to_sym)
           status_steps.delete("#{sym}_by".to_sym)
-          
+
           true
         end
       end
