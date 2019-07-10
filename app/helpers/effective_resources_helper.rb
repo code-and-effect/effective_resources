@@ -81,12 +81,21 @@ module EffectiveResourcesHelper
       (resource.kind_of?(Class) ? effective_resource.resource_klass_actions : effective_resource.resource_actions)
     end
 
-    # Filter out false and proc false
+    # Consider only, except, false and proc false
+    only = Array(atts[:only]).compact
+    except = Array(atts[:except]).compact
+
     actions = actions.select do |_, opts|
-      if atts[opts[:action]].respond_to?(:call)
-        Effective::ResourceExec.new(self, resource).instance_exec(&atts[opts[:action]])
+      action = opts[:action]
+
+      if only.present? && !only.include?(action)
+        false
+      elsif except.present? && except.include?(action)
+        false
+      elsif atts[action].respond_to?(:call)
+        Effective::ResourceExec.new(self, resource).instance_exec(&atts[action])
       else
-        atts[opts[:action]] != false
+        atts[action] != false
       end
     end
 
