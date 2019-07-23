@@ -159,10 +159,6 @@ module ActsAsArchived
     true
   end
 
-  def destroy
-    archive!
-  end
-
   private
 
   def just_archived?
