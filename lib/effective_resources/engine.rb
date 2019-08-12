@@ -2,7 +2,12 @@ module EffectiveResources
   class Engine < ::Rails::Engine
     engine_name 'effective_resources'
 
-    config.autoload_paths += Dir["#{config.root}/lib/", "#{config.root}/jobs/", "#{config.root}/app/controllers/concerns/effective/"]
+    config.autoload_paths += Dir[
+      "#{config.root}/lib/",
+      "#{config.root}/jobs/",
+      "#{config.root}/app/models/validators/",
+      "#{config.root}/app/controllers/concerns/effective/"
+    ]
 
     # Set up our default configuration options.
     initializer 'effective_resources.defaults', before: :load_config_initializers do |app|
