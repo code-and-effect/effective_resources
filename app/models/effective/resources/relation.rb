@@ -303,7 +303,7 @@ module Effective
         if postgres?
           Arel.sql("array_position(ARRAY[#{keys.first(TARGET_KEYS_LIMIT).join(',')}]::text::int[], #{field}::int)")
         else
-          Arel.sql(keys.first(TARGET_LIST_LIMIT).map { |value| "#{key}=#{value} DESC" }.join(','))
+          Arel.sql(keys.first(TARGET_LIST_LIMIT).map { |value| "#{field}=#{value} DESC" }.join(','))
         end
 
       end
