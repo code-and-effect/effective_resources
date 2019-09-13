@@ -308,7 +308,7 @@ module Effective
       end
 
       def order_by_array_position(keys, field)
-        keys = Array(keys).uniq.compact
+        keys = Array(keys).uniq.compact.presence || [0]
 
         if postgres?
           Arel.sql("array_position(ARRAY[#{keys.first(TARGET_KEYS_LIMIT).join(',')}]::text::int[], #{field}::int)")
