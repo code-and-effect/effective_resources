@@ -27,7 +27,6 @@ module Effective
         case sql_type
         when :belongs_to
           relation
-            .order(Arel.sql("#{is_null(sql_column)} ASC"))
             .order(order_by_associated_conditions(association, sort: sort, direction: direction, limit: limit))
         when :belongs_to_polymorphic
           relation
@@ -71,13 +70,17 @@ module Effective
         term = Effective::Attribute.new(sql_type, klass: (association.try(:klass) rescue nil) || klass).parse(value, name: name)
 
         # term == 'nil' rescue false is a Rails 4.1 fix, where you can't compare a TimeWithZone to 'nil'
-        if (term == 'nil' rescue false) && ![:has_and_belongs_to_many, :has_many, :has_one, :belongs_to_polymorphic, :effective_roles].include?(sql_type)
+        if (term == 'nil' rescue false) && ![:has_and_belongs_to_many, :has_many, :has_one, :belongs_to, :belongs_to_polymorphic, :effective_roles].include?(sql_type)
           return relation.where(is_null(sql_column))
         end
 
         case sql_type
-        when :belongs_to, :has_and_belongs_to_many, :has_many, :has_one
-          relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
+        when :belongs_to
+          if term == 'nil'
+            relation.where(is_null(association.foreign_key))
+          else
+            relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
+          end
         when :belongs_to_polymorphic
           (type, id) = term.split('_')
 
@@ -89,6 +92,8 @@ module Effective
             id ||= Effective::Attribute.new(:integer).parse(term)
             relation.where("#{sql_column}_id = ? OR #{sql_column}_type = ?", id, (type || term))
           end
+        when :has_and_belongs_to_many, :has_many, :has_one
+          relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
         when :effective_addresses
           relation.where(id: Effective::Resource.new(association).search_any(value, fuzzy: fuzzy).pluck(:addressable_id))
         when :effective_obfuscation
@@ -158,6 +163,11 @@ module Effective
         # Assume this is a set of IDs
         if value.kind_of?(Integer) || value.kind_of?(Array) || (value.to_i.to_s == value)
           return relation.where(klass.primary_key => value)
+        end
+
+        # If the value is 3-something-like-this
+        if (values = value.to_s.split('-')).length > 0 && (maybe_id = values.first).present?
+          return relation.where(klass.primary_key => maybe_id) if (maybe_id.to_i.to_s == maybe_id)
         end
 
         # Otherwise, we fall back to a string/text search of all columns
