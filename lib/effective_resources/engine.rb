@@ -6,7 +6,7 @@ module EffectiveResources
       "#{config.root}/lib/",
       "#{config.root}/jobs/",
       "#{config.root}/app/models/validators/",
-      "#{config.root}/app/controllers/concerns/effective/"
+      "#{config.root}/app/controllers/concerns/"
     ]
 
     # Set up our default configuration options.
