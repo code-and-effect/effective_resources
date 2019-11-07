@@ -35,7 +35,10 @@ module Effective
           EffectiveResources.authorize!(self, :show, duplicate)
 
           self.resource = duplicate_resource(duplicate)
-          raise "expected duplicate_resource to return an unsaved new #{resource_klass} resource" unless resource.kind_of?(resource_klass) && resource.new_record?
+
+          unless resource.kind_of?(resource_scope.klass) && resource.new_record?
+            raise "expected duplicate_resource to return an unsaved new #{resource_scope.klass} resource"
+          end
 
           if (message = flash[:success].to_s).present?
             flash.delete(:success)
