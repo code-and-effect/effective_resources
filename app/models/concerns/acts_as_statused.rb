@@ -113,7 +113,7 @@ module ActsAsStatused
       end
 
       self.status_steps["#{status}_at".to_sym] ||= Time.zone.now
-      self.status_steps["#{status}_by".to_sym] ||= current_user&.id
+      self.status_steps["#{status}_by".to_sym] ||= current_user.try(:id)
     end
 
     validates :status, presence: true, inclusion: { in: const_get(:STATUSES).map(&:to_s) }

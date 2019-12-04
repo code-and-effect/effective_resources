@@ -4,7 +4,7 @@ module EffectiveResourcesPrivateHelper
   REPLACE_PAGE_ACTIONS = {'update' => :edit, 'create' => :new}
 
   def permitted_resource_actions(resource, actions)
-    page_action = REPLACE_PAGE_ACTIONS[params[:action]] || params[:action]&.to_sym || :save
+    page_action = REPLACE_PAGE_ACTIONS[params[:action]] || params[:action].try(:to_sym) || :save
     executor = Effective::ResourceExec.new(self, resource)
 
     actions.select do |commit, args|
