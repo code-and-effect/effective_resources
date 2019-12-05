@@ -147,6 +147,14 @@ module ActsAsStatused
         status_steps.delete("#{sym}_at".to_sym)
         status_steps.delete("#{sym}_by".to_sym)
 
+        if respond_to?("#{sym}_at=") && respond_to?("#{sym}_at") && send("#{sym}_at").present?
+          self.send("#{sym}_at=", nil)
+        end
+
+        if respond_to?("#{sym}_by=") && respond_to?("#{sym}_by") && send("#{sym}_by").present?
+          self.send("#{sym}_by=", nil)
+        end
+
         true
       end
 
