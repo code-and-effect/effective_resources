@@ -118,10 +118,7 @@ module Effective
 
       return unless datatable_klass.present?
 
-      datatable = datatable_klass.new(resource_datatable_attributes)
-      datatable.view = view_context
-
-      datatable
+      datatable_klass.new(resource_datatable_attributes)
     end
 
     def resource_params_method_name
