@@ -120,6 +120,8 @@ module ActsAsStatused
 
     # Create an received scope and approved? method for each status
     acts_as_statused_options[:statuses].each do |sym|
+      scope(sym, -> { where(status: sym.to_s) })
+
       define_method("#{sym}?") { status == sym.to_s }
       define_method("was_#{sym}?") { send("#{sym}_at").present? }
 
@@ -158,7 +160,6 @@ module ActsAsStatused
         true
       end
 
-      scope(sym, -> { where(status: sym.to_s) })
     end
   end
 
