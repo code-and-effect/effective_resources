@@ -51,7 +51,7 @@ module Effective
         flash.now[:danger] ||= resource_flash(:danger, resource, action)
 
         respond_to do |format|
-          case action.to_sym
+          case action_name.to_sym
           when :create
             format.html { render :new }
           when :update
@@ -61,24 +61,11 @@ module Effective
               redirect_flash
               redirect_to(resource_redirect_path(action))
             end
-          else # member action
-            from_path = referer_redirect_path.to_s
-
-            format.html do
-              if resource_edit_path && from_path.end_with?(resource_edit_path)
-                @page_title ||= "Edit #{resource}"
-                render :edit
-              elsif resource_new_path && from_path.end_with?(resource_new_path)
-                @page_title ||= "New #{resource_name.titleize}"
-                render :new
-              elsif resource_action_path(action) && from_path.end_with?(resource_action_path(action)) && template_present?(action)
-                @page_title ||= "#{action.to_s.titleize} #{resource}"
-                render(action, locals: { action: action })
-              elsif resource_show_path && from_path.end_with?(resource_show_path)
-                @page_title ||= resource_name.titleize
-                render :show
-              else
-                @page_title ||= resource.to_s
+          else
+            if template_present?(action)
+              format.html { render(action, locals: { action: action }) }
+            else
+              format.html do
                 redirect_flash
                 redirect_to(from_path.presence || resource_redirect_path(action))
               end
@@ -91,6 +78,54 @@ module Effective
           end
         end
       end
+
+      # def respond_with_error(resource, action)
+      #   return if response.body.present?
+
+      #   flash.delete(:success)
+      #   flash.now[:danger] ||= resource_flash(:danger, resource, action)
+
+      #   respond_to do |format|
+      #     case action.to_sym
+      #     when :create
+      #       format.html { render :new }
+      #     when :update
+      #       format.html { render :edit }
+      #     when :destroy
+      #       format.html do
+      #         redirect_flash
+      #         redirect_to(resource_redirect_path(action))
+      #       end
+      #     else # member action
+      #       from_path = referer_redirect_path.to_s
+
+      #       format.html do
+      #         if resource_edit_path && from_path.end_with?(resource_edit_path)
+      #           @page_title ||= "Edit #{resource}"
+      #           render :edit
+      #         elsif resource_new_path && from_path.end_with?(resource_new_path)
+      #           @page_title ||= "New #{resource_name.titleize}"
+      #           render :new
+      #         elsif resource_action_path(action) && from_path.end_with?(resource_action_path(action)) && template_present?(action)
+      #           @page_title ||= "#{action.to_s.titleize} #{resource}"
+      #           render(action, locals: { action: action })
+      #         elsif resource_show_path && from_path.end_with?(resource_show_path)
+      #           @page_title ||= resource_name.titleize
+      #           render :show
+      #         else
+      #           @page_title ||= resource.to_s
+      #           redirect_flash
+      #           redirect_to(from_path.presence || resource_redirect_path(action))
+      #         end
+      #       end
+      #     end
+
+      #     format.js do
+      #       view = template_present?(action) ? action : :member_action
+      #       render(view, locals: { action: action }) # action.js.erb
+      #     end
+      #   end
+      # end
 
       private
 
