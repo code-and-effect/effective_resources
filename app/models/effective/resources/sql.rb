@@ -52,6 +52,8 @@ module Effective
           :belongs_to_polymorphic
         elsif has_and_belongs_to_many(name)
           :has_and_belongs_to_many
+        elsif active_storage(name)
+          :active_storage
         elsif name == 'id' && defined?(EffectiveObfuscation) && klass.respond_to?(:deobfuscate)
           :effective_obfuscation
         elsif name == 'roles' && defined?(EffectiveRoles) && klass.respond_to?(:with_role)

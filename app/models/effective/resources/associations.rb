@@ -43,6 +43,11 @@ module Effective
         klass.reflect_on_all_associations(:has_and_belongs_to_many)
       end
 
+      def active_storages
+        return [] unless klass.respond_to?(:reflect_on_all_associations)
+        klass.reflect_on_all_associations.select { |ass| ass.class_name == 'ActiveStorage::Attachment' }
+      end
+
       def active_storage_has_manys
         return [] unless klass.respond_to?(:reflect_on_all_associations)
         klass.reflect_on_all_associations(:has_many).select { |ass| ass.class_name == 'ActiveStorage::Attachment' }
@@ -116,6 +121,11 @@ module Effective
         return unless category.present?
 
         Effective::Address.where(category: category).where(addressable_type: class_name)
+      end
+
+      def active_storage(name)
+        name = name.to_sym
+        active_storages.find { |ass| ass.name.to_s.gsub(/_attachment(s?)\z/, '').to_sym == name }
       end
 
       def nested_resource(name)

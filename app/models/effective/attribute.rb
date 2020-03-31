@@ -60,6 +60,7 @@ module Effective
         when :effective_addresses         ; :effective_addresses
         when :effective_obfuscation       ; :effective_obfuscation
         when :effective_roles             ; :effective_roles
+        when :active_storage              ; :active_storage
         else
           raise "unsupported type for #{obj}"
         end
@@ -137,6 +138,8 @@ module Effective
             value.to_s
           end
         end
+      when :active_storage
+        value.to_s
       else
         raise "unsupported type #{type}"
       end

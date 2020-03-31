@@ -40,6 +40,9 @@ module Effective
           relation
             .order(order_by_associated_conditions(associated(:addresses), sort: sort, direction: direction, limit: limit))
             .order(Arel.sql("#{sql_column(klass.primary_key)} #{sql_direction}"))
+        when :active_storage
+          relation.send("with_attached_#{name}").references("#{name}_attachment")
+            .order(Arel.sql("active_storage_blobs.filename #{sql_direction}"))
         when :effective_roles
           relation.order(Arel.sql("#{sql_column(:roles_mask)} #{sql_direction}"))
         when :string, :text
@@ -101,6 +104,9 @@ module Effective
           relation.where("#{sql_column} = ?", (value == term ? 0 : term))
         when :effective_roles
           relation.with_role(term)
+        when :active_storage
+          relation.send("with_attached_#{name}").references("#{name}_attachment")
+            .where(ActiveStorage::Blob.arel_table[:filename].matches("%#{term}%"))
         when :boolean
           relation.where("#{sql_column} = ?", term)
         when :datetime, :date
