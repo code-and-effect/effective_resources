@@ -40,8 +40,9 @@ module Effective
         when :price       ; :price
         when :nil         ; :nil
         when :resource    ; :resource
+        when :select      ; :string
         when :string      ; :string
-        when :text        ; :text
+        when :text        ; :string
         when :time        ; :time
         when FalseClass   ; :boolean
         when (defined?(Integer) ? Integer : Fixnum) ; :integer
@@ -118,7 +119,7 @@ module Effective
         value.presence
       when :price # Integer * 100. Number of cents.
         value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f * 100.0).round
-      when :string, :text, :email
+      when :string, :email
         value.to_s
       when :belongs_to_polymorphic
         value.to_s
