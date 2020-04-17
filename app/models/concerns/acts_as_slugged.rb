@@ -7,7 +7,7 @@
 module ActsAsSlugged
   extend ActiveSupport::Concern
 
-  module ActiveRecord
+  module Base
     def acts_as_slugged(options = nil)
       include ::ActsAsSlugged
     end

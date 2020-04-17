@@ -28,7 +28,7 @@
 module ActsAsArchived
   extend ActiveSupport::Concern
 
-  module ActiveRecord
+  module Base
     def acts_as_archived(cascade: [], strategy: :archive)
 
       cascade = Array(cascade).compact

@@ -17,11 +17,11 @@ module EffectiveResources
     # Include acts_as_addressable concern and allow any ActiveRecord object to call it
     initializer 'effective_resources.active_record' do |app|
       ActiveSupport.on_load :active_record do
-        ActiveRecord::Base.extend(ActsAsArchived::ActiveRecord)
-        ActiveRecord::Base.extend(ActsAsTokened::ActiveRecord)
-        ActiveRecord::Base.extend(ActsAsSlugged::ActiveRecord)
-        ActiveRecord::Base.extend(ActsAsStatused::ActiveRecord)
-        ActiveRecord::Base.extend(EffectiveResource::ActiveRecord)
+        ActiveRecord::Base.extend(ActsAsArchived::Base)
+        ActiveRecord::Base.extend(ActsAsTokened::Base)
+        ActiveRecord::Base.extend(ActsAsSlugged::Base)
+        ActiveRecord::Base.extend(ActsAsStatused::Base)
+        ActiveRecord::Base.extend(EffectiveResource::Base)
       end
     end
 

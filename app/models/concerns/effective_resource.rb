@@ -5,7 +5,7 @@
 module EffectiveResource
   extend ActiveSupport::Concern
 
-  module ActiveRecord
+  module Base
     def effective_resource(options = nil, &block)
       return @_effective_resource unless block_given?
 

@@ -6,7 +6,7 @@
 module ActsAsTokened
   extend ActiveSupport::Concern
 
-  module ActiveRecord
+  module Base
     def acts_as_tokened(options = nil)
       include ::ActsAsTokened
     end
