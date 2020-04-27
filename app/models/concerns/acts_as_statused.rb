@@ -9,7 +9,7 @@ module ActsAsStatused
   extend ActiveSupport::Concern
 
   module Base
-    # acts_as_statuses :pending, :approved, :declined, option_key: :option_value
+    # acts_as_statused :pending, :approved, :declined, option_key: :option_value
     def acts_as_statused(*args)
       options = args.extract_options!
       statuses = Array(args).compact
