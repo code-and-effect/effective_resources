@@ -146,6 +146,30 @@ module EffectiveResourcesHelper
     end
   end
 
+  # Similar to render_resource_form
+  def render_resource_partial(resource, atts = {})
+    unless resource.kind_of?(ActiveRecord::Base) || resource.class.ancestors.include?(ActiveModel::Model)
+      raise 'expected first argument to be an ActiveRecord or ActiveModel object'
+    end
+
+    raise 'expected attributes to be a Hash' unless atts.kind_of?(Hash)
+
+    effective_resource = (atts.delete(:effective_resource) || find_effective_resource)
+
+    action = atts.delete(:action)
+    atts = { :namespace => (effective_resource.namespace.to_sym if effective_resource.namespace), effective_resource.name.to_sym => resource }.compact.merge(atts)
+
+    if lookup_context.template_exists?(effective_resource.name, controller._prefixes, :partial)
+      render(effective_resource.name, atts)
+    elsif lookup_context.template_exists?(effective_resource.name, [effective_resource.plural_name], :partial)
+      render(effective_resource.plural_name + '/' + effective_resource.name, atts)
+    elsif lookup_context.template_exists?(effective_resource.name, [effective_resource.name], :partial)
+      render(effective_resource.name + '/' + effective_resource.name, atts)
+    else
+      render(resource, atts)  # Will raise the regular error
+    end
+  end
+
   # Tableize attributes
   # This is used by effective_orders, effective_logging, effective_trash and effective_mergery
   def tableize_hash(obj, table: 'table', th: true, sub_table: 'table', sub_th: true, flatten: true)

@@ -8,7 +8,7 @@
     .col-4.text-right
       = render_resource_buttons(@resource, show: false)
 
-  = render @resource
+  = render_resource_partial(@resource)
 
 .form-actions
   = link_to 'Continue', (resource.action_path(:index) || root_path), class: 'btn btn-primary'
