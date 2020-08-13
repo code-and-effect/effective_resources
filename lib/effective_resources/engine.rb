@@ -3,9 +3,14 @@ module EffectiveResources
     engine_name 'effective_resources'
 
     config.autoload_paths += Dir[
-      "#{config.root}/lib/",
       "#{config.root}/jobs/",
-      "#{config.root}/app/models/validators/",
+      "#{config.root}/lib/validators/",
+      "#{config.root}/app/controllers/concerns/"
+    ]
+
+    config.eager_load_paths += Dir[
+      "#{config.root}/jobs/",
+      "#{config.root}/lib/validators/",
       "#{config.root}/app/controllers/concerns/"
     ]
 
