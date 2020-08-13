@@ -75,11 +75,11 @@ module Effective
       when :date, :datetime
         if (digits = value.to_s.scan(/(\d+)/).flatten).present?
           date = if digits.first.length == 4  # 2017-01-10
-            Time.zone.local(*digits)
+            (Time.zone.local(*digits) rescue nil)
           else # 01/10/2016
             year = digits.find { |d| d.length == 4}
             digits = [year] + (digits - [year])
-            Time.zone.local(*digits)
+            (Time.zone.local(*digits) rescue nil)
           end
 
           name.to_s.start_with?('end_') ? date.end_of_day : date
@@ -87,7 +87,7 @@ module Effective
       when :time
         if (digits = value.to_s.scan(/(\d+)/).flatten).present?
           now = Time.zone.now
-          Time.zone.local(now.year, now.month, now.day, *digits)
+          (Time.zone.local(now.year, now.month, now.day, *digits) rescue nil)
         end
       when :decimal, :currency
         (value.kind_of?(String) ? value.gsub(/[^0-9|\-|\.]/, '') : value).to_f
