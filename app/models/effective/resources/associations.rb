@@ -26,7 +26,10 @@ module Effective
 
       def has_ones
         return [] unless klass.respond_to?(:reflect_on_all_associations)
-        klass.reflect_on_all_associations(:has_one).reject { |ass| ass.class_name.to_s.start_with?('ActiveStorage::') }
+
+        blacklist = ['ActiveStorage::', 'ActionText::']
+
+        klass.reflect_on_all_associations(:has_one).reject { |ass| blacklist.any? { |val| ass.class_name.start_with?(val) } }
       end
 
       def has_ones_ids
@@ -64,6 +67,14 @@ module Effective
 
       def active_storage_has_ones_ids
         active_storage_has_ones.map { |ass| ass.name.to_s.gsub(/_attachment\z/, '').to_sym }
+      end
+
+      def active_texts
+        klass.reflect_on_all_associations(:has_one).select { |ass| ass.class_name == 'ActionText::RichText' }
+      end
+
+      def active_texts_has_ones_ids
+        active_texts.map { |ass| ass.name.to_s.gsub(/\Arich_text_/, '').to_sym }
       end
 
       def nested_resources
@@ -153,7 +164,3 @@ module Effective
     end
   end
 end
-
-
-
-

@@ -52,6 +52,12 @@ module Effective
         end
       end
 
+      def active_text_attributes
+        {}.tap do |retval|
+          active_texts_has_ones_ids.each { |k, v| retval[k] = [:string] }
+        end
+      end
+
       # All will include primary_key, created_at, updated_at and belongs_tos
       # This is the attributes as defined by the effective_resources do .. end block
       # { :name => [:string, { permitted: false }], ... }
@@ -66,6 +72,7 @@ module Effective
             .merge(effective_addresses_attributes)
             .merge(effective_assets_attributes)
             .merge(active_storage_attributes)
+            .merge(active_text_attributes)
             .merge(atts)
         else  # This is the migrator. This should match table_attributes
           belong_tos_attributes.merge(atts.reject { |_, v| v[0] == :permitted_param })
@@ -137,7 +144,3 @@ module Effective
     end
   end
 end
-
-
-
-

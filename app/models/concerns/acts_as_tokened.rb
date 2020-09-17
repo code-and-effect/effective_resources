@@ -51,4 +51,3 @@ module ActsAsTokened
   end
 
 end
-
