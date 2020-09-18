@@ -158,6 +158,12 @@ module Effective
           else
             relation.where("#{sql_column} = ?", term)
           end
+        when :uuid
+          if fuzzy
+            relation.where("#{sql_column}::text #{ilike} ?", "%#{term}%")
+          else
+            relation.where("#{sql_column}::text = ?", term)
+          end
         else
           raise "unsupported sql type #{sql_type}"
         end

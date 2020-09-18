@@ -1,6 +1,9 @@
 module Effective
   class ModelReader
-    DATATYPES = [:binary, :boolean, :date, :datetime, :decimal, :float, :hstore, :inet, :integer, :string, :text, :permitted_param]
+    DATATYPES = [
+      :binary, :boolean, :date, :datetime, :decimal, :float, :hstore, :inet, :integer,
+      :string, :text, :uuid, :permitted_param
+    ]
 
     attr_reader :attributes
 

@@ -44,6 +44,7 @@ module Effective
         when :string      ; :string
         when :text        ; :string
         when :time        ; :time
+        when :uuid        ; :uuid
         when FalseClass   ; :boolean
         when (defined?(Integer) ? Integer : Fixnum) ; :integer
         when Float        ; :decimal
@@ -139,6 +140,8 @@ module Effective
             value.to_s
           end
         end
+      when :uuid
+        value.to_s
       when :active_storage
         value.to_s
       else
