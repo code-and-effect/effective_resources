@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module EffectiveResourcesHelper
 
   # effective_bootstrap
@@ -74,18 +76,22 @@ module EffectiveResourcesHelper
     namespace ||= (effective_resource.namespace.to_sym if effective_resource.namespace)
 
     # Assign actions
-    actions = if atts.key?(:actions) # We filter out any actions passed to us that aren't supported
-      available = effective_resource.actions + atts[:actions].map { |k, v| v[:action] if v[:path] }.compact
-      atts[:actions].inject({}) { |h, (commit, opts)| h[commit] = opts if available.include?(opts[:action]); h }
+    # We filter out any actions passed to us that aren't supported
+    actions = if atts.key?(:actions)
+      {}.tap do |actions|
+        atts[:actions].each do |commit, opts|
+          actions[commit] = opts if (effective_resource.actions.include?(opts[:action]) || opts[:path]).present?
+        end
+      end
     else
       (resource.kind_of?(Class) ? effective_resource.resource_klass_actions : effective_resource.resource_actions)
     end
 
     # Consider only, except, false and proc false
-    only = Array(atts[:only]).compact
-    except = Array(atts[:except]).compact
+    only = Array(atts[:only]) if atts[:only].present?
+    except = Array(atts[:except]) if atts[:except].present?
 
-    actions = actions.select do |_, opts|
+    actions.select! do |_, opts|
       action = opts[:action]
 
       if only.present? && !only.include?(action)
@@ -100,8 +106,11 @@ module EffectiveResourcesHelper
     end
 
     # Select Partial
-    partial = ['effective/resource/actions', partial.to_s].join('_') if partial.kind_of?(Symbol)
-    partial = (partial.presence || 'effective/resource/actions') + '.html'
+    partial = if partial.kind_of?(Symbol)
+      "effective/resource/actions_#{partial}.html"
+    else
+      "#{partial.presence || 'effective/resource/actions'}.html"
+    end
 
     # Assign Locals
     locals = {
