@@ -61,22 +61,20 @@ module Effective
         end
 
         # This generates the correct route when an object is overriding to_param
-        target = (resource || instance)
-
-        if target.respond_to?(:to_param) && target.respond_to?(:id) && (target.to_param != target.id.to_s)
-          formattable = routes[action].parts.inject({}) do |h, part|
-            if part == :id
-              h[part] = target.to_param
-            elsif part == :format
-              # Nothing
-            else
-              h[part] = target.public_send(part) if target.respond_to?(part)
-            end; h
+        formattable = routes[action].parts.each_with_object({}) do |part, h|
+          if part == :id
+            h[part] = (resource || instance).to_param
+          elsif part == :format
+            # Nothing
+          elsif (resource || instance).respond_to?(part)
+            h[part] = (resource || instance).public_send(part)
+          else
+            # Nothing
           end
         end
 
         # Generate the path
-        path = routes[action].format(formattable || EMPTY_HASH).presence
+        path = routes[action].format(formattable).presence
 
         if path.present? && opts.present?
           uri = URI.parse(path)
