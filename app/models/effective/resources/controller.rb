@@ -1,3 +1,5 @@
+# frozen_sting_literals: true
+
 module Effective
   module Resources
     module Controller
@@ -66,15 +68,19 @@ module Effective
       # It is used by datatables
       def resource_actions
         {}.tap do |actions|
-          (member_get_actions & crud_actions).reverse_each do |action|
+          member_get_actions.reverse_each do |action|
+            next unless crud_actions.include?(action)
             actions[action.to_s.titleize] = { action: action, default: true }
           end
 
-          (member_get_actions - crud_actions).each do |action|
+          member_get_actions.each do |action|
+            next if crud_actions.include?(action)
             actions[action.to_s.titleize] = { action: action, default: true }
           end
 
-          (member_post_actions - crud_actions).each do |action|
+          member_post_actions.each do |action|
+            next if crud_actions.include?(action)
+
             actions[action.to_s.titleize] = { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
 
             actions[action.to_s.titleize] = case action
@@ -89,7 +95,7 @@ module Effective
 
           member_delete_actions.each do |action|
             if action == :destroy
-              next if actions.values.find { |v| v[:action] == :archive }.present?
+              next if actions.find { |_, v| v[:action] == :archive }.present?
               actions['Delete'] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really delete @resource?" }
             else
               actions[action.to_s.titleize] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really #{action} @resource?" }
