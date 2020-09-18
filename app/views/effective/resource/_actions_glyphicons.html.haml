@@ -1,5 +1,8 @@
 - permitted_resource_actions(resource, actions).each do |label, opts|
-  = glyphicon_to(opts[:action], (effective_resource.action_path(opts[:action], resource) || '#'), opts.except(:action, :class))
+  - action = opts.delete(:action)
+  - opts.delete(:class)
+
+  = glyphicon_to(action, (effective_resource.action_path(action, resource) || '#'), opts)
 
 = instance_exec(resource, &format_block) if local_assigns[:format_block]
 = yield(resource) if block_given?
