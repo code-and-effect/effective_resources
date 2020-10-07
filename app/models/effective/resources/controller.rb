@@ -31,22 +31,26 @@ module Effective
           end
 
           (member_post_actions - crud_actions).each do |action| # default true means it will be overwritten by dsl methods
-            buttons[action.to_s.titleize] = case action
+            action_name = action.to_s.titleize
+
+            buttons[action_name] = case action
             when :archive
-              { action: action, default: true, if: -> { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?"}
+              { action: action, default: true, if: -> { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action_name} @resource?"}
             when :unarchive
-              { action: action, default: true, if: -> { resource.archived? }, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
+              { action: action, default: true, if: -> { resource.archived? }, 'data-method' => :post, 'data-confirm' => "Really #{action_name} @resource?" }
             else
-              { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?"}
+              { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action_name} @resource?"}
             end
           end
 
           member_delete_actions.each do |action|
+            action_name = action.to_s.titleize
+
             if action == :destroy
               next if buttons.values.find { |v| v[:action] == :archive }.present?
               buttons['Delete'] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really delete @resource?" }
             else
-              buttons[action.to_s.titleize] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really #{action} @resource?" }
+              buttons[action_name] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really #{action_name} @resource?" }
             end
           end
 
@@ -81,24 +85,26 @@ module Effective
           member_post_actions.each do |action|
             next if crud_actions.include?(action)
 
-            actions[action.to_s.titleize] = { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
+            action_name = action.to_s.titleize
 
-            actions[action.to_s.titleize] = case action
+            actions[action_name] = case action
             when :archive
-              { action: action, default: true, if: -> { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?"}
+              { action: action, default: true, if: -> { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action_name} @resource?"}
             when :unarchive
-              { action: action, default: true, if: -> { resource.archived? }, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
+              { action: action, default: true, if: -> { resource.archived? }, 'data-method' => :post, 'data-confirm' => "Really #{action_name} @resource?" }
             else
-              { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action} @resource?" }
+              { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action_name} @resource?" }
             end
           end
 
           member_delete_actions.each do |action|
+            action_name = action.to_s.titleize
+
             if action == :destroy
               next if actions.find { |_, v| v[:action] == :archive }.present?
               actions['Delete'] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really delete @resource?" }
             else
-              actions[action.to_s.titleize] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really #{action} @resource?" }
+              actions[action_name] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really #{action_name} @resource?" }
             end
           end
         end
