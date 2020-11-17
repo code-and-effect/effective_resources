@@ -64,10 +64,14 @@ module Effective
           else
             if template_present?(action)
               format.html { render(action, locals: { action: action }) }
+            elsif request.referer.to_s.end_with?('/edit')
+              format.html { render :edit }
+            elsif request.referer.to_s.end_with?('/new')
+              format.html { render :new }
             else
               format.html do
                 redirect_flash
-                redirect_to(from_path.presence || resource_redirect_path(action))
+                redirect_to(resource_redirect_path(action))
               end
             end
           end
