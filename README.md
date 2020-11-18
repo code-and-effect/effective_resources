@@ -1,7 +1,7 @@
 # Effective Resources
 
 This gem looks at the current `routes.rb`, authorization `ability.rb`, `current_user` and controller context
-to metaprogram an effective CRUD website. 
+to metaprogram an effective CRUD website.
 
 It automates linking to resource edit, show, delete pages, as well as member and collection actions.
 
@@ -256,6 +256,14 @@ end
 
 and include Effective::CrudController in your resource controller.
 
+## Testing
+
+Run tests by:
+
+```ruby
+rails test
+```
+
 ## License
 
 MIT License.  Copyright [Code and Effect Inc.](http://www.codeandeffect.com/)
@@ -268,4 +276,3 @@ MIT License.  Copyright [Code and Effect Inc.](http://www.codeandeffect.com/)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Bonus points for test coverage
 6. Create new Pull Request
-
