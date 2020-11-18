@@ -1,7 +1,7 @@
 require 'test_helper'
 
 class EffectiveResources::Test < ActiveSupport::TestCase
-  test "truth" do
-    assert_kind_of Module, EffectiveResources
+  test 'thing is valid' do
+    assert Thing.create!(title: "Title", body: "Body")
   end
 end

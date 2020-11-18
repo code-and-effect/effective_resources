@@ -3,6 +3,9 @@ require_relative 'boot'
 require 'rails/all'
 
 Bundler.require(*Rails.groups)
+
+require 'pry-byebug'
+require 'haml'
 require "effective_resources"
 
 module Dummy
