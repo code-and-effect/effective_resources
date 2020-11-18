@@ -16,6 +16,7 @@ class AdminCrudControllerTest < ActionDispatch::IntegrationTest
     get admin_things_url
     assert_equal Thing.all.to_a, @controller.resources
     assert_equal [], @controller.view_context.assigns['things']
+    assert_equal 'Admin::ThingsDatatable', @controller.view_context.assigns['datatable'].class.name
   end
 
   test 'new' do

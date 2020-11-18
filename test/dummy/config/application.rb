@@ -7,6 +7,7 @@ Bundler.require(*Rails.groups)
 require 'pry-byebug'
 require 'haml'
 require "effective_resources"
+require "effective_datatables"
 
 module Dummy
   class Application < Rails::Application

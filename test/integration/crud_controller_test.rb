@@ -16,6 +16,7 @@ class CrudControllerTest < ActionDispatch::IntegrationTest
     get things_url
     assert_equal Thing.all.to_a, @controller.resources
     assert_equal [], @controller.view_context.assigns['things']
+    assert_equal 'ThingsDatatable', @controller.view_context.assigns['datatable'].class.name
   end
 
   test 'new' do

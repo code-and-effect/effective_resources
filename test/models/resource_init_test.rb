@@ -56,4 +56,13 @@ class ResourceInitTest < ActiveSupport::TestCase
     assert_equal thing, resource.instance
   end
 
+  test 'init datatable klass' do
+    resource = Effective::Resource.new('thing')
+    assert_equal ThingsController, resource.controller_klass
+    assert_equal ThingsDatatable, resource.datatable_klass
+
+    resource = Effective::Resource.new('admin/things')
+    assert_equal Admin::ThingsController, resource.controller_klass
+    assert_equal Admin::ThingsDatatable, resource.datatable_klass
+  end
 end
