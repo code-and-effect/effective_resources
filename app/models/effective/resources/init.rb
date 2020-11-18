@@ -4,8 +4,10 @@ module Effective
 
       private
 
-      def _initialize_input(input, namespace: nil)
+      def _initialize_input(input, namespace: nil, engine_name: nil)
         @initialized_name = input
+
+        @engine_name = engine_name
 
         @model_klass = case input
         when String, Symbol
@@ -48,6 +50,7 @@ module Effective
 
         names = input.split('/')
 
+        # Crazy classify
         0.upto(names.length-1) do |index|
           class_name = names[index..-1].map { |name| name.classify } * '::'
           klass = class_name.safe_constantize
@@ -59,6 +62,18 @@ module Effective
 
           if klass.present?
             @namespaces ||= names[0...index]
+            @model_klass = klass
+            return klass
+          end
+        end
+
+        # Crazy engine
+        if engine_name.present? && names[0] == 'admin'
+          class_name = (['effective'] + names[1..-1]).map { |name| name.classify } * '::'
+          klass = class_name.safe_constantize
+
+          if klass.present?
+            @namespaces ||= names[0...-1]
             @model_klass = klass
             return klass
           end

@@ -11,7 +11,12 @@ module Effective
       # Effective::Resource.new('admin/posts').routes[:index]
       def routes
         @routes ||= (
-          matches = [[namespace, plural_name].compact.join('/'), [namespace, name].compact.join('/')]
+          matches = [
+            [('effective' if engine_name), namespace, plural_name].compact.join('/'),
+            [('effective' if engine_name), namespace, name].compact.join('/'),
+            [namespace, plural_name].compact.join('/'),
+            [namespace, name].compact.join('/'),
+          ].uniq
 
           routes_engine.routes.routes.select do |route|
             matches.any? { |match| match == route.defaults[:controller] } && !route.name.to_s.end_with?('root')
@@ -22,13 +27,14 @@ module Effective
       end
 
       # Effective::Resource.new('effective/order', namespace: :admin)
+
+      # Effective::Resource.new('effective/order', engine_name: 'effective_orders')
       def routes_engine
-        case class_name
-        when 'Effective::Order'
-          EffectiveOrders::Engine
-        else
-          Rails.application
-        end
+        return Rails.application unless engine_name.present?
+
+        (engine_name.classify + '::Engine').safe_constantize ||
+        (engine_name.classify.pluralize + '::Engine').safe_constantize ||
+        raise("unknown routes_engine for #{engine_name} engine_name")
       end
 
       # Effective::Resource.new('admin/posts').action_path_helper(:edit) => 'edit_admin_posts_path'
