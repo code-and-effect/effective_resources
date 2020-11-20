@@ -6,10 +6,41 @@ module Effective
 
       def _initialize_input(input, namespace: nil, engine_name: nil)
         @initialized_name = input
-
         @engine_name = engine_name
+        @model_klass = _klass_by_input(input)
 
-        @model_klass = case input
+        # Consider namespaces
+        if namespace
+          @namespaces = (namespace.kind_of?(String) ? namespace.split('/') : Array(namespace))
+        end
+
+        if input.kind_of?(Array) && @namespaces.blank?
+          @namespaces = input[0...-1].map { |input| input.to_s.presence }.compact
+        end
+
+        # Consider relation
+        if input.kind_of?(ActiveRecord::Relation)
+          @relation ||= input
+        end
+
+        if input.kind_of?(ActiveRecord::Reflection::MacroReflection) && input.scope
+          @relation ||= klass.where(nil).merge(input.scope)
+        end
+
+        # Consider instance
+        if klass && input.instance_of?(klass)
+          @instance ||= input
+        end
+
+        if klass && input.kind_of?(Array) && input.last.instance_of?(klass)
+          @instance ||= input.last
+        end
+      end
+
+      def _klass_by_input(input)
+        case input
+        when Array
+          _klass_by_input(input.last)
         when String, Symbol
           _klass_by_name(input)
         when Class
@@ -25,22 +56,6 @@ module Effective
           _klass_by_name(input.defaults[:controller])
         when nil    ; raise 'expected a string or class'
         else        ; _klass_by_name(input.class.name)
-        end
-
-        if namespace
-          @namespaces = (namespace.kind_of?(String) ? namespace.split('/') : Array(namespace))
-        end
-
-        if input.kind_of?(ActiveRecord::Relation)
-          @relation = input
-        end
-
-        if input.kind_of?(ActiveRecord::Reflection::MacroReflection) && input.scope
-          @relation = klass.where(nil).merge(input.scope)
-        end
-
-        if klass && input.instance_of?(klass)
-          @instance = input
         end
       end
 
@@ -68,7 +83,7 @@ module Effective
         end
 
         # Crazy engine
-        if engine_name.present? && names[0] == 'admin'
+        if names[0] == 'admin'
           class_name = (['effective'] + names[1..-1]).map { |name| name.classify } * '::'
           klass = class_name.safe_constantize
 
