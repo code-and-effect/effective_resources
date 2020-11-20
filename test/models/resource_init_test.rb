@@ -40,6 +40,16 @@ class ResourceInitTest < ActiveSupport::TestCase
     resource = Effective::Resource.new('admin/things', namespace: 'admin')
     assert_equal Thing, resource.klass
     assert_equal ['admin'], resource.namespaces
+
+    thing = Thing.new(title: 'asdf')
+    resource = Effective::Resource.new([:admin, thing])
+    assert_equal Thing, resource.klass
+    assert_equal thing, resource.instance
+    assert_equal ['admin'], resource.namespaces
+
+    resource = Effective::Resource.new([:admin, 'thing'])
+    assert_equal Thing, resource.klass
+    assert_equal ['admin'], resource.namespaces
   end
 
   test 'init relation' do

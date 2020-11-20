@@ -12,17 +12,23 @@ module Effective
       def routes
         @routes ||= (
           matches = [
-            [('effective' if engine_name), namespace, plural_name].compact.join('/'),
-            [('effective' if engine_name), namespace, name].compact.join('/'),
             [namespace, plural_name].compact.join('/'),
             [namespace, name].compact.join('/'),
-          ].uniq
+            ['effective', namespace, plural_name].compact.join('/'),
+            ['effective', namespace, name].compact.join('/')
+          ]
 
-          routes_engine.routes.routes.select do |route|
-            matches.any? { |match| match == route.defaults[:controller] } && !route.name.to_s.end_with?('root')
-          end.inject({}) do |h, route|
-            h[route.defaults[:action].to_sym] = route; h
+          routes = nil
+
+          ([Rails.application] + Rails::Engine.subclasses).each do |engine|
+            routes = engine.routes.routes.select do |route|
+              matches.any? { |match| match == route.defaults[:controller] } && !route.name.to_s.end_with?('root')
+            end
+
+            break if routes.present?
           end
+
+          Array(routes).inject({}) { |h, route| h[route.defaults[:action].to_sym] = route; h }
         )
       end
 

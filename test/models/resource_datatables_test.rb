@@ -10,7 +10,7 @@ class ResourceDatatablesTest < ActiveSupport::TestCase
     datatable = resource.datatable_klass.new().rendered
     assert datatable.kind_of?(ThingsDatatable)
 
-    actions = datatable.actions_col_actions(datatable.columns[:_actions])
+    actions = datatable.effective_resource.resource_actions
     assert actions['Show'].present?
     assert actions['Edit'].present?
     assert actions['Delete'].present?
@@ -24,8 +24,7 @@ class ResourceDatatablesTest < ActiveSupport::TestCase
     assert datatable.kind_of?(Admin::ThingsDatatable)
     assert_equal 'admin', datatable.controller_namespace
 
-    actions = datatable.actions_col_actions(datatable.columns[:_actions])
-
+    actions = datatable.effective_resource.resource_actions
     assert actions['Show'].present?
     assert actions['Edit'].present?
     assert actions['Delete'].present?

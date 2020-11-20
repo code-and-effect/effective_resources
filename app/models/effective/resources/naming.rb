@@ -11,6 +11,10 @@ module Effective
         name.pluralize
       end
 
+      def resource_name # 'effective_post'
+        class_name.parameterize.underscore
+      end
+
       def initialized_name
         @initialized_name
       end
