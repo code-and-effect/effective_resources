@@ -13,19 +13,30 @@ module Effective
         @routes ||= (
           matches = [
             [namespace, plural_name].compact.join('/'),
-            [namespace, name].compact.join('/'),
-            ['effective', namespace, plural_name].compact.join('/'),
-            ['effective', namespace, name].compact.join('/')
+            [namespace, name].compact.join('/')
           ]
 
-          routes = nil
+          # Check main Rails app
+          routes = Rails.application.routes.routes.select do |route|
+            (matches & [route.defaults[:controller]]).present? && !route.name.to_s.end_with?('root')
+          end
 
-          ([Rails.application] + Rails::Engine.subclasses).each do |engine|
-            routes = engine.routes.routes.select do |route|
-              matches.any? { |match| match == route.defaults[:controller] } && !route.name.to_s.end_with?('root')
+          # Check engine routes
+          if routes.blank?
+            matches = [
+              [namespace, plural_name].compact.join('/'),
+              [namespace, name].compact.join('/'),
+              ['effective', namespace, plural_name].compact.join('/'),
+              ['effective', namespace, name].compact.join('/')
+            ]
+
+            Rails::Engine.subclasses.each do |engine|
+              routes = engine.routes.routes.select do |route|
+                (matches & [route.defaults[:controller]]).present? && !route.name.to_s.end_with?('root')
+              end
+
+              break if routes.present?
             end
-
-            break if routes.present?
           end
 
           Array(routes).inject({}) { |h, route| h[route.defaults[:action].to_sym] = route; h }
