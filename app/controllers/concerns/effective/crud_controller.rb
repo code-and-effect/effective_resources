@@ -118,7 +118,9 @@ module Effective
 
       return unless datatable_klass.present?
 
-      datatable_klass.new(resource_datatable_attributes)
+      datatable = datatable_klass.new(resource_datatable_attributes)
+      datatable.effective_resource = effective_resource if datatable.respond_to?(:effective_resource=)
+      datatable
     end
 
     def resource_params_method_name
