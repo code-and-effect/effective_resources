@@ -30,7 +30,7 @@ module Effective
               ['effective', namespace, name].compact.join('/')
             ]
 
-            Rails::Engine.subclasses.each do |engine|
+            (Rails::Engine.subclasses.reverse + [Rails.application]).each do |engine|
               routes = engine.routes.routes.select do |route|
                 (matches & [route.defaults[:controller]]).present? && !route.name.to_s.end_with?('root')
               end
