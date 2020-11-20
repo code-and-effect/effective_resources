@@ -11,24 +11,36 @@ module Effective
       # Effective::Resource.new('admin/posts').routes[:index]
       def routes
         @routes ||= (
-          matches = [[namespace, plural_name].compact.join('/'), [namespace, name].compact.join('/')]
+          matches = [
+            [namespace, plural_name].compact.join('/'),
+            [namespace, name].compact.join('/')
+          ]
 
-          routes_engine.routes.routes.select do |route|
-            matches.any? { |match| match == route.defaults[:controller] } && !route.name.to_s.end_with?('root')
-          end.inject({}) do |h, route|
-            h[route.defaults[:action].to_sym] = route; h
+          # Check main Rails app
+          routes = Rails.application.routes.routes.select do |route|
+            (matches & [route.defaults[:controller]]).present? && !route.name.to_s.end_with?('root')
           end
-        )
-      end
 
-      # Effective::Resource.new('effective/order', namespace: :admin)
-      def routes_engine
-        case class_name
-        when 'Effective::Order'
-          EffectiveOrders::Engine
-        else
-          Rails.application
-        end
+          # Check engine routes
+          if routes.blank?
+            matches = [
+              [namespace, plural_name].compact.join('/'),
+              [namespace, name].compact.join('/'),
+              ['effective', namespace, plural_name].compact.join('/'),
+              ['effective', namespace, name].compact.join('/')
+            ]
+
+            Rails::Engine.subclasses.each do |engine|
+              routes = engine.routes.routes.select do |route|
+                (matches & [route.defaults[:controller]]).present? && !route.name.to_s.end_with?('root')
+              end
+
+              break if routes.present?
+            end
+          end
+
+          Array(routes).inject({}) { |h, route| h[route.defaults[:action].to_sym] = route; h }
+        )
       end
 
       # Effective::Resource.new('admin/posts').action_path_helper(:edit) => 'edit_admin_posts_path'

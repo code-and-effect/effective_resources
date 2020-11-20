@@ -1,4 +1,5 @@
 require 'effective_resources/engine'
+require 'effective_resources/version'
 
 module EffectiveResources
 

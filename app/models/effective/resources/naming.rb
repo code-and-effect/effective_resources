@@ -11,6 +11,10 @@ module Effective
         name.pluralize
       end
 
+      def resource_name # 'effective_post' used by permitted params
+        @resource_name ||= ((klass.present? ? klass.name : initialized_name).to_s.split(SPLIT).join('_') || '').singularize.underscore
+      end
+
       def initialized_name
         @initialized_name
       end

@@ -5,7 +5,7 @@ module Effective
 
       # This is only available to models that use the effective_resource do ... end attributes block
       # It will be called last, and only for those resources
-      # params.require(effective_resource.name).permit!
+      # params.require(effective_resource.resource_name).permit!
       def resource_permitted_params
         raise 'expected resource class to have effective_resource do .. end' if effective_resource.model.blank?
 
@@ -13,10 +13,10 @@ module Effective
 
         if Rails.env.development?
           Rails.logger.info "Effective::CrudController#resource_permitted_params:"
-          Rails.logger.info "params.require(:#{effective_resource.name}).permit(#{permitted_params.to_s[1...-1]})"
+          Rails.logger.info "params.require(:#{effective_resource.resource_name}).permit(#{permitted_params.to_s[1...-1]})"
         end
 
-        params.require(effective_resource.name).permit(*permitted_params)
+        params.require(effective_resource.resource_name).permit(*permitted_params)
       end
 
       # If the resource is ActiveModel, just permit all
@@ -24,13 +24,13 @@ module Effective
       def resource_active_model_permitted_params
         if Rails.env.development?
           Rails.logger.info "Effective::CrudController#resource_permitted_params:"
-          Rails.logger.info "params.require(:#{effective_resource.name}).permit!"
+          Rails.logger.info "params.require(:#{effective_resource.resource_name}).permit!"
         end
 
-        if params[effective_resource.name].present?
-          params.require(effective_resource.name).permit!
+        if params[effective_resource.resource_name].present?
+          params.require(effective_resource.resource_name).permit!
         else
-          params.require((effective_resource.namespaces + [effective_resource.name]).join('_')).permit!
+          params.require((effective_resource.namespaces + [effective_resource.resource_name]).join('_')).permit!
         end
       end
 
@@ -96,7 +96,7 @@ module Effective
 
           if (nested_params = permitted_params_for(nested.klass, namespaces)).present?
             nested_params.insert(nested_params.rindex { |obj| !obj.kind_of?(Hash)} + 1, :_destroy)
-            permitted_params << { "#{nested.name}_attributes".to_sym => nested_params }
+            permitted_params << { "#{nested.resource_name}_attributes".to_sym => nested_params }
           end
         end
 
