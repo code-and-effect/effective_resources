@@ -4,9 +4,8 @@ module Effective
 
       private
 
-      def _initialize_input(input, namespace: nil, engine_name: nil)
+      def _initialize_input(input, namespace: nil)
         @initialized_name = input
-        @engine_name = engine_name
         @model_klass = _klass_by_input(input)
 
         # Consider namespaces

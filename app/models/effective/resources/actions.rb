@@ -32,17 +32,6 @@ module Effective
         )
       end
 
-      # Effective::Resource.new('effective/order', namespace: :admin)
-
-      # Effective::Resource.new('effective/order', engine_name: 'effective_orders')
-      def routes_engine
-        return Rails.application unless engine_name.present?
-
-        (engine_name.classify + '::Engine').safe_constantize ||
-        (engine_name.classify.pluralize + '::Engine').safe_constantize ||
-        raise("unknown routes_engine for #{engine_name} engine_name")
-      end
-
       # Effective::Resource.new('admin/posts').action_path_helper(:edit) => 'edit_admin_posts_path'
       # This will return empty for create, update and destroy
       def action_path_helper(action)
