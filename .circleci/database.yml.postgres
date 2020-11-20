@@ -1,0 +1,4 @@
+test:
+  adapter: postgresql
+  host: localhost
+  database: test
