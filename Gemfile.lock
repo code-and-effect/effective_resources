@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    effective_resources (1.5.5)
+    effective_resources (1.6.0)
       rails (>= 4.0.0)
 
 GEM
@@ -80,7 +80,7 @@ GEM
     coffee-script-source (1.12.2)
     concurrent-ruby (1.1.7)
     crass (1.0.6)
-    effective_bootstrap (0.9.8)
+    effective_bootstrap (0.9.9)
       bootstrap (>= 4.0.0)
       coffee-rails
       inline_svg
@@ -93,9 +93,6 @@ GEM
       effective_resources
       rails (>= 3.2.0)
       sass
-    effective_developer (0.5.4)
-      effective_resources
-      rails (>= 3.2.0)
     erubi (1.10.0)
     execjs (2.7.0)
     ffi (1.13.1)
@@ -204,8 +201,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  effective_bootstrap
   effective_datatables
-  effective_developer
   effective_resources!
   haml
   pry-byebug

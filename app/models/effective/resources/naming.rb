@@ -31,6 +31,10 @@ module Effective
         (Array(namespaces).map { |name| name.to_s.classify } + [class_name]) * '::'
       end
 
+      def namespaced_module_name # 'Admin::EffectivePosts'
+        Array(namespaces).map { |name| name.to_s.classify }.join('::') + '::' + class_name.gsub('::', '')
+      end
+
       def namespace # 'admin/things'
         (namespaces.join('/') if namespaces.present?)
       end

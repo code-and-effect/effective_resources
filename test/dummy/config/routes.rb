@@ -10,4 +10,17 @@ Rails.application.routes.draw do
     end
   end
 
+  scope module: 'effective' do
+    resources :thangs
+  end
+
+  namespace :admin do
+    resources :thangs do
+      get :report, on: :collection
+
+      post :approve, on: :member
+      post :decline, on: :member
+    end
+  end
+
 end

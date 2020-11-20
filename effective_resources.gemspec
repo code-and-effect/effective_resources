@@ -19,8 +19,8 @@ Gem::Specification.new do |s|
   s.add_dependency 'rails', '>= 4.0.0'
 
   s.add_development_dependency "sqlite3"
+  s.add_development_dependency "effective_bootstrap"
   s.add_development_dependency "effective_datatables"
-  s.add_development_dependency "effective_developer"
   s.add_development_dependency "haml"
   s.add_development_dependency "pry-byebug"
 end

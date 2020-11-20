@@ -9,10 +9,11 @@ module Effective
       def datatable_klass
         if defined?(EffectiveDatatables)
           "#{namespaced_class_name.pluralize}Datatable".safe_constantize ||
-          "#{class_name.pluralize.camelize}Datatable".safe_constantize ||
-          "#{name.pluralize.camelize}Datatable".safe_constantize ||
+          "#{namespaced_module_name.pluralize}Datatable".safe_constantize ||
           "#{namespaced_class_name.pluralize.gsub('::', '')}Datatable".safe_constantize ||
+          "#{class_name.pluralize.camelize}Datatable".safe_constantize ||
           "#{class_name.pluralize.camelize.gsub('::', '')}Datatable".safe_constantize ||
+          "#{name.pluralize.camelize}Datatable".safe_constantize ||
           "#{name.pluralize.camelize.gsub('::', '')}Datatable".safe_constantize ||
           "Effective::Datatables::#{namespaced_class_name.pluralize}".safe_constantize ||
           "Effective::Datatables::#{class_name.pluralize.camelize}".safe_constantize ||
