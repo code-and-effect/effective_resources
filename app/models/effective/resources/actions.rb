@@ -85,13 +85,15 @@ module Effective
                 h[part] = target.public_send(part)
               end
             end
-          else
+          elsif target.respond_to?(:to_param) || target.respond_to?(:id)
             target
+          else
+            {id: target}
           end
         end
 
         # Generate the path
-        path = routes[action].format(formattable || EMPTY_HASH)
+        path = (routes[action].format(formattable || EMPTY_HASH) rescue nil)
 
         if path.present? && opts.present?
           uri = URI.parse(path)
