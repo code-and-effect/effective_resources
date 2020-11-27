@@ -96,7 +96,7 @@ module Effective
 
           if (nested_params = permitted_params_for(nested.klass, namespaces)).present?
             nested_params.insert(nested_params.rindex { |obj| !obj.kind_of?(Hash)} + 1, :_destroy)
-            permitted_params << { "#{nested.resource_name}_attributes".to_sym => nested_params }
+            permitted_params << { "#{nested.name}_attributes".to_sym => nested_params }
           end
         end
 
