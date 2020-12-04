@@ -8,6 +8,8 @@ module Effective
     include Effective::WizardController::Actions
 
     included do
+      before_action :redirect_if_blank_step, only: [:show]
+      before_action :assign_wizard_resource, only: [:show, :update]
     end
 
     def resource_wizard_steps
@@ -17,6 +19,18 @@ module Effective
     def resource_wizard_path(resource, step)
       path_helper = effective_resource.action_path_helper(:show).to_s.sub('_path', '_build_path')
       public_send(path_helper, resource, step)
+    end
+
+    def assign_wizard_resource
+      self.resource ||= wizard_resource
+    end
+
+    def wizard_resource
+      if params[resource_name_id] && params[resource_name_id] != 'new'
+        resource_scope.find(params[resource_name_id])
+      else
+        resource_scope.new
+      end
     end
 
   #   module ClassMethods
