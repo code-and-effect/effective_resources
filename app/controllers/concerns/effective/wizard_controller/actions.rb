@@ -11,19 +11,18 @@ module Effective
         redirect_to resource_wizard_path(:new, resource_wizard_steps.first)
       end
 
-      # Fixes show urls
-      # When I visit /resources/1 go to /resources/1/build/step
-      def redirect_if_blank_step
-        if params[:id].present? && params[resource_name_id].blank?
-          params[resource_name_id] = params[:id]
+      def show
+        Rails.logger.info 'Processed by Effective::WizardController#show'
 
-          assign_wizard_resource()
-
-          current_step = (resource.first_uncompleted_step || Import::WIZARD_STEPS.keys.last)
-          redirect_to resource_wizard_path(resource, current_step)
-        end
+        render_wizard
       end
 
+      def update
+        Rails.logger.info 'Processed by Effective::WizardController#update'
+
+        resource.assign_attributes(send(resource_params_method_name))
+        render_next_step_if(:save, resource)
+      end
 
     end
   end

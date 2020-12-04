@@ -40,7 +40,7 @@ module ActsAsWizard
     serialize :wizard_steps, Hash
 
     before_save(if: -> { current_step.present? }) do
-      wizard_steps[current_step] ||= Time.zone.now
+      wizard_steps[current_step.to_sym] ||= Time.zone.now
     end
 
     def required_steps
