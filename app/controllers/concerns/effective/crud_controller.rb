@@ -71,6 +71,10 @@ module Effective
       effective_resource.name
     end
 
+    def resource_name_id
+      (effective_resource.name + '_id').to_sym
+    end
+
     def resource_klass # Thing
       effective_resource.klass
     end
