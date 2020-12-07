@@ -2,6 +2,10 @@ module Effective
   module WizardController
     extend ActiveSupport::Concern
 
+    unless defined?(Wicked)
+      raise("please install gem 'wicked' to use Effective::WizardController")
+    end
+
     include Wicked::Wizard
     include Effective::CrudController
 
@@ -27,7 +31,7 @@ module Effective
       helper_method :resource
 
       rescue_from Wicked::Wizard::InvalidStepError do |exception|
-        flash[:info] = "Unknown step. You have been moved to the #{resource_wizard_steps.first} step."
+        flash[:danger] = "Unknown step. You have been moved to the #{resource_wizard_steps.first} step."
         redirect_to wizard_path(resource_wizard_steps.first)
       end
     end

@@ -1,0 +1,10 @@
+%h1= @page_title
+%p= resource
+
+%p This is the finish step
+
+= effective_form_with(model: resource, url: wizard_path(step), method: :put) do |f|
+  = f.text_field :title
+  = f.text_area :body
+
+  = f.submit 'Save and Continue'

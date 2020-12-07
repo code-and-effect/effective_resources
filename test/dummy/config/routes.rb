@@ -23,4 +23,8 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :thongs, only: [:index, :show, :new, :destroy] do
+    resources :build, controller: :thongs, only: [:show, :update]
+  end
+
 end
