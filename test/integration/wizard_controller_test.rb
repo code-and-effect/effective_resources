@@ -49,7 +49,7 @@ class WizardControllerTest < ActionDispatch::IntegrationTest
     put thong_build_path(thong_id: :new, id: :start), params: { thong: { title: 'Title', body: 'Body'} }
 
     assert_redirected_to thong_build_path(Thong.last, :select)
-    assert_equal 'Successfully saved', flash[:success]
+    assert_equal 'Successfully saved Title', flash[:success]
 
     assert @controller.resource.kind_of?(Thong)
     assert @controller.resource.persisted?
@@ -59,7 +59,7 @@ class WizardControllerTest < ActionDispatch::IntegrationTest
     put thong_build_path(thong_id: :new, id: :start), params: { thong: { title: '', body: ''} }
 
     assert_response :success
-    assert_equal "Errors occurred while trying to save.", flash[:danger]
+    assert_equal "Unable to save New Thong: title can't be blank and body can't be blank", flash[:danger]
     assert_match "<form", @response.body
 
     assert @controller.resource.kind_of?(Thong)
