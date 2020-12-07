@@ -24,7 +24,9 @@ module Effective
         save_action = ([:create, :update].include?(action) ? :save : action)
         raise "expected @#{resource_name} to respond to #{save_action}!" unless resource.respond_to?("#{save_action}!")
 
-        resource.current_user ||= current_user if resource.respond_to?(:current_user=)
+        if respond_to?(:current_user) && resource.respond_to?(:current_user=)
+          resource.current_user ||= current_user
+        end
 
         success = false
 

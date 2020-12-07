@@ -63,8 +63,13 @@ module Effective
         self.resource ||= resource_scope.new
         action = (commit_action[:action] == :save ? :create : commit_action[:action])
 
-        resource.current_user ||= current_user if resource.respond_to?(:current_user=)
-        resource.created_by ||= current_user if resource.respond_to?(:created_by=)
+        if respond_to?(:current_user) && resource.respond_to?(:current_user=)
+          resource.current_user ||= current_user
+        end
+
+        if respond_to?(:current_user) && resource.respond_to?(:created_by=)
+          resource.created_by ||= current_user
+        end
 
         resource.assign_attributes(send(resource_params_method_name))
 
@@ -121,8 +126,13 @@ module Effective
         EffectiveResources.authorize!(self, action, resource)
         @page_title ||= "Edit #{resource}"
 
-        resource.current_user ||= current_user if resource.respond_to?(:current_user=)
-        resource.updated_by ||= current_user if resource.respond_to?(:updated_by=)
+        if respond_to?(:current_user) && resource.respond_to?(:current_user=)
+          resource.current_user ||= current_user
+        end
+
+        if respond_to?(:current_user) && resource.respond_to?(:updated_by=)
+          resource.updated_by ||= current_user
+        end
 
         resource.assign_attributes(send(resource_params_method_name))
 
