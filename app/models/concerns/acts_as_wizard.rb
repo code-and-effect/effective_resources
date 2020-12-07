@@ -43,6 +43,10 @@ module ActsAsWizard
       wizard_steps[current_step.to_sym] ||= Time.zone.now
     end
 
+    def can_visit_step?(step)
+      can_revisit_completed_steps(step)
+    end
+
     def required_steps
       return self.class.test_required_steps if Rails.env.test? && self.class.test_required_steps.present?
       self.class.const_get(:WIZARD_STEPS).keys
@@ -60,13 +64,13 @@ module ActsAsWizard
       required_steps.find { |step| has_completed_step?(step) == false }
     end
 
+    def has_completed_step?(step)
+      wizard_steps[step].present?
+    end
+
     def previous_step(step)
       index = required_steps.index(step)
       required_steps[index-1] unless index == 0 || index.nil?
-    end
-
-    def has_completed_step?(step)
-      wizard_steps[step].present?
     end
 
     def has_completed_previous_step?(step)
@@ -74,8 +78,20 @@ module ActsAsWizard
       previous.blank? || has_completed_step?(previous)
     end
 
-    def can_visit_step?(step)
+    def has_completed_last_step?
+      has_completed_step?(required_steps.last)
+    end
+
+    private
+
+    def can_revisit_completed_steps(step)
+      return (step == required_steps.last) if has_completed_last_step?
       has_completed_previous_step?(step)
+    end
+
+    def cannot_revisit_completed_steps(step)
+      return (step == required_steps.last) if has_completed_last_step?
+      has_completed_previous_step?(step) && !has_completed_step?(step)
     end
 
   end

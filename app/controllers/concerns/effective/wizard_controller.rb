@@ -29,6 +29,9 @@ module Effective
       end
 
       helper_method :resource
+      helper_method :resource_wizard_step_title
+
+      helper EffectiveResourcesWizardHelper
 
       rescue_from Wicked::Wizard::InvalidStepError do |exception|
         flash[:danger] = "Unknown step. You have been moved to the #{resource_wizard_steps.first} step."
@@ -44,8 +47,9 @@ module Effective
       end
     end
 
-    def resource_wizard_step(step)
-      effective_resource.klass.const_get(:WIZARD_STEPS)[step]
+    def resource_wizard_step_title(step)
+      return if step == 'wicked_finish'
+      effective_resource.klass.const_get(:WIZARD_STEPS).fetch(step)
     end
 
     def resource_wizard_steps

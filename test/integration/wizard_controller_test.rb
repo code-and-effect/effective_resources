@@ -33,7 +33,7 @@ class WizardControllerTest < ActionDispatch::IntegrationTest
     assert_equal Thong::WIZARD_STEPS.keys, @controller.resource_wizard_steps
 
     assert_equal Thong::WIZARD_STEPS[:start], @controller.view_context.assigns['page_title']
-    assert_equal Thong::WIZARD_STEPS[:start], @controller.resource_wizard_step(:start)
+    assert_equal Thong::WIZARD_STEPS[:start], @controller.resource_wizard_step_title(:start)
 
     assert @controller.resource.kind_of?(Thong)
     assert @controller.view_context.assigns['thong'].kind_of?(Thong)
@@ -86,7 +86,7 @@ class WizardControllerTest < ActionDispatch::IntegrationTest
     thong = Thong.create!(title: 'Title', body: 'Body', current_step: :start)
 
     get thong_build_path(Thong.last, :finish)
-    assert_equal "Please complete the select step before continuing.", flash[:danger]
+    assert_equal "You have been redirected to the Select step.", flash[:danger]
 
     assert_redirected_to thong_build_path(Thong.last, thong.first_uncompleted_step)
   end

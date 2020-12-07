@@ -38,20 +38,20 @@ module Effective
       # before_action :enforce_can_visit_step, only: [:show, :update]
       # Make sure I have permission for this step
       def enforce_can_visit_step
-        nav_step = step
-
+        return if step == 'wicked_finish'
         return if resource.can_visit_step?(step)
 
-        permitted_step = resource.first_uncompleted_step || resource_wizard_steps.first
+        next_step = wizard_steps.reverse.find { |step| resource.can_visit_step?(step) }
+        raise('There is no wizard step to visit') unless next_step
 
-        flash[:danger] = "Please complete the #{permitted_step} step before continuing."
-        redirect_to wizard_path(permitted_step)
+        flash[:danger] = "You have been redirected to the #{resource_wizard_step_title(next_step)} step."
+        redirect_to wizard_path(next_step)
       end
 
       # before_action :assign_current_step, only: [:show, :update]
       # Assign the urrent step to resource
       def assign_current_step
-        if respond_to?(:current_user) && resource.respond_to?('current_user=')
+        if respond_to?(:current_user) && resource.respond_to?(:current_user=)
           resource.current_user = current_user
         end
 
@@ -61,7 +61,7 @@ module Effective
       # before_action :assign_page_title, only: [:show, :update]
       # Assign page title
       def assign_page_title
-        @page_title ||= resource_wizard_step(step)
+        @page_title ||= resource_wizard_step_title(step)
       end
 
     end
