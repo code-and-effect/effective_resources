@@ -2,8 +2,9 @@ module Effective
   module WizardController
     module Save
 
-      def render_next_step_if(resource, action, options = {})
+      def save_wizard_resource(resource, action = nil, options = {})
         was_new_record = resource.new_record?
+        action ||= resource.respond_to?("#{step}!") ? step : :save
 
         if save_resource(resource, action)
           flash[:success] = options.delete(:success) || resource_flash(:success, resource, action)
