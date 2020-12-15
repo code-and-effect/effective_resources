@@ -42,7 +42,12 @@ module Effective
         return if resource.can_visit_step?(step)
 
         next_step = wizard_steps.reverse.find { |step| resource.can_visit_step?(step) }
-        raise('There is no wizard step to visit') unless next_step
+        raise('There is no wizard step to visit. Make sure can_visit_step?(step) returns true for at least one step') unless next_step
+
+        if Rails.env.development?
+          Rails.logger.info "  \e[31m\e[1mFAILED\e[0m\e[22m" # bold red
+          Rails.logger.info "  Unable to visit step :#{step}. Last can_visit_step? is :#{next_step}. Change the acts_as_wizard model's can_visit_step?(step) function to change this."
+        end
 
         flash[:danger] = "You have been redirected to the #{resource_wizard_step_title(next_step)} step."
         redirect_to wizard_path(next_step)
