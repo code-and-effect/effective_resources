@@ -49,7 +49,7 @@ module Effective
           Rails.logger.info "  Unable to visit step :#{step}. Last can_visit_step? is :#{next_step}. Change the acts_as_wizard model's can_visit_step?(step) function to change this."
         end
 
-        flash[:danger] = "You have been redirected to the #{resource_wizard_step_title(next_step)} step."
+        flash[:success] = "You have been redirected to the #{resource_wizard_step_title(next_step)} step."
         redirect_to wizard_path(next_step)
       end
 

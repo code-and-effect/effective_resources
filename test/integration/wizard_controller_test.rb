@@ -86,7 +86,7 @@ class WizardControllerTest < ActionDispatch::IntegrationTest
     thong = Thong.create!(title: 'Title', body: 'Body', current_step: :start)
 
     get thong_build_path(Thong.last, :finish)
-    assert_equal "You have been redirected to the Select step.", flash[:danger]
+    assert_equal "You have been redirected to the Select step.", flash[:success]
 
     assert_redirected_to thong_build_path(Thong.last, thong.first_uncompleted_step)
   end
