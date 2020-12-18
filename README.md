@@ -256,6 +256,102 @@ end
 
 and include Effective::CrudController in your resource controller.
 
+### acts_as_wizard
+
+Build up an object through a wizard.
+
+Works with the [wicked](https://github.com/zombocom/wicked) gem to create wizard quickly.
+
+Create a model and define `acts_as_wizard`:
+
+```ruby
+class Thing < ApplicationRecord
+  acts_as_wizard(
+    start: 'Start',
+    select: 'Select',
+    finish: 'Finish'
+  )
+
+  effective_resource do
+    title       :string
+    wizard_steps  :text, permitted: false
+  end
+
+  validates :title, presence: true
+
+  def to_s
+    title.presence || 'New Thing'
+  end
+
+  # If you define a bang method matching the name of a step
+  # it will be called when that step is submitted.
+  # Otherwise save! is called.
+  def select!
+    ApplicationMailer.selected(self).deliver_later
+    save!
+  end
+
+  # An array of steps that the controller will use
+  # Default value is just all of them. But you can customize here
+  # def required_steps
+  #   steps = WIZARD_STEPS.keys
+  #   selectable? ? steps : steps - [:select]
+  # end
+
+  # Control whether the user has permission to visit this step
+  #
+  # This is the default, can go forward or back:
+  #
+  # def can_visit_step?(step)
+  #   can_revisit_completed_steps(step)
+  # end
+  #
+  # Easy change if you only want to go forward:
+  #
+  # def can_visit_step?(step)
+  #   cannot_revisit_completed_steps(step)
+  # end
+  #
+  # or custom algorithm:
+  #
+  # def can_visit_step?(step)
+  #   return false unless has_completed_previous_step?(step)
+  #   return false if has_completed_step?(:finish) && step != :finish
+  # end
+end
+```
+
+In your routes:
+
+```ruby
+resources :things, only: [:index, :show, :new, :destroy] do
+  resources :build, controller: :things, only: [:show, :update]
+end
+```
+
+Make a controller:
+
+```ruby
+class ThingsController < ApplicationController
+  include Effective::WizardController
+end
+```
+
+And then create one view per step.
+
+Here's `views/things/start.html.haml`:
+
+```haml
+= render_wizard_sidebar(resource) do
+  %h1= @page_title
+
+  = effective_form_with(model: resource, url: wizard_path(step), method: :put) do |f|
+    = f.text_field :title
+    = f.submit 'Save and Continue'
+```
+
+You can also call `render_wizard_sidebar(resource)` without the block syntax.
+
 ## Testing
 
 Run tests by:
