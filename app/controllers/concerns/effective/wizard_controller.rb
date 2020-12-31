@@ -2,11 +2,7 @@ module Effective
   module WizardController
     extend ActiveSupport::Concern
 
-    unless defined?(Wicked)
-      raise("please install gem 'wicked' to use Effective::WizardController")
-    end
-
-    include Wicked::Wizard
+    include Wicked::Wizard if defined?(Wicked)
     include Effective::CrudController
 
     include Effective::WizardController::Actions
@@ -14,6 +10,8 @@ module Effective
     include Effective::WizardController::Save
 
     included do
+      raise("please install gem 'wicked' to use Effective::WizardController") unless defined?(Wicked)
+
       with_options(only: [:show, :update]) do
         before_action :redirect_if_blank_step
 
