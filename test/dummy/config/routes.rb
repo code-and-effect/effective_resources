@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   resources :things
+  resources :resource_scope
 
   namespace :admin do
     resources :things do

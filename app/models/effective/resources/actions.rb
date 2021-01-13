@@ -12,8 +12,8 @@ module Effective
       def routes
         @routes ||= (
           matches = [
-            [namespace, plural_name].compact.join('/'),
-            [namespace, name].compact.join('/')
+            [namespace, route_name.pluralize].compact.join('/'),
+            [namespace, route_name].compact.join('/'),
           ]
 
           # Check main Rails app
@@ -21,9 +21,25 @@ module Effective
             (matches & [route.defaults[:controller]]).present? && !route.name.to_s.end_with?('root')
           end
 
+          if routes.blank?
+            matches = [
+              [namespace, plural_name].compact.join('/'),
+              [namespace, name].compact.join('/')
+            ]
+
+            # Check main Rails app
+            routes = Rails.application.routes.routes.select do |route|
+              (matches & [route.defaults[:controller]]).present? && !route.name.to_s.end_with?('root')
+            end
+          end
+
           # Check engine routes
           if routes.blank?
             matches = [
+              [namespace, route_name.pluralize].compact.join('/'),
+              [namespace, route_name].compact.join('/'),
+              ['effective', namespace, route_name.pluralize].compact.join('/'),
+              ['effective', namespace, route_name].compact.join('/'),
               [namespace, plural_name].compact.join('/'),
               [namespace, name].compact.join('/'),
               ['effective', namespace, plural_name].compact.join('/'),

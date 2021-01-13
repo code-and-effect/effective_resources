@@ -4,9 +4,9 @@ module Effective
 
       private
 
-      def _initialize_input(input, namespace: nil)
+      def _initialize_input(input, namespace: nil, relation: nil)
         @initialized_name = input
-        @model_klass = _klass_by_input(input)
+        @model_klass = (relation ? _klass_by_input(relation) : _klass_by_input(input))
 
         # Consider namespaces
         if namespace
@@ -18,20 +18,24 @@ module Effective
         end
 
         # Consider relation
+        if relation.kind_of?(ActiveRecord::Relation)
+          @relation ||= relation
+        end
+
         if input.kind_of?(ActiveRecord::Relation)
           @relation ||= input
         end
 
         if input.kind_of?(ActiveRecord::Reflection::MacroReflection) && input.scope
-          @relation ||= klass.where(nil).merge(input.scope)
+          @relation ||= @model_klass.where(nil).merge(input.scope)
         end
 
         # Consider instance
-        if klass && input.instance_of?(klass)
+        if @model_klass && input.instance_of?(@model_klass)
           @instance ||= input
         end
 
-        if klass && input.kind_of?(Array) && input.last.instance_of?(klass)
+        if @model_klass && input.kind_of?(Array) && input.last.instance_of?(@model_klass)
           @instance ||= input.last
         end
       end

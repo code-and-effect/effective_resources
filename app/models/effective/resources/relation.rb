@@ -4,8 +4,10 @@ module Effective
       TARGET_LIST_LIMIT = 1500
       TARGET_KEYS_LIMIT = 30000
 
+      # This could be active_model? in which we just return the klass itself here
+      # This value ends up being crud_controller resource_scope()
       def relation
-        @relation ||= klass.where(nil)
+        @relation ||= (klass.respond_to?(:where) ? klass.where(nil) : klass)
       end
 
       # When Effective::Resource is initialized with an ActiveRecord relation, the following

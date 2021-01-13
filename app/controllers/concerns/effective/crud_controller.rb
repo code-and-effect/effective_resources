@@ -11,13 +11,14 @@ module Effective
 
     included do
       define_actions_from_routes
-      define_permitted_params_from_model
       define_callbacks :resource_render, :resource_before_save, :resource_after_save, :resource_after_commit, :resource_error
     end
 
     module ClassMethods
       include Effective::CrudController::Dsl
 
+      # This is used to define_actions_from_routes and for the buttons/submits/ons
+      # It doesn't really work with the resource_scope correctly but the routes are important here
       def effective_resource
         @_effective_resource ||= Effective::Resource.new(controller_path)
       end
@@ -32,17 +33,6 @@ module Effective
           define_method(action) { collection_action(action) }
         end
       end
-
-      def define_permitted_params_from_model
-        if effective_resource.model.present?
-          define_method(:effective_resource_permitted_params) { resource_permitted_params } # save.rb
-        end
-
-        if effective_resource.active_model?
-          define_method(:effective_resource_permitted_params) { resource_active_model_permitted_params } # save.rb
-        end
-      end
-
     end
 
     def resource # @thing
@@ -62,10 +52,30 @@ module Effective
     end
 
     def effective_resource
-      self.class.effective_resource
+      @_effective_resource ||= begin
+        relation = resource_scope_relation.call() if respond_to?(:resource_scope_relation)
+
+        if respond_to?(:resource_scope_relation) && !relation.kind_of?(ActiveRecord::Relation)
+          raise('resource_scope must return an ActiveRecord::Relation')
+        end
+
+        Effective::Resource.new(controller_path, relation: relation)
+      end
     end
 
     private
+
+    def resource_scope
+      @_effective_resource_scope ||= begin
+        relation = effective_resource.relation
+
+        unless relation.kind_of?(ActiveRecord::Relation) || effective_resource.active_model?
+          raise("unable to build resource_scope for #{effective_resource.klass || 'unknown klass'}. Please name your controller to match an existing model, or manually define a resource_scope.")
+        end
+
+        relation
+      end
+    end
 
     def resource_name # 'thing'
       effective_resource.name
@@ -81,30 +91,6 @@ module Effective
 
     def resource_plural_name # 'things'
       effective_resource.plural_name
-    end
-
-    # Returns an ActiveRecord relation based on the computed value of `resource_scope` dsl method
-    def resource_scope # Thing
-      @_effective_resource_relation ||= (
-        relation = case @_effective_resource_scope  # If this was initialized by the resource_scope before_action
-        when ActiveRecord::Relation
-          @_effective_resource_scope
-        when Hash
-          effective_resource.klass.where(@_effective_resource_scope)
-        when Symbol
-          effective_resource.klass.send(@_effective_resource_scope)
-        when nil
-          effective_resource.klass.respond_to?(:all) ? effective_resource.klass.all : effective_resource.klass
-        else
-          raise "expected resource_scope method to return an ActiveRecord::Relation or Hash"
-        end
-
-        unless relation.kind_of?(ActiveRecord::Relation) || effective_resource.active_model?
-          raise("unable to build resource_scope for #{effective_resource.klass || 'unknown klass'}. Please name your controller to match an existing model, or manually define a resource_scope.")
-        end
-
-        relation
-      )
     end
 
     def resource_datatable_attributes
@@ -128,7 +114,16 @@ module Effective
     end
 
     def resource_params_method_name
-      ["#{resource_name}_params", "#{resource_plural_name}_params", 'permitted_params', 'effective_resource_permitted_params', ('resource_permitted_params' if effective_resource.model.present?)].compact.find { |name| respond_to?(name, true) } || 'params'
+      ['permitted_params', "#{resource_name}_params", "#{resource_plural_name}_params"].each do |name|
+        return name if respond_to?(name, true)
+      end
+
+      # Built in ones
+      return 'resource_permitted_params' if effective_resource.model.present?
+      return 'resource_active_model_permitted_params' if effective_resource.active_model?
+
+      # Fallback
+      'params'
     end
 
   end

@@ -15,8 +15,8 @@ module Effective
     include Effective::Resources::Sql
 
     # post, Post, Admin::Post, admin::Post, admin/posts, admin/post, admin/effective::post
-    def initialize(input, namespace: nil, &block)
-      _initialize_input(input, namespace: namespace)
+    def initialize(input, namespace: nil, relation: nil, &block)
+      _initialize_input(input, namespace: namespace, relation: relation)
       _initialize_model(&block) if block_given?
       self
     end

@@ -79,9 +79,12 @@ module Effective
       def resource_scope(obj = nil, opts = {}, &block)
         raise 'expected a proc or block' unless (obj.respond_to?(:call) || block_given?)
 
-        instance_exec do
-          before_action(opts) { @_effective_resource_scope ||= instance_exec(&(block_given? ? block : obj)) }
+        if block_given?
+          define_method(:resource_scope_relation) { return block }
+        else
+          define_method(:resource_scope_relation) { return obj }
         end
+
       end
 
     end
