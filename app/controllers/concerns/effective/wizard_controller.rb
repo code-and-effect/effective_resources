@@ -8,6 +8,7 @@ module Effective
     include Effective::WizardController::Actions
     include Effective::WizardController::BeforeActions
     include Effective::WizardController::Save
+    include Effective::WizardController::WickedOverrides
 
     included do
       raise("please install gem 'wicked' to use Effective::WizardController") unless defined?(Wicked)

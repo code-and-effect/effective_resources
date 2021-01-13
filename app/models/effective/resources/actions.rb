@@ -48,11 +48,11 @@ module Effective
       end
 
       def routes_app
-        (@routes_app if routes.present?) || Rails.application
+        @routes_app if routes.present?
       end
 
       def url_helpers
-        routes_app.routes.url_helpers
+        (routes_app || Rails.application).routes.url_helpers
       end
 
       # Effective::Resource.new('admin/posts').action_path_helper(:edit) => 'edit_admin_posts_path'
