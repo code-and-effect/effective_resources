@@ -51,9 +51,11 @@ module EffectiveResources
     # Register the acts_as_archived routes concern
     # resources :things, concerns: :acts_as_archived
     initializer 'effective_resources.routes_concern' do |app|
-      ActiveSupport.on_load :action_controller_base do
-        ActionDispatch::Routing::Mapper.include(ActsAsArchived::RoutesConcern)
-      end
+      ActionDispatch::Routing::Mapper.include(ActsAsArchived::RoutesConcern)
+
+      # Doesn't seem to work with the on_load in rails 6.0
+      #ActiveSupport.on_load :action_controller_base do
+      #end
     end
 
     # Register the flash_messages concern so that it can be called in ActionController

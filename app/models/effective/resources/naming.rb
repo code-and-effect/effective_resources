@@ -44,11 +44,11 @@ module Effective
       end
 
       def human_name
-        class_name.gsub('::', ' ').underscore.gsub('_', ' ')
+        name.gsub('::', ' ').underscore.gsub('_', ' ')
       end
 
       def human_plural_name
-        class_name.pluralize.gsub('::', ' ').underscore.gsub('_', ' ')
+        name.pluralize.gsub('::', ' ').underscore.gsub('_', ' ')
       end
 
     end
