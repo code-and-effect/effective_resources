@@ -53,28 +53,26 @@ module Effective
 
     def effective_resource
       @_effective_resource ||= begin
-        relation = resource_scope_relation.call() if respond_to?(:resource_scope_relation)
+        relation = instance_exec(&resource_scope_relation) if respond_to?(:resource_scope_relation)
 
         if respond_to?(:resource_scope_relation) && !relation.kind_of?(ActiveRecord::Relation)
           raise('resource_scope must return an ActiveRecord::Relation')
         end
 
-        Effective::Resource.new(controller_path, relation: relation)
+        resource = Effective::Resource.new(controller_path, relation: relation)
+
+        unless resource.relation.kind_of?(ActiveRecord::Relation) || effective_resource.active_model?
+          raise("unable to build resource_scope for #{resource.klass || 'unknown klass'}. Please name your controller to match an existing model, or manually define a resource_scope.")
+        end
+
+        resource
       end
     end
 
     private
 
     def resource_scope
-      @_effective_resource_scope ||= begin
-        relation = effective_resource.relation
-
-        unless relation.kind_of?(ActiveRecord::Relation) || effective_resource.active_model?
-          raise("unable to build resource_scope for #{effective_resource.klass || 'unknown klass'}. Please name your controller to match an existing model, or manually define a resource_scope.")
-        end
-
-        relation
-      end
+      effective_resource.relation
     end
 
     def resource_name # 'thing'

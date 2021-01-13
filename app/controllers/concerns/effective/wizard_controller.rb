@@ -55,10 +55,11 @@ module Effective
       effective_resource.klass.const_get(:WIZARD_STEPS).keys
     end
 
+    # It could be :new, :start
+    # Or resource, step
     def resource_wizard_path(resource, step)
-      path_helper = effective_resource.action_path_helper(:show).to_s.sub('_path', '_build_path')
-
-      effective_resource.url_helpers.public_send(path_helper, resource, step)
+      param = (resource.respond_to?(:to_param) ? resource.to_param : resource)
+      wizard_path(step, resource_name_id => param)
     end
 
   end

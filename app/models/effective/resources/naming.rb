@@ -20,11 +20,7 @@ module Effective
       end
 
       def route_name # 'post' initialized from the controller_path/initialized_name and not the class
-        @route_name ||= begin
-          name = initialized_name.to_s.split(SPLIT).last.presence
-          name ||= klass.name if klass.present?
-          name
-        end.singularize.underscore
+        @route_name ||= (initialized_name.to_s.split(SPLIT).last || '').singularize.underscore
       end
 
       def class_name # 'Effective::Post'
