@@ -56,7 +56,8 @@ module Effective
 
     def resource_wizard_path(resource, step)
       path_helper = effective_resource.action_path_helper(:show).to_s.sub('_path', '_build_path')
-      public_send(path_helper, resource, step)
+
+      effective_resource.url_helpers.public_send(path_helper, resource, step)
     end
 
   end

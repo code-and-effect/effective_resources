@@ -35,12 +35,24 @@ module Effective
                 (matches & [route.defaults[:controller]]).present? && !route.name.to_s.end_with?('root')
               end
 
-              break if routes.present?
+              if routes.present?
+                @routes_app = engine
+                break
+              end
+
             end
           end
 
           Array(routes).inject({}) { |h, route| h[route.defaults[:action].to_sym] = route; h }
         )
+      end
+
+      def routes_app
+        (@routes_app if routes.present?) || Rails.application
+      end
+
+      def url_helpers
+        routes_app.routes.url_helpers
       end
 
       # Effective::Resource.new('admin/posts').action_path_helper(:edit) => 'edit_admin_posts_path'
