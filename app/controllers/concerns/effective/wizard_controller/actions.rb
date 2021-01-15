@@ -21,6 +21,7 @@ module Effective
         Rails.logger.info 'Processed by Effective::WizardController#update'
 
         resource.assign_attributes(send(resource_params_method_name))
+        assign_current_step
 
         save_wizard_resource(resource)
       end

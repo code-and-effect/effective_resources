@@ -54,7 +54,7 @@ module Effective
       end
 
       # before_action :assign_current_step, only: [:show, :update]
-      # Assign the urrent step to resource
+      # Assign the current step to resource
       def assign_current_step
         if respond_to?(:current_user) && resource.respond_to?(:current_user=)
           resource.current_user = current_user
