@@ -1,7 +1,7 @@
 require 'test_helper'
 require 'wicked'
 
-class WizardControllerTest < ActionDispatch::IntegrationTest
+class WizardTest < ActionDispatch::IntegrationTest
   test 'index route works' do
     get thongs_url
 

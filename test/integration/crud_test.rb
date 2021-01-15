@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class CrudControllerTest < ActionDispatch::IntegrationTest
+class CrudTest < ActionDispatch::IntegrationTest
   test 'controller' do
     get things_url
 

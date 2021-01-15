@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class AdminEffectiveCrudControllerTest < ActionDispatch::IntegrationTest
+class AdminEffectiveCrudTest < ActionDispatch::IntegrationTest
   test 'controller' do
     get admin_thangs_url
 

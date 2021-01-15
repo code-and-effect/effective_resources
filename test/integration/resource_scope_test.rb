@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class ResourceScopeControllerTest < ActionDispatch::IntegrationTest
+class ResourceScopeTest < ActionDispatch::IntegrationTest
   test 'controller' do
     get resource_scope_index_url
 

@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class EffectiveCrudControllerTest < ActionDispatch::IntegrationTest
+class EffectiveCrudTest < ActionDispatch::IntegrationTest
   test 'controller' do
     get thangs_url
 

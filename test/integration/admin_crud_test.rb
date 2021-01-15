@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class AdminCrudControllerTest < ActionDispatch::IntegrationTest
+class AdminCrudTest < ActionDispatch::IntegrationTest
   test 'controller' do
     get admin_things_url
 

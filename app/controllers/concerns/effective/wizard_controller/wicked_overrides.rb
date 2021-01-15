@@ -12,7 +12,7 @@ module Effective
                     :action     => 'show',
                     :id         => goto_step || params[:id],
                     :only_path  => true
-                   }.merge options
+                   }.merge(options)
 
         merged_url_options = options.reverse_merge!(url_options)
         effective_resource.url_helpers.url_for(merged_url_options)
