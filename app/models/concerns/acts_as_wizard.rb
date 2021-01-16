@@ -68,6 +68,10 @@ module ActsAsWizard
       wizard_steps[step].present?
     end
 
+    def next_step
+      required_steps.reverse.find { |step| can_visit_step?(step) } || required_steps.first
+    end
+
     def previous_step(step)
       index = required_steps.index(step)
       required_steps[index-1] unless index == 0 || index.nil?
