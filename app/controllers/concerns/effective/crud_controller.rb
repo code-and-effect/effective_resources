@@ -61,7 +61,7 @@ module Effective
 
         resource = Effective::Resource.new(controller_path, relation: relation)
 
-        unless resource.relation.kind_of?(ActiveRecord::Relation) || effective_resource.active_model?
+        unless resource.relation.kind_of?(ActiveRecord::Relation) || resource.active_model?
           raise("unable to build resource_scope for #{resource.klass || 'unknown klass'}. Please name your controller to match an existing model, or manually define a resource_scope.")
         end
 
