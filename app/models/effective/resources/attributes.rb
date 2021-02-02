@@ -54,7 +54,7 @@ module Effective
 
       def active_text_attributes
         {}.tap do |retval|
-          active_texts_has_ones_ids.each { |k, v| retval[k] = [:string] }
+          action_texts_has_ones_ids.each { |k, v| retval[k] = [:string] }
         end
       end
 

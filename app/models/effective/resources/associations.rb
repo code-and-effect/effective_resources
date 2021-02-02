@@ -69,12 +69,12 @@ module Effective
         active_storage_has_ones.map { |ass| ass.name.to_s.gsub(/_attachment\z/, '').to_sym }
       end
 
-      def active_texts
+      def action_texts
         klass.reflect_on_all_associations(:has_one).select { |ass| ass.class_name == 'ActionText::RichText' }
       end
 
-      def active_texts_has_ones_ids
-        active_texts.map { |ass| ass.name.to_s.gsub(/\Arich_text_/, '').to_sym }
+      def action_texts_has_ones_ids
+        action_texts.map { |ass| ass.name.to_s.gsub(/\Arich_text_/, '').to_sym }
       end
 
       def nested_resources

@@ -49,7 +49,7 @@ module Effective
           end
         end
 
-        has_ones.each do |association|
+        (action_texts + has_ones).each do |association|
           next if except.present? && except.include?(association.name)
           next unless only.blank? || only.include?(association.name)
 
@@ -74,9 +74,22 @@ module Effective
         attributes.delete_if { |_, value| value.blank? }
       end
 
+      def instance_action_texts_previous_changes
+        return {} unless instance.present? && action_texts.present?
+
+        action_texts
+          .map { |ass| instance.send(ass.name) }
+          .compact
+          .select { |obj| obj.previous_changes['body'].present? }
+          .inject({}) { |h, obj| h[obj.name.to_sym] = obj.previous_changes['body']; h }
+      end
+
       # used by effective_logging
       def instance_changes(only: nil, except: nil)
-        return {} unless (instance.present? && instance.previous_changes.present?)
+        return {} unless instance.present?
+
+        action_texts_changes = instance_action_texts_previous_changes()
+        return {} unless instance.previous_changes.present? || action_texts_changes.present?
 
         # Build up our only and except
         only = Array(only).map(&:to_sym)
@@ -94,6 +107,13 @@ module Effective
         changes = changes.except(*except) if except.present?
         changes = changes.slice(*only) if only.present?
 
+        action_texts_changes.each do |name, (before, after)|
+          next if except.present? && except.include?(name)
+          next unless only.blank? || only.include?(name)
+
+          changes[name] = [before.to_s, after.to_s]
+        end
+
         # Log to_s changes on all belongs_to associations
         belong_tos.each do |association|
           next if except.present? && except.include?(association.name)
@@ -110,7 +130,3 @@ module Effective
     end
   end
 end
-
-
-
-
