@@ -58,8 +58,7 @@ module ActsAsSlugged
   end
 
   def to_param
-    slug
+    slug_was || slug
   end
 
 end
-
