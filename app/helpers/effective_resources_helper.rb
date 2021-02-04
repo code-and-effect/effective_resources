@@ -107,15 +107,16 @@ module EffectiveResourcesHelper
 
     # Select Partial
     partial = if partial.kind_of?(Symbol)
-      "effective/resource/actions_#{partial}.html"
+      "effective/resource/actions_#{partial}"
     else
-      "#{partial.presence || 'effective/resource/actions'}.html"
+      partial.presence || 'effective/resource/actions'
     end
 
     # Assign Locals
     locals = {
       resource: resource,
       effective_resource: effective_resource,
+      formats: [:html],
       format_block: (block if block_given?),
       namespace: namespace,
       actions: actions,
@@ -123,7 +124,14 @@ module EffectiveResourcesHelper
     }.compact.merge(locals)
 
     if resource.kind_of?(Array)
-      render(partial: partial, collection: resource, as: :resource, locals: locals.except(:resource), spacer_template: spacer_template)
+      render(
+        partial: partial,
+        formats: [:html],
+        collection: resource,
+        as: :resource,
+        locals: locals.except(:resource),
+        spacer_template: spacer_template
+      )
     else
       render(partial, locals)
     end

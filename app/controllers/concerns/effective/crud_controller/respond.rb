@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Effective
   module CrudController
     module Respond
@@ -94,7 +96,10 @@ module Effective
       end
 
       def template_present?(action)
-        lookup_context.template_exists?("#{action}.#{request.format.symbol.to_s.sub('json', 'js').presence || 'html'}", _prefixes)
+        #lookup_context.template_exists?("#{action}.#{request.format.symbol.to_s.sub('json', 'js').presence || 'html'}", _prefixes)
+
+        formats = [request.format.symbol.to_s.sub('json', 'js').presence || 'html']
+        lookup_context.template_exists?(action, _prefixes, formats: formats)
       end
 
     end
