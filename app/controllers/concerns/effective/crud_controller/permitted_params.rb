@@ -10,25 +10,28 @@ module Effective
         raise 'expected resource class to have effective_resource do .. end' if effective_resource.model.blank?
 
         permitted_params = permitted_params_for(resource, effective_resource.namespaces)
+        permitted_name = params.key?(effective_resource.name) ? effective_resource.name : effective_resource.resource_name
 
         if Rails.env.development?
           Rails.logger.info "Effective::CrudController#resource_permitted_params:"
-          Rails.logger.info "params.require(:#{effective_resource.resource_name}).permit(#{permitted_params.to_s[1...-1]})"
+          Rails.logger.info "params.require(:#{permitted_name}).permit(#{permitted_params.to_s[1...-1]})"
         end
 
-        params.require(effective_resource.resource_name).permit(*permitted_params)
+        params.require(permitted_name).permit(*permitted_params)
       end
 
       # If the resource is ActiveModel, just permit all
       # This can still be overridden by a controller
       def resource_active_model_permitted_params
+        permitted_name = params.key?(effective_resource.name) ? effective_resource.name : effective_resource.resource_name
+
         if Rails.env.development?
           Rails.logger.info "Effective::CrudController#resource_permitted_params:"
-          Rails.logger.info "params.require(:#{effective_resource.resource_name}).permit!"
+          Rails.logger.info "params.require(:#{permitted_name}).permit!"
         end
 
-        if params[effective_resource.resource_name].present?
-          params.require(effective_resource.resource_name).permit!
+        if params[permitted_name].present?
+          params.require(permitted_name).permit!
         else
           params.require((effective_resource.namespaces + [effective_resource.resource_name]).join('_')).permit!
         end

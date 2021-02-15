@@ -14,10 +14,18 @@ module Effective
     include Effective::Resources::Relation
     include Effective::Resources::Sql
 
+
+    # In practice, this is initialized two ways
+    # With a klass and a namespace from effective_datatables
+    # Or with a controller_path from crud controller
+
     # post, Post, Admin::Post, admin::Post, admin/posts, admin/post, admin/effective::post
     def initialize(input, namespace: nil, relation: nil, &block)
       _initialize_input(input, namespace: namespace, relation: relation)
+
+      # This is an effective_resource do ... end block
       _initialize_model(&block) if block_given?
+
       self
     end
 

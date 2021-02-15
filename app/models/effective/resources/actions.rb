@@ -7,33 +7,27 @@ module Effective
       POST_VERBS = ['POST', 'PUT', 'PATCH']
       CRUD_ACTIONS = %i(index new create show edit update destroy)
 
-      # This was written for the Edit actions fallback templates and Datatables
-      # Effective::Resource.new('admin/posts').routes[:index]
+      # This will have been set by init from crud_controller, or from a class and namespace
+      def controller_path
+        @controller_path ||= ([namespace, plural_name].compact * '/')
+      end
+
       def routes
-        @routes ||= (
-          matches = [
-            [namespace, route_name.pluralize].compact.join('/'),
-            [namespace, route_name].compact.join('/'),
-          ]
+        @routes ||= begin
+          routes = nil
+          engines = [Rails.application] + Rails::Engine.subclasses.reverse
 
-          # Check main Rails app
-          routes = Rails.application.routes.routes.select do |route|
-            (matches & [route.defaults[:controller]]).present? && !route.name.to_s.end_with?('root')
-          end
+          # Check from controller_path. This is generally correct.
+          engines.each do |engine|
+            routes = engine.routes.routes.select do |route|
+              controller_path == route.defaults[:controller] && !route.name.to_s.end_with?('root')
+            end
 
-          if routes.blank?
-            matches = [
-              [namespace, plural_name].compact.join('/'),
-              [namespace, name].compact.join('/')
-            ]
-
-            # Check main Rails app
-            routes = Rails.application.routes.routes.select do |route|
-              (matches & [route.defaults[:controller]]).present? && !route.name.to_s.end_with?('root')
+            if routes.present?
+              @routes_app = engine; break
             end
           end
 
-          # Check engine routes
           if routes.blank?
             matches = [
               [namespace, route_name.pluralize].compact.join('/'),
@@ -46,21 +40,19 @@ module Effective
               ['effective', namespace, name].compact.join('/')
             ]
 
-            (Rails::Engine.subclasses.reverse + [Rails.application]).each do |engine|
+            engines.each do |engine|
               routes = engine.routes.routes.select do |route|
                 (matches & [route.defaults[:controller]]).present? && !route.name.to_s.end_with?('root')
               end
 
               if routes.present?
-                @routes_app = engine
-                break
+                @routes_app = engine; break
               end
-
             end
           end
 
           Array(routes).inject({}) { |h, route| h[route.defaults[:action].to_sym] = route; h }
-        )
+        end
       end
 
       def routes_app
@@ -137,58 +129,39 @@ module Effective
       end
 
       def crud_actions
-        @crud_actions ||= (actions & CRUD_ACTIONS)
+        (actions & CRUD_ACTIONS)
       end
 
       # GET actions
       def collection_actions
-        @collection_actions ||= (
-          routes.map { |_, route| route.defaults[:action].to_sym if is_collection_route?(route) }.tap(&:compact!)
-        )
+        routes.map { |_, route| route.defaults[:action].to_sym if is_collection_route?(route) } - [nil]
       end
 
       def collection_get_actions
-        @collection_get_actions ||= (
-          routes.map { |_, route| route.defaults[:action].to_sym if is_collection_route?(route) && is_get_route?(route) }.tap(&:compact!)
-        )
+        routes.map { |_, route| route.defaults[:action].to_sym if is_collection_route?(route) && is_get_route?(route) } - [nil]
       end
 
       def collection_post_actions
-        @collection_post_actions ||= (
-          routes.map { |_, route| route.defaults[:action].to_sym if is_collection_route?(route) && is_post_route?(route) }.tap(&:compact!)
-        )
+        routes.map { |_, route| route.defaults[:action].to_sym if is_collection_route?(route) && is_post_route?(route) } - [nil]
       end
 
       # All actions
       def member_actions
-        @member_actions ||= (
-          routes.map { |_, route| route.defaults[:action].to_sym if is_member_route?(route) }.tap(&:compact!)
-        )
+        routes.map { |_, route| route.defaults[:action].to_sym if is_member_route?(route) } - [nil]
       end
 
       # GET actions
       def member_get_actions
-        @member_get_actions ||= (
-          routes.map { |_, route| route.defaults[:action].to_sym if is_member_route?(route) && is_get_route?(route) }.tap(&:compact!)
-        )
+        routes.map { |_, route| route.defaults[:action].to_sym if is_member_route?(route) && is_get_route?(route) } - [nil]
       end
 
       def member_delete_actions
-        @member_delete_actions ||= (
-          routes.map { |_, route| route.defaults[:action].to_sym if is_member_route?(route) && is_delete_route?(route) }.tap(&:compact!)
-        )
+        routes.map { |_, route| route.defaults[:action].to_sym if is_member_route?(route) && is_delete_route?(route) } - [nil]
       end
 
       # POST/PUT/PATCH actions
       def member_post_actions
-        @member_post_actions ||= (
-          routes.map { |_, route| route.defaults[:action].to_sym if is_member_route?(route) && is_post_route?(route) }.tap(&:compact!)
-        )
-      end
-
-      # Same as controller_path in the view
-      def controller_path
-        [namespace, plural_name].compact * '/'
+        routes.map { |_, route| route.defaults[:action].to_sym if is_member_route?(route) && is_post_route?(route) } - [nil]
       end
 
       private

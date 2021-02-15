@@ -42,11 +42,17 @@ class ResourceActionsTest < ActiveSupport::TestCase
   end
 
   test 'controller_path' do
-    resource = Effective::Resource.new('thing')
+    resource = Effective::Resource.new(Thing)
     assert_equal 'things', resource.controller_path
 
-    resource = Effective::Resource.new('admin/thing')
+    resource = Effective::Resource.new(Thing, namespace: 'admin')
     assert_equal 'admin/things', resource.controller_path
+
+    resource = Effective::Resource.new('thing')
+    assert_equal 'thing', resource.controller_path
+
+    resource = Effective::Resource.new('admin/thing')
+    assert_equal 'admin/thing', resource.controller_path
   end
 
   test 'action_path_helper' do

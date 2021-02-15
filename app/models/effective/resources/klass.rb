@@ -8,6 +8,8 @@ module Effective
 
       def datatable_klass
         if defined?(EffectiveDatatables)
+          "#{controller_path.classify.pluralize}Datatable".safe_constantize ||
+          "#{controller_path.classify}Datatable".safe_constantize ||
           "#{namespaced_class_name.pluralize}Datatable".safe_constantize ||
           "#{namespaced_module_name.pluralize}Datatable".safe_constantize ||
           "#{namespaced_class_name.pluralize.gsub('::', '')}Datatable".safe_constantize ||

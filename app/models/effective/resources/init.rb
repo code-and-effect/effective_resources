@@ -8,6 +8,11 @@ module Effective
         @initialized_name = input
         @model_klass = (relation ? _klass_by_input(relation) : _klass_by_input(input))
 
+        # Consider controller_name
+        if @model_klass && input.kind_of?(String) && namespace.blank?
+          @controller_path = input
+        end
+
         # Consider namespaces
         if namespace
           @namespaces = (namespace.kind_of?(String) ? namespace.split('/') : Array(namespace))
@@ -62,30 +67,30 @@ module Effective
         end
       end
 
+
+      # 'acpa/admin/shirts'
       def _klass_by_name(input)
         input = input.to_s
         input = input[1..-1] if input.start_with?('/')
 
         names = input.split('/')
 
-        # Crazy classify
-        0.upto(names.length-1) do |index|
-          class_name = names[index..-1].map { |name| name.classify } * '::'
-          klass = class_name.safe_constantize
+        # Classify based on namespace
+        # acpa/admin/shirts
+        (names.length).downto(1).each do |n|
+          names.combination(n).to_a.each do |pieces|
+            klass_pieces = pieces.map { |piece| piece.classify } * '::'
+            klass = klass_pieces.safe_constantize
 
-          if klass.blank? && index > 0
-            class_name = (names[0..index-1].map { |name| name.classify.pluralize } + names[index..-1].map { |name| name.classify }) * '::'
-            klass = class_name.safe_constantize
-          end
-
-          if klass.present?
-            @namespaces ||= names[0...index]
-            @model_klass = klass
-            return klass
+            if klass.present? && klass.class != Module
+              @namespaces ||= (names - pieces)
+              @model_klass = klass
+              return klass
+            end
           end
         end
 
-        # Crazy engine
+        # Crazy effective engine.
         if names[0] == 'admin'
           class_name = (['effective'] + names[1..-1]).map { |name| name.classify } * '::'
           klass = class_name.safe_constantize
