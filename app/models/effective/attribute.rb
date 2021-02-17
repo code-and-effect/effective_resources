@@ -27,6 +27,7 @@ module Effective
       @type ||= (
         case obj
         when :boolean     ; :boolean
+        when :config      ; :config
         when :currency    ; :currency
         when :date        ; :date
         when :datetime    ; :datetime
@@ -73,6 +74,9 @@ module Effective
       case type
       when :boolean
         [true, 'true', 't', '1'].include?(value)
+      when :config
+        raise('expected an ActiveSupport::OrderedOptions') unless value.kind_of?(ActiveSupport::OrderedOptions)
+        parse_ordered_options(value)
       when :date, :datetime
         if (digits = value.to_s.scan(/(\d+)/).flatten).present?
           date = if digits.first.length == 4  # 2017-01-10
@@ -167,6 +171,15 @@ module Effective
 
     def ==(other)
       name == other.name && type == other.type
+    end
+
+    # This returns a nested ActiveSupport::OrderedOptions.new config
+    def parse_ordered_options(obj)
+      return obj unless obj.kind_of?(Hash)
+
+      ActiveSupport::OrderedOptions.new.tap do |config|
+        obj.each { |key, value| config[key] = parse_ordered_options(value) }
+      end
     end
 
   end

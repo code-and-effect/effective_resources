@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Effective
   module CrudController
     extend ActiveSupport::Concern
@@ -12,6 +13,7 @@ module Effective
     included do
       define_actions_from_routes
       define_callbacks :resource_render, :resource_before_save, :resource_after_save, :resource_after_commit, :resource_error
+      layout -> { resource_layout }
     end
 
     module ClassMethods
@@ -109,6 +111,11 @@ module Effective
       datatable = datatable_klass.new(resource_datatable_attributes)
       datatable.effective_resource = effective_resource if datatable.respond_to?(:effective_resource=)
       datatable
+    end
+
+    def resource_layout
+      namespace = controller_path.include?('admin/') ? 'admin' : 'application'
+      defined?(Tenant) ? "#{Tenant.current}/#{namespace}" : namespace
     end
 
     def resource_params_method_name
