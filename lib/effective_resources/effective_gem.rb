@@ -1,10 +1,10 @@
 # Effective Engine concern
 
-module EffectiveEngine
+module EffectiveGem
   extend ActiveSupport::Concern
 
   included do
-    raise("please define a self.config_keys method") unless respond_to?(:config_keys)
+    raise("expected self.config_keys method") unless respond_to?(:config_keys)
 
     config_keys.each do |key|
       self.class.define_method(key) { config()[key] }
@@ -28,7 +28,11 @@ module EffectiveEngine
       yield(config(namespace))
 
       if(unsupported = (config(namespace).keys - config_keys)).present?
-        raise("unsupported config keys: #{unsupported}\n supported keys: #{CONFIG_KEYS}")
+        if unsupported.include?(:authorization_method)
+          raise("config.authorization_method has been removed. This gem will call EffectiveResources.authorization_method instead. Please double check the config.authorization_method setting in config/initializers/effective_resources.rb and remove it from this file.")
+        end
+
+        raise("unsupported config keys: #{unsupported}\n supported keys: #{config_keys}")
       end
 
       true
