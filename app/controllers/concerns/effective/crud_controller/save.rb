@@ -94,6 +94,9 @@ module Effective
 
       # Should return a new resource based on the passed one
       def duplicate_resource(resource)
+        return resource.duplicate if resource.respond_to?(:duplicate)
+        return resource.duplicate! if resource.respond_to?(:duplicate!)
+        return resource.deep_dup if resource.respond_to?(:deep_dup)
         resource.dup
       end
 
