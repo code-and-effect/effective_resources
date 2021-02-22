@@ -16,7 +16,9 @@ module ActsAsSlugged
   included do
     extend FinderMethods
 
-    before_validation { self.slug ||= build_slug }
+    before_validation do
+      assign_attributes(slug: build_slug) if slug.blank?
+    end
 
     validates :slug,
       presence: true, uniqueness: true, exclusion: { in: excluded_slugs }, length: { maximum: 255 },
@@ -44,7 +46,7 @@ module ActsAsSlugged
 
   # Instance Methods
   def build_slug
-    slug = self.to_s.parameterize.downcase[0, 250]
+    slug = to_s.parameterize.downcase[0, 250]
 
     if self.class.excluded_slugs.include?(slug)
       slug = "#{slug}-#{self.class.name.demodulize.parameterize}"
