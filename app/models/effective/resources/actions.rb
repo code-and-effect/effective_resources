@@ -29,13 +29,7 @@ module Effective
           end
 
           if routes.blank?
-            matches = [
-              route_name.singularize,
-              [namespace, plural_name].compact.join('/'),
-              [namespace, name].compact.join('/'),
-              ['effective', namespace, plural_name].compact.join('/'),
-              ['effective', namespace, name].compact.join('/')
-            ]
+            matches = route_name_fallbacks()
 
             engines.each do |engine|
               routes = engine.routes.routes.select do |route|

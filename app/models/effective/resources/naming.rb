@@ -30,6 +30,18 @@ module Effective
         end.compact.map(&:downcase).join('/').pluralize
       end
 
+      def route_name_fallbacks
+        mod = class_name.split('::').first.downcase
+
+        matches = [
+          route_name.singularize,
+          [*namespace, plural_name].join('/'),
+          [*namespace, name].join('/'),
+          [mod, *namespace, plural_name].join('/'),
+          [mod, *namespace, name].join('/')
+        ]
+      end
+
       def class_name # 'Effective::Post'
         @model_klass ? @model_klass.name : name.classify
       end
