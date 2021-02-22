@@ -53,7 +53,7 @@ module Effective
 
         respond_to do |format|
           format.html { }
-          format.js { render('new.js') }
+          format.js { render('new', formats: :js) }
         end
       end
 
@@ -95,7 +95,7 @@ module Effective
 
         respond_to do |format|
           format.html { }
-          format.js { render('show.js') }
+          format.js { render('show', formats: :js) }
         end
 
       end
@@ -112,7 +112,7 @@ module Effective
 
         respond_to do |format|
           format.html { }
-          format.js { render('edit.js') }
+          format.js { render('edit', formats: :js) }
         end
 
       end
@@ -176,7 +176,10 @@ module Effective
 
           respond_to do |format|
             format.html { }
-            format.js { render(template_present?(action) ? action : 'member_action.js', locals: { action: action }) }
+            format.js do
+              template = template_present?(action) ? action : 'member_action'
+              render(template, formats: :js, locals: { action: action })
+            end
           end
 
           return

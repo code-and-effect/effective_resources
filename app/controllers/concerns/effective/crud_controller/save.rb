@@ -76,6 +76,7 @@ module Effective
       def resource_flash(status, resource, action, e: nil)
         submit = commit_action(action)
         message = submit[status].respond_to?(:call) ? instance_exec(&submit[status]) : submit[status]
+
         return message.gsub('@resource', resource.to_s) if message.present?
         return nil if message.blank? && submit.key?(status)
 
