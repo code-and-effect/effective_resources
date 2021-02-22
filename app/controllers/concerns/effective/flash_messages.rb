@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Effective
   module FlashMessages
     extend ActiveSupport::Concern
@@ -6,7 +8,11 @@ module Effective
     def flash_success(resource, action = nil, name: nil)
       raise 'expected an ActiveRecord resource' unless (name || resource.class.respond_to?(:model_name))
 
-      "Successfully #{action_verb(action)} #{name || resource}".html_safe
+      name ||= begin
+        resource.destroyed? ? resource.class.model_name.to_s.downcase.split('::').last : resource.to_s.presence
+      end
+
+      "Successfully #{action_verb(action)} #{name || 'resource'}".html_safe
     end
 
     # flash.now[:danger] = flash_danger(@post)
@@ -18,7 +24,9 @@ module Effective
 
       messages = flash_errors(resource, e: e)
 
-      name ||= resource.to_s.presence
+      name ||= begin
+        resource.destroyed? ? resource.class.model_name.to_s.downcase.split('::').last : resource.to_s.presence
+      end
 
       ["Unable to #{action}", (" #{name}" if name), (": #{messages}" if messages)].compact.join.html_safe
     end
@@ -27,7 +35,10 @@ module Effective
     def flash_errors(resource, e: nil)
       raise 'expected an ActiveRecord resource' unless resource.respond_to?(:errors)
 
-      messages = resource.errors.map do |attribute, message|
+      messages = resource.errors.map do |error|
+        attribute = error.respond_to?(:attribute) ? error.attribute : error.first
+        message = error.respond_to?(:message) ? error.message : error.last
+
         if message[0] == message[0].upcase # If the error begins with a capital letter
           message
         elsif attribute == :base
@@ -52,6 +63,8 @@ module Effective
         'deleted'
       elsif word == 'undo'
         'undid'
+      elsif word == 'run'
+        'ran'
       elsif word.end_with?('e')
         action.sub(word, word + 'd')
       elsif ['a', 'i', 'o', 'u'].include?(word[-1])
