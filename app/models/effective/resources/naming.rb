@@ -19,8 +19,15 @@ module Effective
         @initialized_name
       end
 
+      # There could be a few, this is the best guess.
       def route_name # 'post' initialized from the controller_path/initialized_name and not the class
-        @route_name ||= (initialized_name.to_s.split(SPLIT).last || '').singularize.underscore
+        names = class_name.split('::')
+
+        if names.length > 1
+          Array(names[0]) + namespaces + Array(names[1..-1])
+        else
+          namespaces + names
+        end.compact.map(&:downcase).join('/').pluralize
       end
 
       def class_name # 'Effective::Post'

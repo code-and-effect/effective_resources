@@ -9,7 +9,7 @@ module Effective
 
       # This will have been set by init from crud_controller, or from a class and namespace
       def controller_path
-        @controller_path ||= ([namespace, plural_name].compact * '/')
+        @controller_path ||= route_name #[namespace, plural_name].compact * '/')
       end
 
       def routes
@@ -20,7 +20,7 @@ module Effective
           # Check from controller_path. This is generally correct.
           engines.each do |engine|
             routes = engine.routes.routes.select do |route|
-              controller_path == route.defaults[:controller] && !route.name.to_s.end_with?('root')
+              controller_path == route.defaults[:controller] && !(route.name || '').end_with?('root')
             end
 
             if routes.present?
@@ -30,10 +30,7 @@ module Effective
 
           if routes.blank?
             matches = [
-              [namespace, route_name.pluralize].compact.join('/'),
-              [namespace, route_name].compact.join('/'),
-              ['effective', namespace, route_name.pluralize].compact.join('/'),
-              ['effective', namespace, route_name].compact.join('/'),
+              route_name.singularize,
               [namespace, plural_name].compact.join('/'),
               [namespace, name].compact.join('/'),
               ['effective', namespace, plural_name].compact.join('/'),
@@ -42,7 +39,7 @@ module Effective
 
             engines.each do |engine|
               routes = engine.routes.routes.select do |route|
-                (matches & [route.defaults[:controller]]).present? && !route.name.to_s.end_with?('root')
+                (matches & [route.defaults[:controller]]).present? && !(route.name || '').end_with?('root')
               end
 
               if routes.present?
