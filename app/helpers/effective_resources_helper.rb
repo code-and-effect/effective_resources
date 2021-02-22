@@ -151,16 +151,24 @@ module EffectiveResourcesHelper
     atts = { :namespace => (effective_resource.namespace.to_sym if effective_resource.namespace), effective_resource.name.to_sym => resource }.compact.merge(atts)
 
     if lookup_context.template_exists?("form_#{action}", controller._prefixes, :partial)
-      render "form_#{action}", atts
-    elsif lookup_context.template_exists?('form', controller._prefixes, :partial)
-      render 'form', atts
-    elsif lookup_context.template_exists?('form', effective_resource.plural_name, :partial)
-      render "#{effective_resource.plural_name}/form", atts
-    elsif lookup_context.template_exists?('form', effective_resource.name, :partial)
-      render "#{effective_resource.name}/form", atts
-    else
-      render 'form', atts  # Will raise the regular error
+      return render("form_#{action}", atts)
     end
+
+    if lookup_context.template_exists?('form', controller._prefixes, :partial)
+      return render('form', atts)
+    end
+
+    effective_resource.view_paths.each do |view_path|
+      if lookup_context.template_exists?("form_#{action}", [view_path], :partial)
+        return render(view_path + '/' + "form_#{action}", atts)
+      end
+
+      if lookup_context.template_exists?('form', [view_path], :partial)
+        return render(view_path + '/' + 'form', atts)
+      end
+    end
+
+    render('form', atts) # Will raise the regular error
   end
 
   # Similar to render_resource_form
@@ -177,14 +185,16 @@ module EffectiveResourcesHelper
     atts = { :namespace => (effective_resource.namespace.to_sym if effective_resource.namespace), effective_resource.name.to_sym => resource }.compact.merge(atts)
 
     if lookup_context.template_exists?(effective_resource.name, controller._prefixes, :partial)
-      render(effective_resource.name, atts)
-    elsif lookup_context.template_exists?(effective_resource.name, [effective_resource.plural_name], :partial)
-      render(effective_resource.plural_name + '/' + effective_resource.name, atts)
-    elsif lookup_context.template_exists?(effective_resource.name, [effective_resource.name], :partial)
-      render(effective_resource.name + '/' + effective_resource.name, atts)
-    else
-      render(resource, atts)  # Will raise the regular error
+      return render(effective_resource.name, atts)
     end
+
+    effective_resource.view_paths.each do |view_path|
+      if lookup_context.template_exists?(effective_resource.name, [view_path], :partial)
+        return render(view_path + '/' + effective_resource.name, atts)
+      end
+    end
+
+    render(resource, atts)  # Will raise the regular error
   end
 
   # Tableize attributes
