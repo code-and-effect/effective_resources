@@ -31,4 +31,19 @@ module EffectiveResources
     (['Save', 'Continue', 'Add New'] & Array(config.default_submits)).inject({}) { |h, v| h[v] = true; h }
   end
 
+  # Utilities
+
+  def self.truthy?(value)
+    if defined?(::ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES)  # Rails <5
+      ::ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES.include?(value)
+    else
+      ::ActiveRecord::Type::Boolean.new.cast(value)
+    end
+  end
+
+  def self.deliver_method
+    config = Rails.application.config
+    (config.respond_to?(:active_job) && config.active_job.queue_adapter) ? :deliver_later : :deliver_now
+  end
+
 end
