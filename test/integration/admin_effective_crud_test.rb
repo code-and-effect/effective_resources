@@ -90,7 +90,7 @@ class AdminEffectiveCrudTest < ActionDispatch::IntegrationTest
     thang = Effective::Thang.create!(title: 'Title', body: 'Body')
 
     delete admin_thang_url(thang)
-    assert_equal 'Successfully deleted Title', flash[:success]
+    assert_equal 'Successfully deleted thang', flash[:success]
     assert_redirected_to admin_thangs_path
   end
 
