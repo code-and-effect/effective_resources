@@ -7,6 +7,7 @@ module Effective
     include Effective::Resources::Init
     include Effective::Resources::Instance
     include Effective::Resources::Forms
+    include Effective::Resources::Generator
     include Effective::Resources::Klass
     include Effective::Resources::Model
     include Effective::Resources::Naming

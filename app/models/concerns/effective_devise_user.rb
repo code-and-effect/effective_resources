@@ -66,6 +66,7 @@ module EffectiveDeviseUser
 
   module ClassMethods
     def permitted_sign_up_params # Should contain all fields as per views/users/_sign_up_fields
+      raise('please define a self.permitted_sign_up_params')
       [:email, :password, :password_confirmation, :first_name, :last_name, :name, :login]
     end
 
@@ -151,8 +152,6 @@ module EffectiveDeviseUser
   # Send devise & devise_invitable emails via active job
   def send_devise_notification(notification, *args)
     raise('expected args Hash') unless args.respond_to?(:last) && args.last.kind_of?(Hash)
-
-
 
     if defined?(Tenant)
       tenant = Tenant.current || raise('expected a current tenant')

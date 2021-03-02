@@ -50,14 +50,6 @@ module Effective
         class_name.split('::')[0...-1].map { |name| name.underscore } * '/'
       end
 
-      def namespaced_class_name # 'Admin::Effective::Post'
-        (Array(namespaces).map { |name| name.to_s.classify } + [class_name]) * '::'
-      end
-
-      def namespaced_module_name # 'Admin::EffectivePosts'
-        Array(namespaces).map { |name| name.to_s.classify }.join('::') + '::' + class_name.gsub('::', '')
-      end
-
       def namespace # 'admin/things'
         (namespaces.join('/') if namespaces.present?)
       end
@@ -72,6 +64,15 @@ module Effective
 
       def human_plural_name
         name.pluralize.gsub('::', ' ').underscore.gsub('_', ' ')
+      end
+
+      def tenant
+        return nil unless defined?(Tenant)
+        return nil unless klass.present?
+        return nil unless class_name.include?('::')
+
+        name = class_name.split('::').first.downcase.to_sym
+        name if Rails.application.config.tenants[name].present?
       end
 
     end

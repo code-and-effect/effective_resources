@@ -196,6 +196,7 @@ module EffectiveResourcesHelper
 
     render(resource, atts)  # Will raise the regular error
   end
+  alias_method :render_resource, :render_resource_partial
 
   # Tableize attributes
   # This is used by effective_orders, effective_logging, effective_trash and effective_mergery

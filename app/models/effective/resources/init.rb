@@ -72,8 +72,7 @@ module Effective
       def _klass_by_name(input)
         input = input.to_s
         input = input[1..-1] if input.start_with?('/')
-
-        names = input.split('/')
+        names = input.split(%r{\/|::})
 
         # Classify based on namespace
         # acpa/admin/shirts
