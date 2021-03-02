@@ -36,8 +36,8 @@ module Effective
       raise 'expected an ActiveRecord resource' unless resource.respond_to?(:errors)
 
       messages = resource.errors.map do |error|
-        attribute = error.respond_to?(:attribute) ? error.attribute : error.first
-        message = error.respond_to?(:message) ? error.message : error.last
+        attribute = error.respond_to?(:attribute) ? error.attribute : error
+        message = error.respond_to?(:message) ? error.message : resource.errors[attribute].to_sentence
 
         if message[0] == message[0].upcase # If the error begins with a capital letter
           message
