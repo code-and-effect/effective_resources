@@ -1,6 +1,9 @@
 # HasManyRichTexts
 #
-# Mark your model with 'has_many_rich_texts' and then any method missing is a rich text region
+# Mark your model with 'has_many_rich_texts'
+# Then it will automatically create a region when using a method named rich_text_*
+# object.rich_text_body = "<p>Stuff</p>"
+# object.rich_text_body => ActionText::RichText<name="body" body="<p>Stuff</p>">
 
 module HasManyRichTexts
   extend ActiveSupport::Concern
@@ -25,17 +28,14 @@ module HasManyRichTexts
     rich_texts.find { |rt| rt.name == name } || rich_texts.build(name: name)
   end
 
-  def rich_text_body=(name, body)
+  def assign_rich_text_body(name, body)
     rich_text(name).assign_attributes(body: body)
   end
 
   # Prevents an ActiveModel::UnknownAttributeError
   # https://github.com/rails/rails/blob/main/activemodel/lib/active_model/attribute_assignment.rb#L48
   def respond_to?(*args)
-    method = args.first.to_s
-    return false if ['to_a', 'to_ary'].any? { |str| method == str }
-    return false if ['_by', '_at', '_id', '_by=', '_at=', 'id='].any? { |str| method.end_with?(str) }
-    true
+    args.first.to_s.start_with?('rich_text_') ? true : super
   end
 
   def method_missing(method, *args, &block)
@@ -43,11 +43,12 @@ module HasManyRichTexts
     super unless respond_to?(method)
 
     method = method.to_s
+    name = method.chomp('=').sub('rich_text_', '')
 
-    if method.end_with?('=') && args.length == 1 && (args.first.kind_of?(String) || args.first.kind_of?(NilClass))
-      send(:rich_text_body=, method.chomp('='), *args)
+    if method.end_with?('=')
+      send(:assign_rich_text_body, name, *args)
     elsif args.length == 0
-      send(:rich_text, method, *args)
+      send(:rich_text, name, *args)
     else
       super
     end
