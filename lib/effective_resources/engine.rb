@@ -27,6 +27,7 @@ module EffectiveResources
         ActiveRecord::Base.extend(ActsAsSlugged::Base)
         ActiveRecord::Base.extend(ActsAsStatused::Base)
         ActiveRecord::Base.extend(ActsAsWizard::Base)
+        ActiveRecord::Base.extend(HasManyRichTexts::Base)
 
         ActiveRecord::Base.extend(EffectiveDeviseUser::Base)
         ActiveRecord::Base.extend(EffectiveResource::Base)
