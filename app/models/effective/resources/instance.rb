@@ -80,6 +80,7 @@ module Effective
         action_texts
           .map { |ass| instance.send(ass.name) }
           .compact
+          .flatten
           .select { |obj| obj.previous_changes['body'].present? }
           .inject({}) { |h, obj| h[obj.name.to_sym] = obj.previous_changes['body']; h }
       end

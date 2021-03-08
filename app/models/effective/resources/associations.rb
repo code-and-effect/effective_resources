@@ -70,7 +70,8 @@ module Effective
       end
 
       def action_texts
-        klass.reflect_on_all_associations(:has_one).select { |ass| ass.class_name == 'ActionText::RichText' }
+        klass.reflect_on_all_associations(:has_one).select { |ass| ass.class_name == 'ActionText::RichText' } +
+        klass.reflect_on_all_associations(:has_many).select { |ass| ass.class_name == 'ActionText::RichText' }
       end
 
       def action_texts_has_ones_ids
