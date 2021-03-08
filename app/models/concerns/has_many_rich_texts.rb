@@ -39,18 +39,15 @@ module HasManyRichTexts
   end
 
   def method_missing(method, *args, &block)
-    super if block_given?
-    super unless respond_to?(method)
-
     method = method.to_s
+    super unless method.start_with?('rich_text_')
+
     name = method.chomp('=').sub('rich_text_', '')
 
     if method.end_with?('=')
       send(:assign_rich_text_body, name, *args)
-    elsif args.length == 0
-      send(:rich_text, name, *args)
     else
-      super
+      send(:rich_text, name, *args)
     end
   end
 
