@@ -148,6 +148,7 @@ module EffectiveResourcesHelper
     effective_resource = (atts.delete(:effective_resource) || find_effective_resource)
 
     action = atts.delete(:action)
+    safe = atts.delete(:safe)
     atts = { :namespace => (effective_resource.namespace.to_sym if effective_resource.namespace), effective_resource.name.to_sym => resource }.compact.merge(atts)
 
     if lookup_context.template_exists?("form_#{action}", controller._prefixes, :partial)
@@ -168,7 +169,10 @@ module EffectiveResourcesHelper
       end
     end
 
-    render('form', atts) # Will raise the regular error
+    # Will raise the regular error
+    return ''.html_safe if safe
+
+    render('form', atts)
   end
 
   # Similar to render_resource_form
@@ -182,6 +186,7 @@ module EffectiveResourcesHelper
     effective_resource = (atts.delete(:effective_resource) || find_effective_resource)
 
     action = atts.delete(:action)
+    safe = atts.delete(:safe)
     atts = { :namespace => (effective_resource.namespace.to_sym if effective_resource.namespace), effective_resource.name.to_sym => resource }.compact.merge(atts)
 
     if lookup_context.template_exists?(effective_resource.name, controller._prefixes, :partial)
@@ -194,7 +199,10 @@ module EffectiveResourcesHelper
       end
     end
 
-    render(resource, atts)  # Will raise the regular error
+    # Will raise the regular error
+    return ''.html_safe if safe
+
+    render(resource, atts)
   end
   alias_method :render_resource, :render_resource_partial
 
