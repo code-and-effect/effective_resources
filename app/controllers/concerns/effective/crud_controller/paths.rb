@@ -2,7 +2,7 @@ module Effective
   module CrudController
     module Paths
 
-      def resource_redirect_path(action = nil)
+      def resource_redirect_path(resource, action)
         submit = commit_action(action)
         redirect = submit[:redirect].respond_to?(:call) ? instance_exec(&submit[:redirect]) : submit[:redirect]
 
@@ -39,13 +39,29 @@ module Effective
         # Otherwise consider the action
         commit_default_redirect = case action
         when :create
-          [resource_show_path, resource_edit_path, resource_index_path]
+          [
+            (resource_show_path if EffectiveResources.authorized?(self, :show, resource)),
+            (resource_edit_path if EffectiveResources.authorized?(self, :edit, resource)),
+            (resource_index_path if EffectiveResources.authorized?(self, :index, resource.class))
+          ]
         when :update
-          [resource_edit_path, resource_show_path, resource_index_path]
+          [
+            (resource_edit_path if EffectiveResources.authorized?(self, :edit, resource)),
+            (resource_show_path if EffectiveResources.authorized?(self, :show, resource)),
+            (resource_index_path if EffectiveResources.authorized?(self, :index, resource.class))
+          ]
         when :destroy
-          [referer_redirect_path, resource_index_path]
+          [
+            referer_redirect_path,
+            (resource_index_path if EffectiveResources.authorized?(self, :index, resource.class))
+          ]
         else
-          [referer_redirect_path, resource_edit_path, resource_show_path, resource_index_path]
+          [
+            referer_redirect_path,
+            (resource_edit_path if EffectiveResources.authorized?(self, :edit, resource)),
+            (resource_show_path if EffectiveResources.authorized?(self, :show, resource)),
+            (resource_index_path if EffectiveResources.authorized?(self, :index, resource.class))
+          ]
         end.compact.first
 
         return commit_default_redirect if commit_default_redirect.present?

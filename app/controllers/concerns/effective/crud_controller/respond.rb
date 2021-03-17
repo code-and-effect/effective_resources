@@ -10,12 +10,12 @@ module Effective
           respond_to do |format|
             format.html do
               flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path(action))
+              redirect_to(resource_redirect_path(resource, action))
             end
 
             format.js do
               flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path(action))
+              redirect_to(resource_redirect_path(resource, action))
             end
           end
         elsif template_present?(action)
@@ -35,7 +35,7 @@ module Effective
           respond_to do |format|
             format.html do
               flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path(action))
+              redirect_to(resource_redirect_path(resource, action))
             end
 
             format.js do
@@ -61,7 +61,7 @@ module Effective
           when :destroy
             format.html do
               redirect_flash
-              redirect_to(resource_redirect_path(action))
+              redirect_to(resource_redirect_path(resource, action))
             end
           else
             if template_present?(action)
@@ -73,7 +73,7 @@ module Effective
             else
               format.html do
                 redirect_flash
-                redirect_to(resource_redirect_path(action))
+                redirect_to(resource_redirect_path(resource, action))
               end
             end
           end
