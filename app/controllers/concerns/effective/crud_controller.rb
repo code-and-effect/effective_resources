@@ -11,7 +11,6 @@ module Effective
     include Effective::CrudController::Submits
 
     included do
-      define_actions_from_routes
       define_callbacks :resource_render, :resource_before_save, :resource_after_save, :resource_after_commit, :resource_error
       layout -> { resource_layout }
     end
@@ -19,21 +18,10 @@ module Effective
     module ClassMethods
       include Effective::CrudController::Dsl
 
-      # This is used to define_actions_from_routes and for the buttons/submits/ons
+      # This is used for the buttons/submits/ons
       # It doesn't really work with the resource_scope correctly but the routes are important here
       def effective_resource
         @_effective_resource ||= Effective::Resource.new(controller_path)
-      end
-
-      # Automatically respond to any action defined via the routes file
-      def define_actions_from_routes
-        (effective_resource.member_actions - effective_resource.crud_actions).each do |action|
-          define_method(action) { member_action(action) }
-        end
-
-        (effective_resource.collection_actions - effective_resource.crud_actions).each do |action|
-          define_method(action) { collection_action(action) }
-        end
       end
     end
 
@@ -53,7 +41,7 @@ module Effective
       send(:instance_variable_set, "@#{resource_plural_name}", instance)
     end
 
-    def effective_resource
+    def effective_resource(safe: false)
       @_effective_resource ||= begin
         relation = instance_exec(&resource_scope_relation) if respond_to?(:resource_scope_relation)
 
@@ -64,11 +52,28 @@ module Effective
         resource = Effective::Resource.new(controller_path, relation: relation)
 
         unless resource.relation.kind_of?(ActiveRecord::Relation) || resource.active_model?
-          raise("unable to build resource_scope for #{resource.klass || 'unknown klass'}. Please name your controller to match an existing model, or manually define a resource_scope.")
+          raise("unable to build resource_scope for #{resource.klass || 'unknown klass'}. Please name your controller to match an existing model, or manually define a resource_scope.") unless safe
+        else
+          resource
         end
-
-        resource
       end
+    end
+
+    def action_missing(action, *args, &block)
+      effective_resource = self.effective_resource(safe: true)
+      return super if effective_resource.blank?
+
+      action = action.to_sym
+
+      if effective_resource.member_actions.include?(action)
+        return member_action(action)
+      end
+
+      if effective_resource.collection_actions.include?(action)
+        return collection_action(action)
+      end
+
+      super
     end
 
     private
