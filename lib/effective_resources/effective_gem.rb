@@ -7,7 +7,7 @@ module EffectiveGem
     raise("expected self.config_keys method") unless respond_to?(:config_keys)
 
     config_keys.each do |key|
-      self.class.define_method(key) { config()[key] }
+      self.singleton_class.define_method(key) { config()[key] }
     end
   end
 
