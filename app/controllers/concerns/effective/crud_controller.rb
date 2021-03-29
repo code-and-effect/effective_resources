@@ -45,8 +45,10 @@ module Effective
       @_effective_resource ||= begin
         relation = instance_exec(&resource_scope_relation) if respond_to?(:resource_scope_relation)
 
-        if respond_to?(:resource_scope_relation) && !relation.kind_of?(ActiveRecord::Relation)
-          raise('resource_scope must return an ActiveRecord::Relation')
+        if respond_to?(:resource_scope_relation)
+          unless relation.kind_of?(ActiveRecord::Relation) || (relation.kind_of?(Class) && relation.ancestors.include?(ActiveModel::Model))
+            raise('resource_scope must return an ActiveRecord::Relation or class including ActiveModel::Model')
+          end
         end
 
         resource = Effective::Resource.new(controller_path, relation: relation)
