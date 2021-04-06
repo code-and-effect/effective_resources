@@ -7,7 +7,7 @@ module Effective
         action ||= resource.respond_to?("#{step}!") ? step : :save
 
         if save_resource(resource, action)
-          flash[:success] = options.delete(:success) || resource_flash(:success, resource, action)
+          flash[:success] ||= options.delete(:success) || resource_flash(:success, resource, action)
 
           @skip_to ||= next_step
           @redirect_to ||= resource_wizard_path(resource, @skip_to) if was_new_record
