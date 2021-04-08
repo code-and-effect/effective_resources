@@ -15,7 +15,7 @@ module Effective
 
             format.js do
               flash[:success] ||= resource_flash(:success, resource, action)
-              redirect_to(resource_redirect_path(resource, action))
+              render(action, locals: { remote_form_redirect: resource_redirect_path(resource, action)}) # action.js.erb
             end
           end
         elsif template_present?(action)
