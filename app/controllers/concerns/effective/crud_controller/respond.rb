@@ -27,7 +27,6 @@ module Effective
 
             format.js do
               flash.now[:success] ||= resource_flash(:success, resource, action)
-              #reload_resource unless action == :destroy # Removed.
               render(action) # action.js.erb
             end
           end
@@ -96,9 +95,7 @@ module Effective
       end
 
       def template_present?(action)
-        #lookup_context.template_exists?("#{action}.#{request.format.symbol.to_s.sub('json', 'js').presence || 'html'}", _prefixes)
-
-        formats = [request.format.symbol.to_s.sub('json', 'js').presence || 'html']
+        formats = [(request.format.symbol.to_s.sub('json', 'js').presence || 'html').to_sym]
         lookup_context.template_exists?(action, _prefixes, formats: formats)
       end
 
