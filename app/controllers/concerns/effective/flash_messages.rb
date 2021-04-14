@@ -9,9 +9,9 @@ module Effective
       raise 'expected an ActiveRecord resource' unless (name || resource.class.respond_to?(:model_name))
 
       name ||= if resource.respond_to?(:destroyed?) && resource.destroyed?
-        resource.class.model_name.to_s.downcase.split('::').last
+        resource_human_name
       else
-        resource.to_s.presence
+        resource.to_s.presence || resource_human_name
       end
 
       "Successfully #{action_verb(action)} #{name || 'resource'}".html_safe
@@ -27,9 +27,9 @@ module Effective
       messages = flash_errors(resource, e: e)
 
       name ||= if resource.respond_to?(:destroyed?) && resource.destroyed?
-        resource.class.model_name.to_s.downcase.split('::').last
+        resource_human_name
       else
-        resource.to_s.presence
+        resource.to_s.presence || resource_human_name
       end
 
       ["Unable to #{action}", (" #{name}" if name), (": #{messages}" if messages)].compact.join.html_safe

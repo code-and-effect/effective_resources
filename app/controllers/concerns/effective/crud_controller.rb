@@ -96,6 +96,10 @@ module Effective
       effective_resource.klass
     end
 
+    def resource_human_name
+      effective_resource.human_name
+    end
+
     def resource_plural_name # 'things'
       effective_resource.plural_name
     end
