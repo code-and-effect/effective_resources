@@ -65,7 +65,7 @@ module ActsAsWizard
     end
 
     def has_completed_step?(step)
-      wizard_steps[step].present?
+      (errors.present? ? wizard_steps_was : wizard_steps)[step].present?
     end
 
     def next_step
