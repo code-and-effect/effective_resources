@@ -78,8 +78,20 @@ module Effective
         # acpa/admin/shirts
         (names.length).downto(1).each do |n|
           names.combination(n).to_a.each do |pieces|
-            klass_pieces = pieces.map { |piece| piece.classify } * '::'
-            klass = klass_pieces.safe_constantize
+            klass = begin
+              klass_pieces = pieces.map { |piece| piece.classify } * '::'
+              klass_pieces.safe_constantize
+            end
+
+            klass ||= if pieces.length > 1
+              klass_pieces = ([pieces.first.classify] + pieces[1..-1].map { |piece| piece.classify }) * '::'
+              klass_pieces.safe_constantize
+            end
+
+            klass ||= if pieces.length > 1
+              klass_pieces = ([pieces.first.classify.pluralize] + pieces[1..-1].map { |piece| piece.classify }) * '::'
+              klass_pieces.safe_constantize
+            end
 
             if klass.present? && klass.class != Module
               @namespaces ||= (names - pieces)
