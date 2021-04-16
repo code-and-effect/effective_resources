@@ -31,14 +31,14 @@ module Effective
       end
 
       def route_name_fallbacks
-        mod = class_name.split('::').first.downcase
+        mod = class_name.split('::').first.to_s.downcase
 
         matches = [
           route_name.singularize,
           [*namespace, plural_name].join('/'),
           [*namespace, name].join('/'),
-          [mod, *namespace, plural_name].join('/'),
-          [mod, *namespace, name].join('/')
+          [*mod, *namespace, plural_name].join('/'),
+          [*mod, *namespace, name].join('/')
         ]
       end
 
