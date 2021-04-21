@@ -46,9 +46,9 @@ module Effective
       end
     end
 
-    def resource_wizard_step_title(step)
+    def resource_wizard_step_title(resource, step)
       return if step == 'wicked_finish'
-      effective_resource.klass.const_get(:WIZARD_STEPS).fetch(step)
+      resource.wizard_step_title(step)
     end
 
     def resource_wizard_steps

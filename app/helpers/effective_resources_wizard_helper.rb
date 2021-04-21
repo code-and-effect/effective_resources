@@ -20,7 +20,7 @@ module EffectiveResourcesWizardHelper
   def render_wizard_sidebar_item(resource, nav_step, index = nil)
     # From Controller
     current = (nav_step == step)
-    title = resource_wizard_step_title(nav_step)
+    title = resource_wizard_step_title(resource, nav_step)
 
     # From Model
     disabled = !resource.can_visit_step?(nav_step)

@@ -43,6 +43,7 @@ module ActsAsWizard
       wizard_steps[current_step.to_sym] ||= Time.zone.now
     end
 
+    # Use can_visit_step? required_steps and wizard_step_title(step) to control the wizard behaviour
     def can_visit_step?(step)
       can_revisit_completed_steps(step)
     end
@@ -50,6 +51,10 @@ module ActsAsWizard
     def required_steps
       return self.class.test_required_steps if Rails.env.test? && self.class.test_required_steps.present?
       self.class.const_get(:WIZARD_STEPS).keys
+    end
+
+    def wizard_step_title(step)
+      self.class.const_get(:WIZARD_STEPS).fetch(step)
     end
 
     def first_completed_step

@@ -8,7 +8,7 @@ module Effective
         self.resource ||= resource_scope.new
         EffectiveResources.authorize!(self, :new, resource)
 
-        redirect_to resource_wizard_path(:new, resource_wizard_steps.first)
+        redirect_to resource_wizard_path(:new, resource.first_uncompleted_step || resource_wizard_steps.first)
       end
 
       def show
