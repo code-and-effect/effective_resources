@@ -33,7 +33,7 @@ class WizardTest < ActionDispatch::IntegrationTest
     assert_equal Thong::WIZARD_STEPS.keys, @controller.resource_wizard_steps
 
     assert_equal Thong::WIZARD_STEPS[:start], @controller.view_context.assigns['page_title']
-    assert_equal Thong::WIZARD_STEPS[:start], @controller.resource_wizard_step_title(:start)
+    assert_equal Thong::WIZARD_STEPS[:start], @controller.resource_wizard_step_title(@controller.resource, :start)
 
     assert @controller.resource.kind_of?(Thong)
     assert @controller.view_context.assigns['thong'].kind_of?(Thong)
