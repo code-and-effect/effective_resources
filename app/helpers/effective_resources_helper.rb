@@ -116,7 +116,6 @@ module EffectiveResourcesHelper
     locals = {
       resource: resource,
       effective_resource: effective_resource,
-      formats: [:html],
       format_block: (block if block_given?),
       namespace: namespace,
       actions: actions,
@@ -133,7 +132,7 @@ module EffectiveResourcesHelper
         spacer_template: spacer_template
       )
     else
-      render(partial, locals)
+      render(partial: partial, formats: [:html], locals: locals)
     end
   end
 
