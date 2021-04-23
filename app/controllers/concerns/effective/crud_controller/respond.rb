@@ -15,7 +15,16 @@ module Effective
 
             format.js do
               flash[:success] ||= resource_flash(:success, resource, action)
-              render(action, locals: { remote_form_redirect: resource_redirect_path(resource, action)}) # action.js.erb
+
+              if params[:_datatable_action]
+                redirect_to(resource_redirect_path(resource, action))
+              else
+                render(
+                  (template_present?(action) ? action : :member_action),
+                  locals: { action: action, remote_form_redirect: resource_redirect_path(resource, action)}
+                )
+              end
+
             end
           end
         elsif template_present?(action)
