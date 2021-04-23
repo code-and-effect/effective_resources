@@ -9,7 +9,7 @@ module Effective
         if save_resource(resource, action)
           flash[:success] ||= options.delete(:success) || resource_flash(:success, resource, action)
 
-          @skip_to ||= next_step
+          @skip_to ||= resource.required_steps.find { |s| s == next_step } || resource.first_uncompleted_step
           @redirect_to ||= resource_wizard_path(resource, @skip_to) if was_new_record
 
           redirect_to(@redirect_to || wizard_path(@skip_to))
