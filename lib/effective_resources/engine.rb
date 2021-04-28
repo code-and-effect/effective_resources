@@ -23,6 +23,7 @@ module EffectiveResources
     initializer 'effective_resources.active_record' do |app|
       ActiveSupport.on_load :active_record do
         ActiveRecord::Base.extend(ActsAsArchived::Base)
+        ActiveRecord::Base.extend(ActsAsEmailForm::Base)
         ActiveRecord::Base.extend(ActsAsTokened::Base)
         ActiveRecord::Base.extend(ActsAsSlugged::Base)
         ActiveRecord::Base.extend(ActsAsStatused::Base)

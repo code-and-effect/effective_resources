@@ -1,0 +1,30 @@
+= form.hidden_field :email_form_action, value: email_action
+
+- if email_skip
+  = form.check_box :email_form_skip, label: 'Do not send email'
+
+= form.hide_if :email_form_skip, true do
+  - if form.object.errors.present?
+    = form.text_field :email_form_from, label: 'From'
+    = form.text_field :email_form_subject, label: 'Subject'
+    = form.text_area :email_form_body, label: 'Body', rows: 10
+
+  - elsif email_template.present?
+    -# email_template is an Effective::EmailTemplate
+    = form.text_field :email_form_from, label: 'From', value: email_template.from
+    = form.text_field :email_form_subject, label: 'Subject', value: email_template.subject
+    = form.text_area :email_form_body, label: 'Body', value: email_template.body, rows: 10
+
+  - else
+    = form.text_field :email_form_from, label: 'From', value: (email_defaults[:from] || '')
+    = form.text_field :email_form_subject, label: 'Subject', value: (email_defaults[:subject] || '')
+    = form.text_area :email_form_body, label: 'Body', rows: 10, value: (email_defaults[:body] || '')
+
+  - if email_variables.present?
+    %p The available variables are:
+
+    %ul
+      - email_variables.each do |variable|
+        %li {{ #{variable} }}
+
+    %small.text-muted Only a developer can add additional variables
