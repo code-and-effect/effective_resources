@@ -14,7 +14,7 @@ module EffectiveActsAsEmailFormHelper
     end
 
     # These defaults are only used when there is no email_template
-    email_defaults = form.object.email_form_defaults(action)
+    email_defaults = form.object.email_form_defaults(action) unless email_template.present?
 
     locals = {
       form: form,
