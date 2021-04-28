@@ -2,7 +2,7 @@
 
 module EffectiveActsAsEmailFormHelper
 
-  def email_form_fields(form, action = nil, skip: true, variables: nil, partial: nil)
+  def email_form_fields(form, action = nil, skip: true, to: nil, variables: nil, partial: nil)
     raise('expected a form') unless form.respond_to?(:object)
 
     resource = form.object
@@ -18,6 +18,7 @@ module EffectiveActsAsEmailFormHelper
 
     locals = {
       form: form,
+      email_to: to,
       email_skip: skip,
       email_action: (action || true),
       email_defaults: email_defaults,

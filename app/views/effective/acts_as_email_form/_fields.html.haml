@@ -4,6 +4,9 @@
   = form.check_box :email_form_skip, label: 'Do not send email'
 
 = form.hide_if :email_form_skip, true do
+  - if email_to.present? && form.respond_to?(:static_field)
+    = form.static_field :email_form_to, label: 'To', value: (email_to.respond_to?(:email) ? email_to.email : email_to)
+
   - if form.object.errors.present?
     = form.text_field :email_form_from, label: 'From'
     = form.text_field :email_form_subject, label: 'Subject'
