@@ -46,4 +46,22 @@ module EffectiveResources
     (config.respond_to?(:active_job) && config.active_job.queue_adapter) ? :deliver_later : :deliver_now
   end
 
+  def self.advance_date(date, business_days: 1, holidays: [:ca, :observed])
+    raise('business_days must be an integer <= 365') unless business_days.kind_of?(Integer) && business_days <= 365
+
+    business_days.times do
+      loop do
+        date = date + 1.day
+        break if business_day?(date, holidays: holidays)
+      end
+    end
+
+    date
+  end
+
+  def self.business_day?(date, holidays: [:ca, :observed])
+    require 'holidays' unless defined?(Holidays)
+    date.wday != 0 && date.wday != 6 && Holidays.on(date, *holidays).blank?
+  end
+
 end

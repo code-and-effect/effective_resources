@@ -24,4 +24,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency "haml"
   s.add_development_dependency "pry-byebug"
   s.add_development_dependency "wicked"
+  s.add_development_dependency "holidays"
 end
