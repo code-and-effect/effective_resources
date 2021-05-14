@@ -65,6 +65,8 @@ module EffectiveDeviseUser
   end
 
   module ClassMethods
+    def effective_devise_user?; true; end
+
     def permitted_sign_up_params # Should contain all fields as per views/users/_sign_up_fields
       raise('please define a self.permitted_sign_up_params')
       [:email, :password, :password_confirmation, :first_name, :last_name, :name, :login]
