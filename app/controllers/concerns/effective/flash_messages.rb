@@ -41,7 +41,7 @@ module Effective
 
       messages = resource.errors.map do |error|
         attribute = error.respond_to?(:attribute) ? error.attribute : error
-        message = error.respond_to?(:message) ? error.message : resource.errors[attribute].to_sentence
+        message = error.respond_to?(:attribute) ? error.message : resource.errors[attribute].to_sentence
 
         if message[0] == message[0].upcase # If the error begins with a capital letter
           message
