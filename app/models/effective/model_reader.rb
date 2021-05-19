@@ -11,6 +11,11 @@ module Effective
       @attributes = {}
     end
 
+    # For EffectiveLogging. This is a protected keyword I think.
+    def message(*args)
+      method_missing(:message, args)
+    end
+
     def read(&block)
       instance_exec(&block)
     end
