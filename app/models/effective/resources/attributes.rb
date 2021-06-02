@@ -105,8 +105,10 @@ module Effective
         attributes = (klass.new().attributes rescue nil)
         return [] unless attributes
 
-        names = attributes.keys - belong_tos.map { |reference| reference.foreign_key }
-        names = names - [klass.primary_key, 'created_at', 'updated_at'] unless all
+        names = attributes.keys
+        names -= belong_tos.map { |reference| reference.foreign_key }
+        names -= belong_tos.map { |reference| reference.foreign_type if reference.options[:polymorphic] }
+        names -= [klass.primary_key, 'created_at', 'updated_at'] unless all
 
         attributes = names.inject({}) do |h, name|
           if klass.respond_to?(:column_for_attribute) # Rails 4+
