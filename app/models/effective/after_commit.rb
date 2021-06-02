@@ -1,8 +1,7 @@
 module Effective
   class AfterCommit
 
-    def initialize(connection:, **handlers)
-      @connection = connection
+    def initialize(**handlers)
       @handlers = handlers
     end
 
@@ -26,10 +25,6 @@ module Effective
       @handlers[:after_rollback]&.call
     end
 
-    def add_to_transaction(*)
-      @connection.add_transaction_record(self)
-    end
-
     def self.register_callback(connection:, name:, no_tx_action:, callback:)
       raise ArgumentError, "#{name} expected a block" unless callback
 
@@ -45,7 +40,7 @@ module Effective
         end
       end
 
-      after_commit = Effective::AfterCommit.new(connection: connection, "#{name}": callback)
+      after_commit = Effective::AfterCommit.new("#{name}": callback)
       connection.add_transaction_record(after_commit)
     end
 
