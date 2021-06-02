@@ -32,6 +32,7 @@ module EffectiveResources
 
         ActiveRecord::Base.extend(EffectiveDeviseUser::Base)
         ActiveRecord::Base.extend(EffectiveResource::Base)
+        ActiveRecord::Base.include(EffectiveAfterCommit::Base)
       end
     end
 
