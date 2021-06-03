@@ -8,7 +8,7 @@ module Effective
       end
 
       def columns
-        klass.columns
+        klass.respond_to?(:columns) ? klass.columns : []
       end
 
       def column_names
@@ -40,9 +40,11 @@ module Effective
       def sql_type(name)
         name = name.to_s.split('.').first
 
-        if belongs_to(name)
-          :belongs_to
-        elsif (column = column(name))
+        return :belongs_to if belongs_to(name)
+
+        column = column(name)
+
+        if column.present?
           column.type
         elsif has_many(name)
           :has_many
