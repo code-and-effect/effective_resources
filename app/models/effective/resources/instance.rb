@@ -7,7 +7,7 @@ module Effective
       BLACKLIST = [:logged_changes, :trash]
 
       def instance
-        @instance || klass.new
+        @instance || (klass.new if klass)
       end
 
       # called by effective_trash and effective_logging
