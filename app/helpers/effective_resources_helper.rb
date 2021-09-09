@@ -59,6 +59,8 @@ module EffectiveResourcesHelper
   # locals: {} render locals
   # you can also pass all action names and true/false such as edit: true, show: false
   def render_resource_actions(resource, atts = {}, &block)
+    return ''.html_safe if resource.blank?
+
     unless resource.kind_of?(ActiveRecord::Base) || resource.kind_of?(Class) || resource.kind_of?(Array) || resource.class.ancestors.include?(ActiveModel::Model)
       raise 'expected first argument to be an ActiveRecord::Base object or Array of objects'
     end
