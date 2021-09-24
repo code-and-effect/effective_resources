@@ -39,9 +39,9 @@ module HasManyRichTexts
   end
 
   def method_missing(method, *args, &block)
-    method = method.to_s
-    super unless method.start_with?('rich_text_')
+    return super unless method.to_s.start_with?('rich_text_')
 
+    method = method.to_s
     name = method.chomp('=').sub('rich_text_', '')
 
     if method.end_with?('=')
