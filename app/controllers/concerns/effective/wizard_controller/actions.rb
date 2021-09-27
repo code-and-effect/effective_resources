@@ -5,10 +5,13 @@ module Effective
       def new
         Rails.logger.info 'Processed by Effective::WizardController#new'
 
-        self.resource ||= resource_scope.new
+        self.resource ||= (find_wizard_resource || resource_scope.new)
         EffectiveResources.authorize!(self, :new, resource)
 
-        redirect_to resource_wizard_path(:new, resource.first_uncompleted_step || resource_wizard_steps.first)
+        redirect_to resource_wizard_path(
+          (resource.to_param || :new),
+          (resource.first_uncompleted_step || resource_wizard_steps.first)
+        )
       end
 
       def show
