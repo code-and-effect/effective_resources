@@ -25,6 +25,8 @@ module ActsAsWizard
     acts_as_wizard_options = @acts_as_wizard_options
 
     attr_accessor :current_step
+    attr_accessor :skip_to_step
+
     attr_accessor :current_user
 
     if Rails.env.test? # So our tests can override the required_steps method
