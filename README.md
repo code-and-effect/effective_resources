@@ -352,6 +352,8 @@ Here's `views/things/start.html.haml`:
 
 You can also call `render_wizard_sidebar(resource)` without the block syntax.
 
+If you add `f.hidden_field(:skip_to_step, value: 'stepc')` you can control the next step.
+
 ## Testing
 
 Run tests by:
