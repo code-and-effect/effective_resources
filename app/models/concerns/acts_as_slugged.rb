@@ -2,7 +2,7 @@
 #
 # This module automatically generates slugs based on the :to_s field using a before_validation filter
 #
-# Mark your model with 'acts_as_sluggable' make sure you have a string field :slug
+# Mark your model with 'acts_as_slugged' make sure you have a string field :slug
 
 module ActsAsSlugged
   extend ActiveSupport::Concern
