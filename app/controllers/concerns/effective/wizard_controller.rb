@@ -62,5 +62,19 @@ module Effective
       wizard_path(step, resource_name_id => param)
     end
 
+    private
+
+    def current_step_before?(nav_step)
+      index = wizard_steps.index(nav_step) || raise("step #{nav_step} not found in wizard_steps")
+      current = wizard_steps.index(step) || raise("current step not found in wizard_steps")
+      current < index
+    end
+
+    def current_step_after?(nav_step)
+      index = wizard_steps.index(nav_step) || raise("step #{nav_step} not found in wizard_steps")
+      current = wizard_steps.index(step) || raise("current step not found in wizard_steps")
+      current > index
+    end
+
   end
 end
