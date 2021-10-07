@@ -55,6 +55,8 @@ module Effective
           input
         when ActiveRecord::Relation
           input.klass
+        when (ActiveRecord::Reflection::BelongsToReflection rescue :nil)
+          _klass_by_name(input.class_name)
         when (ActiveRecord::Reflection::AbstractReflection rescue :nil)
           ((input.klass rescue nil).presence || _klass_by_name(input.class_name)) unless input.options[:polymorphic]
         when ActiveRecord::Reflection::MacroReflection
