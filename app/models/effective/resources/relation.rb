@@ -91,9 +91,11 @@ module Effective
 
           if term == 'nil'
             relation.where(is_null("#{sql_column}_id")).where(is_null("#{sql_column}_type"))
-          elsif type.present? && id.present?
+          elsif type.present? && id.present? # This was from a polymorphic select
             relation.where("#{sql_column}_id = ?", id).where("#{sql_column}_type = ?", type)
-          else
+          elsif name == :user # Polymorphic user
+            relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
+          else # Maybe from a string field
             id ||= Effective::Attribute.new(:integer).parse(term)
             relation.where("#{sql_column}_id = ? OR #{sql_column}_type = ?", id, (type || term))
           end
@@ -213,8 +215,10 @@ module Effective
 
         # key: the id, or associated_id on my table
         # keys: the ids themselves as per the target table
-
-        if association.macro == :belongs_to
+        if association.macro == :belongs_to && association.options[:polymorphic]
+          key = sql_column(association.foreign_key)
+          keys = relation.pluck((relation.klass.primary_key rescue nil))
+        elsif association.macro == :belongs_to
           key = sql_column(association.foreign_key)
           keys = relation.pluck(association.klass.primary_key)
         elsif association.macro == :has_and_belongs_to_many
