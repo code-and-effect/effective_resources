@@ -293,7 +293,10 @@ module Effective
         # key: the id, or associated_id on my table
         # keys: the ids themselves as per the target table
 
-        if association.macro == :belongs_to
+        if association.macro == :belongs_to && association.options[:polymorphic]
+          key = sql_column(association.foreign_key)
+          keys = relation.pluck((relation.klass.primary_key rescue nil))
+        elsif association.macro == :belongs_to
           key = sql_column(association.foreign_key)
           keys = relation.pluck(association.klass.primary_key)
         elsif association.macro == :has_and_belongs_to_many
