@@ -64,4 +64,36 @@ module EffectiveResources
     date.wday != 0 && date.wday != 6 && Holidays.on(date, *holidays).blank?
   end
 
+  # https://stackoverflow.com/questions/66103388/attach-activestorage-blob-with-a-different-filename
+  def self.clone_blob(blob, options = {})
+    raise('expected an ActiveStorage::Blob') unless blob.kind_of?(ActiveStorage::Blob)
+
+    atts = {
+      filename: blob.filename,
+      byte_size: blob.byte_size,
+      checksum: blob.checksum,
+      content_type: blob.content_type,
+      metadata: blob.metadata,
+    }.merge(options)
+
+    service = blob.service
+    duplicate = ActiveStorage::Blob.create_before_direct_upload!(**atts)
+
+    case service.class.name
+    when 'ActiveStorage::Service::S3Service'
+      bucket = service.bucket
+      object = bucket.object(blob.key)
+      object.copy_to(bucket.object(duplicate.key))
+    when 'ActiveStorage::Service::DiskService'
+      path = service.path_for(blob.key)
+      duplicate_path = service.path_for(duplicate.key)
+      FileUtils.mkdir_p(File.dirname(duplicate_path))
+      FileUtils.ln(path, duplicate_path) if File.exists?(path)
+    else
+      raise "unknown storage service #{service.class.name}"
+    end
+
+    duplicate
+  end
+
 end
