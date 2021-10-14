@@ -12,7 +12,13 @@ module Effective
           @skip_to ||= skip_to_step(resource)
           @redirect_to ||= resource_wizard_path(resource, @skip_to) if was_new_record
 
-          redirect_to(@redirect_to || wizard_path(@skip_to))
+          if @redirect_to
+            redirect_to(@redirect_to)
+          elsif @skip_to
+            redirect_to(wizard_path(@skip_to))
+          else
+            redirect_to_finish_wizard(options, params)
+          end
         else
           flash.now[:danger] = options.delete(:error) || resource_flash(:danger, resource, action)
           render_step(wizard_value(step), options)
