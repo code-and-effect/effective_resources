@@ -8,6 +8,7 @@ module EffectiveGem
 
     config_keys.each do |key|
       self.singleton_class.define_method(key) { config()[key] }
+      self.singleton_class.define_method("#{key}=") { |value| config()[key] = value }
     end
   end
 
