@@ -15,16 +15,16 @@ module EffectiveGem
   module ClassMethods
     def config(namespace = nil)
       namespace ||= Tenant.current if defined?(Tenant)
-      @config.dig(namespace) || @config
+      @config.dig(namespace) || @config.dig(:effective)
     end
 
     def setup(namespace = nil, &block)
       @config ||= ActiveSupport::OrderedOptions.new
-      namespace ||= Tenant.current if defined?(Tenant)
 
-      if namespace
-        @config[namespace] ||= ActiveSupport::OrderedOptions.new
-      end
+      namespace ||= Tenant.current if defined?(Tenant)
+      namespace ||= :effective
+
+      @config[namespace] ||= ActiveSupport::OrderedOptions.new
 
       yield(config(namespace))
 
