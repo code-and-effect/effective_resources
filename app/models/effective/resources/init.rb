@@ -8,7 +8,10 @@ module Effective
 
       def _initialize_input(input, namespace: nil, relation: nil)
         @initialized_name = input
-        @model_klass = (relation ? _klass_by_input(relation) : _klass_by_input(input))
+
+        # Sets the class but also namespaces
+        @model_klass = _klass_by_input(input)
+        @model_klass = _klass_by_input(relation) if relation.present?
 
         # Consider controller_name
         if @model_klass && input.kind_of?(String) && namespace.blank?
