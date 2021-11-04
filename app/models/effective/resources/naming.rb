@@ -75,16 +75,6 @@ module Effective
         name if Rails.application.config.tenants[name].present?
       end
 
-      def tenant_path_name
-        return nil unless defined?(Tenant)
-        Tenant.module_name.downcase
-      end
-
-      def tenant_module_name
-        return nil unless defined?(Tenant)
-        Tenant.module_name
-      end
-
     end
   end
 end
