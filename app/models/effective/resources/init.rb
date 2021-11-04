@@ -1,3 +1,5 @@
+# frozen_sting_literals: true
+
 module Effective
   module Resources
     module Init
