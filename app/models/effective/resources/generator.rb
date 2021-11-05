@@ -30,19 +30,19 @@ module Effective
 
       # Tenants
       def tenant_controller_path
-        (Tenant.module_name.downcase + '/' + controller_path) if defined?(Tenant)
+        (Tenant.module_name.downcase + '/' + controller_path) if tenant?
       end
 
       def tenant_namespaced_class_name
-        (Tenant.module_name + '::' + namespaced_class_name) if defined?(Tenant)
+        (Tenant.module_name + '::' + namespaced_class_name) if tenant?
       end
 
       def tenant_namespaced_module_name
-        (Tenant.module_name + '::' + namespaced_module_name) if defined?(Tenant)
+        (Tenant.module_name + '::' + namespaced_module_name) if tenant?
       end
 
       def tenant_class_name
-        (Tenant.module_name + '::' + class_name) if defined?(Tenant)
+        (Tenant.module_name + '::' + class_name) if tenant?
       end
 
     end

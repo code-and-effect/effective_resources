@@ -65,16 +65,6 @@ module Effective
       def human_plural_name
         name.pluralize.gsub('::', ' ').underscore.gsub('_', ' ')
       end
-
-      def tenant
-        return nil unless defined?(Tenant)
-        return nil unless klass.present?
-        return nil unless class_name.include?('::')
-
-        name = class_name.split('::').first.downcase.to_sym
-        name if Rails.application.config.tenants[name].present?
-      end
-
     end
   end
 end

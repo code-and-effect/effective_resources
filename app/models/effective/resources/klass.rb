@@ -40,7 +40,7 @@ module Effective
       end
 
       def find_tenant_datatable_klass
-        return unless defined?(Tenant)
+        return unless tenant?
 
         "::#{tenant_controller_path.classify.pluralize}Datatable".safe_constantize ||
         "::#{tenant_controller_path.classify}Datatable".safe_constantize ||

@@ -5,8 +5,7 @@ module Effective
     module Paths
 
       def tenant_path
-        return unless tenant.present?
-        Tenant.engine_path(tenant).sub("#{Rails.root}/", '')
+        Tenant.engine_path(tenant).sub("#{Rails.root}/", '') if tenant?
       end
 
       def model_file
