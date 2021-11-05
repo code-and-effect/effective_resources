@@ -1,9 +1,9 @@
 module Effective
   module Resources
-    module Tenant
+    module Tenants
 
       def tenant?
-        defined?(Tenant)
+        defined?(::Tenant)
       end
 
       def tenant

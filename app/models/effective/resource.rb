@@ -14,8 +14,7 @@ module Effective
     include Effective::Resources::Paths
     include Effective::Resources::Relation
     include Effective::Resources::Sql
-    include Effective::Resources::Tenant
-
+    include Effective::Resources::Tenants
 
     # In practice, this is initialized two ways
     # With a klass and a namespace from effective_datatables
