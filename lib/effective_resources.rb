@@ -33,6 +33,24 @@ module EffectiveResources
 
   # Utilities
 
+  # This looks up the best class give the name
+  # If the Tenant is present, use those classes first.
+  def self.best(name)
+    klass = if defined?(Tenant)
+      ('::' + Tenant.module_name + '::' + name).safe_constantize ||
+      ('::' + Tenant.module_name + '::Effective::' + name).safe_constantize
+    end
+
+    klass ||= begin
+      ('::' + name).safe_constantize ||
+      ('::Effective::' + name).safe_constantize
+    end
+
+    raise("unable to find best #{name}") if klass.blank?
+
+    klass
+  end
+
   def self.truthy?(value)
     if defined?(::ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES)  # Rails <5
       ::ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES.include?(value)
