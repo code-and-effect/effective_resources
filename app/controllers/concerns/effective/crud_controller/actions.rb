@@ -9,7 +9,7 @@ module Effective
         @page_title ||= resource_plural_name.titleize
 
         self.resources ||= resource_scope.all if resource_scope.respond_to?(:all)
-        @datatable = resource_datatable(:index)
+        @datatable = resource_datatable()
 
         run_callbacks(:resource_render)
       end
@@ -214,7 +214,7 @@ module Effective
         @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
 
         if request.get?
-          @datatable = resource_datatable(action)
+          @datatable = resource_datatable()
           run_callbacks(:resource_render)
 
           view = lookup_context.template_exists?(action, _prefixes) ? action : :index

@@ -61,7 +61,20 @@ module Effective
         raise 'expected a label or block' unless (label || block_given?)
 
         instance_exec do
-          before_action(opts) { @page_title ||= (block_given? ? instance_exec(&block) : label).to_s }
+          before_action(opts) do
+            @page_title ||= (block_given? ? instance_exec(&block) : label).to_s
+          end
+        end
+      end
+
+      # datatable -> { MyDatatable.new }, only: [:index]
+      def datatable(obj = nil, opts = {}, &block)
+        raise 'expected a proc or block' unless (obj.respond_to?(:call) || block_given?)
+
+        instance_exec do
+          before_action(opts) do
+            @datatable ||= (block_given? ? instance_exec(&block) : obj.call)
+          end
         end
       end
 
@@ -84,7 +97,6 @@ module Effective
         else
           define_method(:resource_scope_relation) { return obj }
         end
-
       end
 
     end

@@ -108,15 +108,16 @@ module Effective
       resource_scope.where_values_hash.symbolize_keys
     end
 
-    def resource_datatable(action)
-      datatable_klass = if action == :index
-        effective_resource.datatable_klass
-      else # Admin::ActionDatatable.new
-        "#{[effective_resource.namespace.to_s.classify.presence, action.to_s.classify].compact.join('::')}Datatable".safe_constantize ||
-        "#{[effective_resource.namespace.to_s.classify.presence, action.to_s.pluralize.classify].compact.join('::')}Datatable".safe_constantize ||
-        "#{[effective_resource.namespace.to_s.classify.presence, action.to_s.singularize.classify].compact.join('::')}Datatable".safe_constantize
+    def resource_datatable
+      # This might have been done from a before action or dsl method
+      unless @datatable.nil?
+        raise('expected @datatable to be an Effective::Datatable') unless @datatable.kind_of?(Effective::Datatable)
+
+        @datatable.effective_resource = effective_resource
+        return @datatable
       end
 
+      datatable_klass = effective_resource.datatable_klass
       return unless datatable_klass.present?
 
       datatable = datatable_klass.new(resource_datatable_attributes)
