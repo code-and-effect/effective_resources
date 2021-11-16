@@ -11,7 +11,7 @@ module Effective
 
         # Sets the class but also namespaces
         @model_klass = _klass_by_input(input)
-        @model_klass = _klass_by_input(relation) if relation.present?
+        @model_klass = _klass_by_input(relation) unless relation.nil?
 
         # Consider controller_name
         if @model_klass && input.kind_of?(String) && namespace.blank?
