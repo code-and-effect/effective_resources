@@ -76,7 +76,11 @@ module ActsAsWizard
     end
 
     def next_step
-      required_steps.reverse.find { |step| can_visit_step?(step) } || required_steps.first
+      first_uncompleted_step ||
+      last_completed_step ||
+      required_steps.reverse.find { |step| can_visit_step?(step) } ||
+      required_steps.first ||
+      :start
     end
 
     def previous_step(step)
@@ -89,6 +93,13 @@ module ActsAsWizard
       previous.blank? || has_completed_step?(previous)
     end
 
+    def has_completed_all_previous_steps?(step)
+      index = required_steps.index(step).to_i
+      previous = required_steps[0...index]
+
+      previous.blank? || previous.all? { |step| has_completed_step?(step) }
+    end
+
     def has_completed_last_step?
       has_completed_step?(required_steps.last)
     end
@@ -97,12 +108,12 @@ module ActsAsWizard
 
     def can_revisit_completed_steps(step)
       return (step == required_steps.last) if has_completed_last_step?
-      has_completed_previous_step?(step)
+      has_completed_all_previous_steps?(step)
     end
 
     def cannot_revisit_completed_steps(step)
       return (step == required_steps.last) if has_completed_last_step?
-      has_completed_previous_step?(step) && !has_completed_step?(step)
+      has_completed_all_previous_steps?(step) && !has_completed_step?(step)
     end
 
   end
