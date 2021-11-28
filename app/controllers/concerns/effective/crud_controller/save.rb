@@ -30,7 +30,7 @@ module Effective
 
         success = false
 
-        ActiveRecord::Base.transaction do
+        EffectiveResources.transaction(resource) do
           begin
             run_callbacks(:resource_before_save)
 

@@ -51,6 +51,17 @@ module EffectiveResources
     klass
   end
 
+  def self.transaction(resource = nil, &block)
+    connection = (resource if resource.respond_to?(:transaction))
+    connection ||= (resource.class if resource.class.respond_to?(:transaction))
+    connection ||= '::ApplicationRecord'.safe_constantize
+    connection ||= 'ActiveRecord::Base'.safe_constantize
+
+    raise('unable to determine transaction class') unless connection.present?
+
+    connection.transaction { yield }
+  end
+
   def self.truthy?(value)
     if defined?(::ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES)  # Rails <5
       ::ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES.include?(value)

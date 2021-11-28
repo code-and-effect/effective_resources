@@ -150,7 +150,7 @@ module Effective
 
         is_scope = false
 
-        ActiveRecord::Base.transaction do
+        EffectiveResources.transaction(klass) do
           begin
             relation = klass.public_send(name).kind_of?(ActiveRecord::Relation)
           rescue => e
