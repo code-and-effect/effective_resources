@@ -25,20 +25,11 @@ module Effective
       @handlers[:after_rollback]&.call
     end
 
-    def self.register_callback(connection:, name:, no_tx_action:, callback:)
+    def self.register_callback(connection:, name:, callback:)
       raise ArgumentError, "#{name} expected a block" unless callback
 
-      unless (connection.transaction_open? && connection.current_transaction.joinable?)
-        case no_tx_action
-        when :warn_and_execute
-          warn "#{name}: No transaction open. Executing callback immediately."
-          return callback.call
-        when :execute
-          return callback.call
-        when :exception
-          raise("#{name} is useless outside transaction")
-        end
-      end
+      raise("#{name} is useless outside transaction") unless connection.transaction_open?
+      raise("#{name} is useless outside transaction") unless connection.current_transaction.joinable?
 
       after_commit = Effective::AfterCommit.new("#{name}": callback)
       connection.add_transaction_record(after_commit)
