@@ -12,7 +12,7 @@ module Effective
         @controller_path ||= route_name #[namespace, plural_name].compact * '/')
       end
 
-      def engines
+      def route_engines
         return ([Rails.application] + Rails::Engine.subclasses.reverse) unless tenant?
 
         [Rails.application, Tenant.Engine] + Rails::Engine.subclasses.reverse.reject do |klass|
@@ -23,6 +23,8 @@ module Effective
       def routes
         @routes ||= begin
           routes = nil
+
+          engines = route_engines()
 
           # Check from controller_path. This is generally correct.
           engines.each do |engine|
