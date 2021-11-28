@@ -32,11 +32,14 @@ module Effective
 
       def route_name_fallbacks
         mod = class_name.split('::').first.to_s.downcase
+        admin = ('admin' if namespace.present? && namespace.include?('/admin'))
 
         matches = [
           route_name.singularize,
           [*namespace, plural_name].join('/'),
+          [*admin, plural_name].join('/'),
           [*namespace, name].join('/'),
+          [*admin, name].join('/'),
           [*mod, *namespace, plural_name].join('/'),
           [*mod, *namespace, name].join('/')
         ]

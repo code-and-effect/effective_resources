@@ -15,6 +15,10 @@ module Effective
         name if Rails.application.config.tenants[name].present?
       end
 
+      def tenant_engines_blacklist
+        return [] unless tenant?
+        Rails.application.config.tenants.map { |name, _| name.to_s.classify }
+      end
     end
   end
 end
