@@ -13,10 +13,12 @@ module Effective
       end
 
       def route_engines
-        return ([Rails.application] + Rails::Engine.subclasses.reverse) unless tenant?
-
-        [Rails.application, Tenant.Engine] + Rails::Engine.subclasses.reverse.reject do |klass|
-          tenant_engines_blacklist.any? { |name| klass.name.start_with?(name) }
+        if tenant? && Tenant.current.present?
+          [Rails.application, Tenant.Engine] + Rails::Engine.subclasses.reverse.reject do |klass|
+            tenant_engines_blacklist.any? { |name| klass.name.start_with?(name) }
+          end
+        else
+          [Rails.application] + Rails::Engine.subclasses.reverse
         end
       end
 
