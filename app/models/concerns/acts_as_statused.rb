@@ -125,16 +125,16 @@ module ActsAsStatused
       define_method("#{sym}?") { status == sym.to_s }
       define_method("was_#{sym}?") { send("#{sym}_at").present? }
 
-      unless has_attribute?("#{sym}_at")
+      #unless has_attribute?("#{sym}_at")
         define_method("#{sym}_at") { status_steps["#{sym}_at".to_sym] }
         define_method("#{sym}_at=") { |value| status_steps["#{sym}_at".to_sym] = value }
-      end
+      #end
 
-      unless has_attribute?("#{sym}_by_id")
+      #unless has_attribute?("#{sym}_by_id")
         define_method("#{sym}_by") { acts_as_statused_by_user(sym) }
         define_method("#{sym}_by_id") { status_steps["#{sym}_by".to_sym] }
         define_method("#{sym}_by_id=") { |value| status_steps["#{sym}_by".to_sym] = value }
-      end
+      #end
 
       # approved!
       define_method("#{sym}!") do |atts = {}|
@@ -180,4 +180,3 @@ module ActsAsStatused
   end
 
 end
-
