@@ -62,6 +62,21 @@ module EffectiveResources
     connection.transaction { yield }
   end
 
+  # Used by streaming CSV export in datatables
+  def self.with_resource_enumerator(&block)
+    raise('expected a block') unless block_given?
+
+    tenant = Tenant.current if defined?(Tenant)
+
+    if tenant
+      Enumerator.new do |enumerator|
+        Tenant.as(tenant) { yield(enumerator) }
+      end
+    else
+      Enumerator.new { |enumerator| yield(enumerator) }
+    end
+  end
+
   def self.truthy?(value)
     if defined?(::ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES)  # Rails <5
       ::ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES.include?(value)
