@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 module Effective
   module Resources
     module Associations
-
       def macros
         [:belongs_to, :belongs_to_polymorphic, :has_many, :has_and_belongs_to_many, :has_one]
       end

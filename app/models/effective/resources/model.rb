@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Effective
   module Resources
     module Model
@@ -18,7 +20,3 @@ module Effective
     end
   end
 end
-
-
-
-

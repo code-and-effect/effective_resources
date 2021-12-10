@@ -1,10 +1,13 @@
+# frozen_string_literal: true
+
 module Effective
   module Resources
     module Sql
-
       def column(name)
         name = name.to_s
-        columns.find { |col| col.name == name || (belongs_to(name) && col.name == belongs_to(name).foreign_key) }
+        bt = belongs_to(name)
+
+        columns.find { |col| col.name == name || (bt && col.name == bt.foreign_key) }
       end
 
       def columns
@@ -32,17 +35,18 @@ module Effective
       end
 
       def sql_direction(name)
-        name.to_s.downcase == 'desc' ? 'DESC'.freeze : 'ASC'.freeze
+        name.to_s.downcase == 'desc' ? 'DESC' : 'ASC'
       end
 
       # This is for EffectiveDatatables (col as:)
       # Might be :name, or 'users.name'
       def sql_type(name)
-        name = name.to_s.split('.').first
+        name = (name.kind_of?(String) ? name.split('.').first : name.to_s)
 
         return :belongs_to if belongs_to(name)
 
-        column = column(name)
+        # Skip using columns() cause we dont need to check for belongs_to
+        column = columns.find { |col| col.name == name }
 
         if column.present?
           column.type
@@ -105,13 +109,11 @@ module Effective
       end
 
       def postgres?
-        return @postgres unless @postgres.nil?
-        @postgres ||= (klass.connection.kind_of?(ActiveRecord::ConnectionAdapters::PostgreSQLAdapter) rescue false)
+        klass.connection.adapter_name == 'PostgreSQL'
       end
 
       def mysql?
-        return @mysql unless @mysql.nil?
-        @mysql ||= (klass.connection.kind_of?(ActiveRecord::ConnectionAdapters::Mysql2Adapter) rescue false)
+        klass.connection.adapter_name == 'MySQL'
       end
 
       def is_null(sql_column)

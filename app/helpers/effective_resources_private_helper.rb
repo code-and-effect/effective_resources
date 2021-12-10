@@ -1,10 +1,8 @@
-# frozen_sting_literals: true
+# frozen_string_literal: true
 
 module EffectiveResourcesPrivateHelper
   REPLACE_PAGE_ACTIONS = {'update' => :edit, 'create' => :new}
   BLACKLIST = [:default, :only, :except, :if, :unless, :redirect, :success, :danger, :klass]
-
-  DATA_CONFIRM = 'data-confirm'
 
   def permitted_resource_actions(resource, actions)
     page_action = REPLACE_PAGE_ACTIONS[params[:action]] || params[:action].try(:to_sym) || :save
@@ -38,8 +36,8 @@ module EffectiveResourcesPrivateHelper
       end
 
       # Replace resource name in any token strings
-      if opts[DATA_CONFIRM].present? && opts[DATA_CONFIRM].include?('@resource'.freeze)
-        opts[DATA_CONFIRM] = opts[DATA_CONFIRM].gsub('@resource'.freeze, resource_to_s)
+      if opts['data-confirm'].present? && opts['data-confirm'].include?('@resource'.freeze)
+        opts['data-confirm'] = opts['data-confirm'].gsub('@resource'.freeze, resource_to_s)
       end
 
       # Assign class
