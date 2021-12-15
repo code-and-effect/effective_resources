@@ -160,9 +160,7 @@ module EffectiveDeviseUser
       args.last[:tenant] ||= tenant
     end
 
-    wait = (5 if notification == :invitation_instructions && !Rails.env.test?)
-
-    devise_mailer.send(notification, self, *args).deliver_later(wait: wait)
+    devise_mailer.send(notification, self, *args).deliver_now
   end
 
 end
