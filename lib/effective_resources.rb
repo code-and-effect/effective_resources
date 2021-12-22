@@ -52,11 +52,7 @@ module EffectiveResources
   end
 
   def self.transaction(resource = nil, &block)
-    connection = (resource if resource.respond_to?(:transaction))
-    connection ||= (resource.class if resource.class.respond_to?(:transaction))
-    connection ||= '::ApplicationRecord'.safe_constantize
-    connection ||= 'ActiveRecord::Base'.safe_constantize
-
+    connection = 'ActiveRecord::Base'.safe_constantize
     raise('unable to determine transaction class') unless connection.present?
 
     connection.transaction { yield }
