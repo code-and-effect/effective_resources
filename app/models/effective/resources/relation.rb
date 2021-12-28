@@ -98,8 +98,16 @@ module Effective
           elsif name == :user # Polymorphic user
             relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
           else # Maybe from a string field
-            id ||= Effective::Attribute.new(:integer).parse(term)
-            relation.where("#{sql_column}_id = ? OR #{sql_column}_type = ?", id, (type || term))
+            collection = relation.none
+
+            relation.distinct("#{name}_type").pluck("#{name}_type").each do |klass_name|
+              resource = Effective::Resource.new(klass_name)
+              next unless resource.klass.present?
+
+              collection = collection.or(relation.where("#{name}_id": resource.search_any(term), "#{name}_type": klass_name))
+            end
+
+            collection
           end
         when :has_and_belongs_to_many, :has_many, :has_one
           relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))

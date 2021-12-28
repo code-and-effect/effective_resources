@@ -21,7 +21,11 @@ module Effective
             collection ||= (klass.const_get(constant_pluralized) rescue nil) if defined?("#{klass.name}::#{constant_pluralized}")
           end
 
-          { as: :select, polymorphic: true, collection: (collection || []) }.compact
+          if collection.present?
+            { as: :select, polymorphic: true, collection: (collection || []) }
+          else
+            { as: :string }
+          end
         when :has_and_belongs_to_many
           { as: :select }.merge(search_form_field_collection(has_and_belongs_to_many(name)))
         when :has_many
