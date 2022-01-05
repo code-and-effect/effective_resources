@@ -100,7 +100,9 @@ module Effective
           else # Maybe from a string field
             collection = relation.none
 
-            relation.distinct("#{name}_type").pluck("#{name}_type").each do |klass_name|
+            relation.unscoped.distinct("#{name}_type").pluck("#{name}_type").each do |klass_name|
+              next if klass_name.nil?
+
               resource = Effective::Resource.new(klass_name)
               next unless resource.klass.present?
 
