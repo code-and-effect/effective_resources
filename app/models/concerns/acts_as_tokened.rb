@@ -40,6 +40,7 @@ module ActsAsTokened
   end
 
   def to_global_id(**params)
+    params[:tenant] = Tenant.current if defined?(Tenant)
     GlobalID.new(URI::GID.build(app: Rails.application.config.global_id.app, model_name: model_name, model_id: to_param, params: params))
   end
 
