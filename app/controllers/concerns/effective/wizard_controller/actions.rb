@@ -17,6 +17,7 @@ module Effective
       def show
         Rails.logger.info 'Processed by Effective::WizardController#show'
 
+        run_callbacks(:resource_render)
         render_wizard
       end
 
