@@ -28,16 +28,16 @@ class ResourceActionsTest < ActiveSupport::TestCase
   test 'admin thing actions' do
     resource = Effective::Resource.new('admin/thing')
 
-    assert_equal [:report, :approve, :decline, :index, :create, :new, :edit, :show, :update, :destroy], resource.actions
+    assert_equal [:index, :create, :new, :edit, :show, :update, :destroy, :report, :approve, :decline], resource.actions
     assert_equal [:index, :create, :new, :edit, :show, :update, :destroy], resource.crud_actions
 
-    assert_equal [:report, :index, :create, :new], resource.collection_actions
-    assert_equal [:report, :index, :new], resource.collection_get_actions
+    assert_equal [:index, :create, :new, :report], resource.collection_actions
+    assert_equal [:index, :new, :report], resource.collection_get_actions
     assert_equal [:create], resource.collection_post_actions
 
-    assert_equal [:approve, :decline, :edit, :show, :update, :destroy], resource.member_actions
+    assert_equal [:edit, :show, :update, :destroy, :approve, :decline], resource.member_actions
     assert_equal [:edit, :show], resource.member_get_actions
-    assert_equal [:approve, :decline, :update], resource.member_post_actions
+    assert_equal [:update, :approve, :decline], resource.member_post_actions
     assert_equal [:destroy], resource.member_delete_actions
   end
 
