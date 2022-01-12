@@ -50,9 +50,13 @@ module ActsAsWizard
       can_revisit_completed_steps(step)
     end
 
+    def wizard_step_keys
+      self.class.const_get(:WIZARD_STEPS).keys
+    end
+
     def required_steps
       return self.class.test_required_steps if Rails.env.test? && self.class.test_required_steps.present?
-      self.class.const_get(:WIZARD_STEPS).keys
+      wizard_step_keys()
     end
 
     def wizard_step_title(step)
@@ -102,6 +106,16 @@ module ActsAsWizard
 
     def has_completed_last_step?
       has_completed_step?(required_steps.last)
+    end
+
+    def without_current_step(&block)
+      existing = current_step
+
+      begin
+        self.current_step = nil; yield
+      ensure
+        self.current_step = existing
+      end
     end
 
     private

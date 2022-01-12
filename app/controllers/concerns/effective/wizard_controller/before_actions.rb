@@ -69,6 +69,13 @@ module Effective
         @page_title ||= resource_wizard_step_title(resource, step)
       end
 
+      def ready_checkout
+        return unless step == :checkout
+        return unless resource.class.try(:acts_as_purchasable_wizard?)
+
+        resource.ready!
+      end
+
     end
   end
 end

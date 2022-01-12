@@ -25,6 +25,8 @@ module Effective
 
         before_action :assign_current_step
         before_action :assign_page_title
+
+        before_action :ready_checkout
       end
 
       helper_method :resource
