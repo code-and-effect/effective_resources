@@ -49,15 +49,16 @@ module ActsAsPurchasableWizard
 
   def find_or_build_submit_order
     order = submit_order || orders.build(user: owner)
-    fees = submit_fees()
+    fees = submit_fees().reject { |fee| fee.marked_for_destruction? }
 
     # Adds fees, but does not overwrite any existing price.
     fees.each do |fee|
       order.add(fee) unless order.purchasables.include?(fee)
     end
 
-    order.purchasables.each do |purchasable|
-      order.remove(purchasable) unless fees.include?(purchasable)
+    order.order_items.each do |order_item|
+      fee = fees.find { |fee| fee == order_item.purchasable }
+      order.remove(order_item) unless fee.present?
     end
 
     # From Billing Step
