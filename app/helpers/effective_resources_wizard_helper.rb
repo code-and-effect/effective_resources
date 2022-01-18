@@ -14,8 +14,8 @@ module EffectiveResourcesWizardHelper
     return sidebar unless block_given?
 
     content_tag(:div, class: 'row') do
-      content_tag(:div, class: 'col-3') { sidebar } +
-      content_tag(:div, class: 'col-9') { yield }
+      content_tag(:div, class: 'col-lg-3') { sidebar } +
+      content_tag(:div, class: 'col-lg-9') { yield }
     end
   end
 
@@ -28,10 +28,10 @@ module EffectiveResourcesWizardHelper
     disabled = !resource.can_visit_step?(nav_step)
 
     label = [index, title].compact.join('. ')
-    klass = ['list-group-item', ('active' if current), ('disabled' if disabled && !current)].compact.join(' ')
+    klass = ['list-group-item', 'list-group-item-action', ('active' if current), ('disabled' if disabled && !current)].compact.join(' ')
 
     if (current || disabled)
-      content_tag(:li, label, class: klass)
+      content_tag(:a, label, class: klass)
     else
       link_to(label, wizard_path(nav_step), class: klass)
     end
