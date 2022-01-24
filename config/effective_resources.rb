@@ -21,6 +21,8 @@ EffectiveResources.setup do |config|
   # end
   config.authorization_method = Proc.new { |controller, action, resource| authorize!(action, resource) }
 
+  # Default Submits
+  #
   # These default submit actions will be added to each controller
   # and rendered when calling effective_submit(f)
   # based on the controller, and its `submits` if any.
@@ -28,4 +30,22 @@ EffectiveResources.setup do |config|
   # Supported values: 'Save', 'Continue', and 'Add New'
   config.default_submits = ['Save', 'Continue', 'Add New']
 
+  # Email Settings
+  #
+  # The default mailer settings for all effective gems
+  #
+  # Configure the parent class responsible to send e-mails.
+  # config.parent_mailer = '::ApplicationMailer'
+
+  # Default deliver method
+  # config.deliver_method = :deliver_now
+
+  # Default layout
+  # config.mailer_layout = 'effective_mailer_layout'
+
+  # Default From
+  config.mailer_sender = "no-reply@example.com"
+
+  # Send Admin correspondence To
+  config.mailer_admin = "admin@example.com"
 end

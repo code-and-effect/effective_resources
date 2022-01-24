@@ -5,7 +5,10 @@ require 'effective_resources/effective_gem'
 module EffectiveResources
 
   def self.config_keys
-    [:authorization_method, :default_submits]
+    [
+      :authorization_method, :default_submits,
+      :deliver_method, :mailer_layout, :mailer_sender, :mailer_admin, :parent_mailer
+    ]
   end
 
   include EffectiveGem
@@ -29,6 +32,28 @@ module EffectiveResources
 
   def self.default_submits
     (['Save', 'Continue', 'Add New'] & Array(config.default_submits)).inject({}) { |h, v| h[v] = true; h }
+  end
+
+  # Email
+  def self.deliver_method
+    config[:deliver_method] || :deliver_now
+  end
+
+  def self.mailer_layout
+    config[:mailer_layout] || 'effective_mailer_layout'
+  end
+
+  def self.mailer_sender
+    config[:mailer_sender] || raise('effective resources mailer_sender missing. Add it to config/initializers/effective_resources.rb')
+  end
+
+  def self.mailer_admin
+    config[:mailer_admin] || raise('effective resources mailer_admin missing. Add it to config/initializers/effective_resources.rb')
+  end
+
+  def self.parent_mailer_class
+    return config[:parent_mailer].constantize if config[:parent_mailer].present?
+    '::ApplicationMailer'.safe_constantize || 'ActionMailer::Base'.constantize
   end
 
   # Utilities

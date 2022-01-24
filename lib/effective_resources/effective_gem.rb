@@ -38,6 +38,16 @@ module EffectiveGem
 
       true
     end
+
+    # This is included into every gem
+    # The gem may not have a mailer or use effective email templates
+    def send_email(email, *args)
+      raise('gem does not respond to mailer_class') unless respond_to?(:mailer_class)
+      raise('expected args to be an Array') unless args.kind_of?(Array)
+
+      mailer_class.send(email, *args).send(EffectiveResources.deliver_method)
+    end
+
   end
 
 end
