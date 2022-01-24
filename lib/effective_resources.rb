@@ -36,7 +36,10 @@ module EffectiveResources
 
   # Email
   def self.deliver_method
-    config[:deliver_method] || :deliver_now
+    return config[:deliver_method] if config[:deliver_method].present?
+
+    rails = Rails.application.config
+    (rails.respond_to?(:active_job) && rails.active_job.queue_adapter) ? :deliver_later : :deliver_now
   end
 
   def self.mailer_layout
@@ -106,10 +109,6 @@ module EffectiveResources
     end
   end
 
-  def self.deliver_method
-    config = Rails.application.config
-    (config.respond_to?(:active_job) && config.active_job.queue_adapter) ? :deliver_later : :deliver_now
-  end
 
   def self.advance_date(date, business_days: 1, holidays: [:ca, :observed])
     raise('business_days must be an integer <= 365') unless business_days.kind_of?(Integer) && business_days <= 365
