@@ -38,7 +38,7 @@ EffectiveResources.setup do |config|
   # config.parent_mailer = '::ApplicationMailer'
 
   # Default deliver method
-  # config.deliver_method = :deliver_now
+  # config.deliver_method = :deliver_later
 
   # Default layout
   # config.mailer_layout = 'effective_mailer_layout'
