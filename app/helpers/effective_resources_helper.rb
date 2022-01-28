@@ -244,4 +244,8 @@ module EffectiveResourcesHelper
     simple_format(sanitize(value.to_s, tags: @format_resource_tags, attributes: @format_resource_atts), {}, sanitize: false)
   end
 
+  def edit_effective_wizard?
+    controller.class.try(:effective_wizard_controller?) && defined?(resource) && resource.draft?
+  end
+
 end

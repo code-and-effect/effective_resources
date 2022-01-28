@@ -10,6 +10,10 @@ module Effective
     include Effective::WizardController::Save
     include Effective::WizardController::WickedOverrides
 
+    module ClassMethods
+      def effective_wizard_controller?; true; end
+    end
+
     included do
       raise("please install gem 'wicked' to use Effective::WizardController") unless defined?(Wicked)
 
