@@ -39,7 +39,8 @@ module Effective
       def redirect_if_existing
         return if step == 'wicked_finish'
         return if resource.blank?
-        return if resource.done?
+        return if resource.try(:done?)
+        return unless resource_scope.respond_to?(:in_progress)
 
         existing = resource_scope.in_progress.where.not(id: resource).first
         return unless existing.present?
