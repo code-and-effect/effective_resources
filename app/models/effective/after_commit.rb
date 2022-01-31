@@ -28,8 +28,10 @@ module Effective
     def self.register_callback(connection:, name:, callback:)
       raise ArgumentError, "#{name} expected a block" unless callback
 
-      raise("#{name} is useless outside transaction") unless connection.transaction_open?
-      raise("#{name} is useless outside transaction") unless connection.current_transaction.joinable?
+      in_transaction = (connection.transaction_open? && connection.current_transaction.joinable?)
+
+      # Execute immediately when outside transaction
+      return callback.call unless in_transaction
 
       after_commit = Effective::AfterCommit.new("#{name}": callback)
       connection.add_transaction_record(after_commit)
