@@ -7,6 +7,7 @@ module Effective
 
     include Effective::WizardController::Actions
     include Effective::WizardController::BeforeActions
+    include Effective::WizardController::PermittedParams
     include Effective::WizardController::Save
     include Effective::WizardController::WickedOverrides
 
@@ -23,9 +24,13 @@ module Effective
         before_action :assign_resource
         before_action :authorize_resource
         before_action :assign_required_steps
+
         before_action :setup_wizard # Wicked
 
         before_action :enforce_can_visit_step
+
+        before_action :redirect_if_existing, only: [:show, :new]
+        before_action :clear_flash_success, only: [:update]
 
         before_action :assign_current_step
         before_action :assign_page_title
@@ -42,6 +47,12 @@ module Effective
         flash[:danger] = "Unknown step. You have been moved to the #{resource_wizard_steps.first} step."
         redirect_to wizard_path(resource_wizard_steps.first)
       end
+
+      # effective_resources on save callback
+      after_action do
+        flash.clear if @_delete_flash_success
+      end
+
     end
 
     def find_wizard_resource

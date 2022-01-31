@@ -35,6 +35,19 @@ module Effective
 
       # setup_wizard from Wicked called now
 
+      # Allow only 1 in-progress wizard at a time
+      def redirect_if_existing
+        return if step == 'wicked_finish'
+        return if resource.blank?
+        return if resource.done?
+
+        existing = resource_scope.in_progress.where.not(id: resource).first
+        return unless existing.present?
+
+        flash[:success] = "You have been redirected to your in-progress wizard"
+        redirect_to resource_wizard_path(existing, existing.next_step)
+      end
+
       # before_action :enforce_can_visit_step, only: [:show, :update]
       # Make sure I have permission for this step
       def enforce_can_visit_step
@@ -74,6 +87,10 @@ module Effective
         return unless resource.class.try(:acts_as_purchasable_wizard?)
 
         resource.ready!
+      end
+
+      def clear_flash_success
+        @_delete_flash_success = true
       end
 
     end
