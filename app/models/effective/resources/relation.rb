@@ -95,8 +95,6 @@ module Effective
             relation.where(is_null("#{sql_column}_id")).where(is_null("#{sql_column}_type"))
           elsif type.present? && id.present? # This was from a polymorphic select
             relation.where("#{sql_column}_id = ?", id).where("#{sql_column}_type = ?", type)
-          elsif name == :user # Polymorphic user
-            relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
           else # Maybe from a string field
             collection = relation.none
 
@@ -106,7 +104,7 @@ module Effective
               resource = Effective::Resource.new(klass_name)
               next unless resource.klass.present?
 
-              collection = collection.or(relation.where("#{name}_id": resource.search_any(term), "#{name}_type": klass_name))
+              collection = collection.or(relation.where("#{name}_id": resource.search_any(term, fuzzy: fuzzy), "#{name}_type": klass_name))
             end
 
             collection
