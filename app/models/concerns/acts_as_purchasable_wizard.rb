@@ -62,7 +62,7 @@ module ActsAsPurchasableWizard
     end
 
     # From Billing Step
-    order.billing_address = owner.billing_address if owner.billing_address.present?
+    order.billing_address = owner.billing_address if owner.try(:billing_address).present?
 
     # Important to add/remove anything
     order.save!
