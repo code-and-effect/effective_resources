@@ -24,10 +24,13 @@ module Effective
       def update
         Rails.logger.info 'Processed by Effective::WizardController#update'
 
+        action = (commit_action[:action] == :save ? :update : commit_action[:action])
+        EffectiveResources.authorize!(self, action, resource)
+
         resource.assign_attributes(send(resource_params_method_name))
         assign_current_step
 
-        save_wizard_resource(resource)
+        save_wizard_resource(resource, action)
       end
 
     end

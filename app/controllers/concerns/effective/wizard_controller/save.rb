@@ -4,12 +4,17 @@ module Effective
 
       def save_wizard_resource(resource, action = nil, options = {})
         was_new_record = resource.new_record?
-        action ||= resource.respond_to?("#{step}!") ? step : :save
+
+        if action.blank? || action == :update
+          action = resource.respond_to?("#{step}!") ? step : :save
+        end
 
         if save_resource(resource, action)
           flash[:success] ||= options.delete(:success) || resource_flash(:success, resource, action)
 
           @skip_to ||= skip_to_step(resource)
+
+          @redirect_to ||= resource_redirect_path(resource, action) if specific_redirect_path?(action)
           @redirect_to ||= resource_wizard_path(resource, @skip_to) if was_new_record
 
           if @redirect_to
