@@ -44,8 +44,8 @@ EffectiveResources.setup do |config|
   # config.mailer_layout = 'effective_mailer_layout'
 
   # Default From
-  config.mailer_sender = "no-reply@example.com"
+  config.mailer_sender = '"Info" <info@example.com>'
 
   # Send Admin correspondence To
-  config.mailer_admin = "admin@example.com"
+  config.mailer_admin = '"Admin" <admin@example.com>'
 end
