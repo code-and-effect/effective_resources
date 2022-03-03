@@ -3,13 +3,24 @@
 module EffectiveGem
   extend ActiveSupport::Concern
 
+  EXCLUDED_GETTERS = [
+    :config, :setup, :send_email, :parent_mailer_class,
+    :deliver_method, :mailer_layout, :mailer_sender, :mailer_admin
+  ]
+
   included do
     raise("expected self.config_keys method") unless respond_to?(:config_keys)
 
-    config_keys.each do |key|
+    # Define getters
+    (config_keys - EXCLUDED_GETTERS).each do |key|
       self.singleton_class.define_method(key) { config()[key] }
+    end
+
+    # Define setters
+    config_keys.each do |key|
       self.singleton_class.define_method("#{key}=") { |value| config()[key] = value }
     end
+
   end
 
   module ClassMethods
