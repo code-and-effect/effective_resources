@@ -39,13 +39,33 @@ module EffectiveGem
       true
     end
 
-    # This is included into every gem
-    # The gem may not have a mailer or use effective email templates
+    # Mailer Settings
+    # These methods are intended to flow through to the default EffectiveResources settings
+    def parent_mailer_class
+      config[:parent_mailer].presence&.constantize || EffectiveResources.parent_mailer_class
+    end
+
+    def deliver_method
+      config[:deliver_method].presence || EffectiveResources.deliver_method
+    end
+
+    def mailer_layout
+      config[:mailer_layout].presence || EffectiveResources.mailer_layout
+    end
+
+    def mailer_sender
+      config[:mailer_sender].presence || EffectiveResources.mailer_sender
+    end
+
+    def mailer_admin
+      config[:mailer_admin].presence || EffectiveResources.mailer_admin
+    end
+
     def send_email(email, *args)
       raise('gem does not respond to mailer_class') unless respond_to?(:mailer_class)
       raise('expected args to be an Array') unless args.kind_of?(Array)
 
-      mailer_class.send(email, *args).send(EffectiveResources.deliver_method)
+      mailer_class.send(email, *args).send(deliver_method)
     end
 
   end

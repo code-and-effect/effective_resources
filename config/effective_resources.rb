@@ -30,7 +30,7 @@ EffectiveResources.setup do |config|
   # Supported values: 'Save', 'Continue', and 'Add New'
   config.default_submits = ['Save', 'Continue', 'Add New']
 
-  # Email Settings
+  # Mailer Settings
   #
   # The default mailer settings for all effective gems
   #

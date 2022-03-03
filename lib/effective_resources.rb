@@ -34,7 +34,9 @@ module EffectiveResources
     (['Save', 'Continue', 'Add New'] & Array(config.default_submits)).inject({}) { |h, v| h[v] = true; h }
   end
 
-  # Email
+  # Mailer Settings
+  # These serve as the default mailer settings for all effective_* gems
+  # They can be overriden on a per-gem basis.
   def self.deliver_method
     return config[:deliver_method] if config[:deliver_method].present?
 
@@ -108,7 +110,6 @@ module EffectiveResources
       ::ActiveRecord::Type::Boolean.new.cast(value)
     end
   end
-
 
   def self.advance_date(date, business_days: 1, holidays: [:ca, :observed])
     raise('business_days must be an integer <= 365') unless business_days.kind_of?(Integer) && business_days <= 365
