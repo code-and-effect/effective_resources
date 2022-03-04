@@ -3,11 +3,12 @@ require 'effective_resources/version'
 require 'effective_resources/effective_gem'
 
 module EffectiveResources
+  MAILER_SUBJECT_PROC = Proc.new { |action, subject, resource, opts = {}| subject }
 
   def self.config_keys
     [
       :authorization_method, :default_submits,
-      :deliver_method, :mailer_layout, :mailer_sender, :mailer_admin, :parent_mailer
+      :parent_mailer, :deliver_method, :mailer_layout, :mailer_sender, :mailer_admin, :mailer_subject
     ]
   end
 
@@ -44,8 +45,17 @@ module EffectiveResources
     (rails.respond_to?(:active_job) && rails.active_job.queue_adapter) ? :deliver_later : :deliver_now
   end
 
+  def self.parent_mailer_class
+    return config[:parent_mailer].constantize if config[:parent_mailer].present?
+    '::ApplicationMailer'.safe_constantize || 'ActionMailer::Base'.constantize
+  end
+
   def self.mailer_layout
     config[:mailer_layout] || 'effective_mailer_layout'
+  end
+
+  def self.mailer_subject
+    config[:mailer_subject] || MAILER_SUBJECT_PROC
   end
 
   def self.mailer_sender
@@ -54,11 +64,6 @@ module EffectiveResources
 
   def self.mailer_admin
     config[:mailer_admin] || raise('effective resources mailer_admin missing. Add it to config/initializers/effective_resources.rb')
-  end
-
-  def self.parent_mailer_class
-    return config[:parent_mailer].constantize if config[:parent_mailer].present?
-    '::ApplicationMailer'.safe_constantize || 'ActionMailer::Base'.constantize
   end
 
   # Utilities

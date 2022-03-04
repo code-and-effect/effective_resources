@@ -43,6 +43,9 @@ EffectiveResources.setup do |config|
   # Default layout
   # config.mailer_layout = 'effective_mailer_layout'
 
+  # Customize the Subject
+  # config.mailer_subject = Proc.new { |action, subject, resource, opts = {}| subject }
+
   # Default From
   config.mailer_sender = '"Info" <info@example.com>'
 
