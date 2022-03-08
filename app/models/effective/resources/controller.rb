@@ -47,7 +47,6 @@ module Effective
             action_name = action.to_s.titleize
 
             if action == :destroy
-              next if buttons.values.find { |v| v[:action] == :archive }.present?
               buttons['Delete'] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really delete @resource?" }
             else
               buttons[action_name] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really #{action_name} @resource?" }
@@ -101,7 +100,6 @@ module Effective
             action_name = action.to_s.titleize
 
             if action == :destroy
-              next if actions.find { |_, v| v[:action] == :archive }.present?
               actions['Delete'] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really delete @resource?" }
             else
               actions[action_name] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really #{action_name} @resource?" }
