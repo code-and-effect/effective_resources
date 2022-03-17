@@ -56,7 +56,23 @@ module ActsAsWizard
 
     def required_steps
       return self.class.test_required_steps if Rails.env.test? && self.class.test_required_steps.present?
-      wizard_step_keys()
+
+      steps = wizard_step_keys()
+
+      # Give the caller class a mechanism to change these.
+      # Used more in effective memberships
+      steps = change_wizard_steps(steps)
+
+      unless steps.kind_of?(Array) && steps.all? { |step| step.kind_of?(Symbol) }
+        raise('expected change_wizard_steps to return an Array of steps with no nils')
+      end
+
+      steps
+    end
+
+    # Intended for use by calling class
+    def change_wizard_steps(steps)
+      steps
     end
 
     # For use in the summary partials. Does not include summary.
