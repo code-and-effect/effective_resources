@@ -48,8 +48,11 @@ module ActsAsPurchasableWizard
   end
 
   def find_or_build_submit_order
-    order = submit_order || orders.build(user: owner)
+    order = submit_order || orders.build(user: owner) # This is polymorphic user, might be an organization
     fees = submit_fees().reject { |fee| fee.marked_for_destruction? }
+
+    # A membership could go from individual to organization
+    order.user = owner
 
     # Adds fees, but does not overwrite any existing price.
     fees.each do |fee|
