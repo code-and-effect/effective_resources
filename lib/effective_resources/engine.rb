@@ -21,7 +21,7 @@ module EffectiveResources
 
     # Include acts_as_addressable concern and allow any ActiveRecord object to call it
     initializer 'effective_resources.active_record' do |app|
-      ActiveSupport.on_load :active_record do
+      app.config.to_prepare do
         ActiveRecord::Base.extend(ActsAsArchived::Base)
         ActiveRecord::Base.extend(ActsAsEmailForm::Base)
         ActiveRecord::Base.extend(ActsAsTokened::Base)
@@ -38,7 +38,7 @@ module EffectiveResources
     end
 
     initializer 'effective_resources.cancancan' do |app|
-      ActiveSupport.on_load :active_record do
+      app.config.to_prepare do
         if defined?(CanCan::Ability)
           CanCan::Ability.module_eval do
             CRUD_ACTIONS = [:index, :new, :create, :edit, :update, :show, :destroy]
@@ -64,8 +64,10 @@ module EffectiveResources
 
     # Register the flash_messages concern so that it can be called in ActionController
     initializer 'effective_resources.action_controller' do |app|
-      ActiveSupport.on_load :action_controller do
-        include(Effective::FlashMessages)
+      app.config.to_prepare do
+        ActiveSupport.on_load :action_controller do
+          include(Effective::FlashMessages)
+        end
       end
     end
 
