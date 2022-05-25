@@ -126,10 +126,13 @@ module Effective
     end
 
     def resource_layout
+      namespace = controller_path.include?('admin/') ? 'admin' : 'application'
+
       if defined?(Tenant)
-        namespace = controller_path.include?('admin/') ? 'admin' : 'application'
-        "#{Tenant.current}/#{namespace}"
+        return "#{Tenant.current}/#{namespace}"
       end
+
+      namespace
     end
 
     def resource_params_method_name
