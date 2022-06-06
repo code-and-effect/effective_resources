@@ -60,7 +60,9 @@ module Effective
             when ActiveRecord::StaleObjectError
               flash.now[:danger] = "#{flash.now[:danger]} <a href='#', class='alert-link' onclick='window.location.reload(true); return false;'>reload page and try again</a>"
               raise(ActiveRecord::Rollback) # This is a soft error, we want to display the flash message to user
-            when Effective::ActionFailed, ActiveRecord::RecordInvalid, RuntimeError
+            when Effective::ActionFailed
+              # Nothing to do
+            when ActiveRecord::RecordInvalid, RuntimeError
               raise(ActiveRecord::Rollback) # This is a soft error, we want to display the flash message to user
             else
               raise(e) # This is a real error that should be sent to 500. Client should not see the message.
