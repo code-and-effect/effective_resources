@@ -207,6 +207,20 @@ module EffectiveResourcesHelper
   end
   alias_method :render_resource, :render_resource_partial
 
+  def render_if_exists(partial, atts = {})
+    raise('expected a path') unless partial.kind_of?(String)
+    raise('path should not include spaces') if partial.include?(' ')
+
+    pieces = partial.to_s.split('/') - [nil, '']
+
+    file = pieces.last
+    path = pieces[0..-2].join('/')
+
+    if lookup_context.exists?(file, [path], :partial)
+      render(partial, atts)
+    end
+  end
+
   # Tableize attributes
   # This is used by effective_orders, effective_logging, effective_trash and effective_mergery
   def tableize_hash(obj, table: 'table', th: true, sub_table: 'table', sub_th: true, flatten: true)
