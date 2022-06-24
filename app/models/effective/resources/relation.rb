@@ -209,15 +209,23 @@ module Effective
 
         fuzzy = true unless fuzzy == false
 
-        conditions = (
-          if fuzzy
-            columns.map { |name| "#{sql_column(name)} #{ilike} :fuzzy" }
-          else
-            columns.map { |name| "#{sql_column(name)} = :value" }
-          end
-        ).join(' OR ')
+        # Retval
+        searched = relation
+        terms = value.split(' ') - [nil, '']
 
-        relation.where(conditions, fuzzy: "%#{value}%", value: value)
+        terms.each do |term|
+          conditions = (
+            if fuzzy
+              columns.map { |name| "#{sql_column(name)} #{ilike} :fuzzy" }
+            else
+              columns.map { |name| "#{sql_column(name)} = :term" }
+            end
+          ).join(' OR ')
+
+          searched = searched.where(conditions, fuzzy: "%#{term}%", term: term)
+        end
+
+        searched
       end
 
       private
