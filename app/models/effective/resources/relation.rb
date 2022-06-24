@@ -6,6 +6,10 @@ module Effective
       TARGET_LIST_LIMIT = 1500
       TARGET_KEYS_LIMIT = 30000
 
+      DO_NOT_SEARCH_EQUALS = ['unconfirmed_email', 'provider', 'secret', 'crypt', 'salt', 'uid', 'certificate', 'otp', 'ssn']
+      DO_NOT_SEARCH_INCLUDE = ['password']
+      DO_NOT_SEARCH_END_WITH = ['_url', '_param', '_token', '_type', '_id', '_key', '_ip']
+
       # This could be active_model? in which we just return the klass itself here
       # This value ends up being crud_controller resource_scope()
       def relation
@@ -197,7 +201,12 @@ module Effective
         end
 
         # Otherwise, we fall back to a string/text search of all columns
-        columns = Array(columns || search_columns)
+        columns = Array(columns || search_columns).reject do |column|
+          DO_NOT_SEARCH_EQUALS.any? { |value| column == value } ||
+          DO_NOT_SEARCH_INCLUDE.any? { |value| column.include?(value) } ||
+          DO_NOT_SEARCH_END_WITH.any? { |value| column.end_with?(value) }
+        end
+
         fuzzy = true unless fuzzy == false
 
         conditions = (

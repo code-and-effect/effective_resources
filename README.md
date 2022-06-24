@@ -354,6 +354,31 @@ You can also call `render_wizard_sidebar(resource)` without the block syntax.
 
 If you add `f.hidden_field(:skip_to_step, value: 'stepc')` you can control the next step.
 
+## Select2 Ajax Controller
+
+This gem provides an admin endpoint for select2 AJAX to fetch users.
+
+To use this endpoint please add
+
+```
+can :admin, :effective_resources
+```
+
+And then create a select field like this:
+
+```
+  = f.select :user_id, current_user.class.all,
+    ajax_url: effective_resources.users_admin_select2_ajax_index_path
+```
+
+To format the results, add a method to your User class. It can return html.
+
+```
+def to_select2
+  "<span>#{user.first_name} #{user.last_name}</span> <small>#{user.email}</small>"
+end
+```
+
 ## Testing
 
 Run tests by:
