@@ -262,4 +262,32 @@ module EffectiveResourcesHelper
     controller.class.try(:effective_wizard_controller?) && defined?(resource) && resource.draft?
   end
 
+  def wizard_card(resource, &block)
+    raise('expected a block') unless block_given?
+    raise('expected an acts_as_wizard resource') unless resource.class.respond_to?(:acts_as_wizard?)
+
+    step = resource.render_step
+    raise('expected a render_step') unless step.present?
+
+    title = resource.wizard_step_title(step)
+    raise("expected a title for step #{step}") unless title.present?
+
+    link = if edit_effective_wizard? && resource.can_visit_step?(step)
+      link_to('Edit', wizard_path(step), title: "Edit #{title}")
+    end
+
+    content_tag(:div, class: 'card') do
+      content_tag(:div, class: 'card-body yo') do
+        content_tag(:div, class: 'row') do
+          content_tag(:div, class: 'col-sm') do
+            content_tag(:h5, title, class: 'card-title')
+          end +
+          content_tag(:div, class: 'col-sm-auto text-right') do
+            (link || '')
+          end
+        end + capture(&block)
+      end
+    end
+  end
+
 end

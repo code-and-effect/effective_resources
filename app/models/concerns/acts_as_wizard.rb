@@ -29,6 +29,9 @@ module ActsAsWizard
 
     attr_accessor :current_user
 
+    # Used by the view when rendering each partial. Not the current step.
+    attr_accessor :render_step
+
     if Rails.env.test? # So our tests can override the required_steps method
       cattr_accessor :test_required_steps
     end
