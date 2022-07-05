@@ -28,7 +28,10 @@ module ActsAsTokened
     def find(*args)
       return super unless args.length == 1
       return super if block_given?
-      return find_by_id(args.first) if @_effective_reloading
+
+      if self.class.instance_variable_get(:@_effective_reloading) || (respond_to?(:klass) && klass.instance_variable_get(:@_effective_reloading))
+        return find_by_id(args.first)
+      end
 
       find_by_token(args.first) || raise(::ActiveRecord::RecordNotFound.new("Couldn't find #{name} with 'token'=#{args.first}"))
     end
