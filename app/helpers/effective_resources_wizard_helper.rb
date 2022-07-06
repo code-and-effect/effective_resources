@@ -6,7 +6,7 @@ module EffectiveResourcesWizardHelper
     klasses = ['wizard-sidebar', 'list-group', ('list-group-horizontal' if horizontal)].compact.join(' ')
 
     sidebar = content_tag(:div, class: klasses) do
-      resource.required_steps.map.with_index do |nav_step, index|
+      resource.sidebar_steps.map.with_index do |nav_step, index|
         render_wizard_sidebar_item(resource, nav_step, (index + 1 if numbers))
       end.join.html_safe
     end

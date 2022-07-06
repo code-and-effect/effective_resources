@@ -78,6 +78,10 @@ module ActsAsWizard
       steps
     end
 
+    def sidebar_steps
+      required_steps
+    end
+
     # For use in the summary partials. Does not include summary.
     def render_steps
       blacklist = [:start, :billing, :checkout, :submitted, :summary]
