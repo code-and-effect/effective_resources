@@ -218,6 +218,9 @@ module EffectiveResourcesHelper
 
     if lookup_context.exists?(file, [path], :partial)
       render(partial, atts)
+    else
+      Rails.logger.info "Skipped Render (effective_resources) render_if_exists: #{partial}"
+      nil
     end
   end
 
