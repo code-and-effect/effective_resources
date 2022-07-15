@@ -22,6 +22,8 @@ module Effective
         before_action :redirect_if_blank_step
 
         before_action :assign_resource
+        before_action :assign_resource_current_user
+
         before_action :authorize_resource
         before_action :assign_required_steps
 
@@ -59,8 +61,12 @@ module Effective
       if params[resource_name_id] && params[resource_name_id] != 'new'
         resource_scope.find(params[resource_name_id])
       else
-        resource_scope.new
+        build_wizard_resource
       end
+    end
+
+    def build_wizard_resource
+      resource_scope.new
     end
 
     def resource_wizard_step_title(resource, step)

@@ -21,6 +21,11 @@ module Effective
         self.resource ||= find_wizard_resource
       end
 
+      def assign_resource_current_user
+        return unless respond_to?(:current_user)
+        resource.current_user ||= current_user
+      end
+
       # before_action :authorize_resource, only: [:show, :update]
       # Authorize the resource
       def authorize_resource
@@ -70,10 +75,6 @@ module Effective
       # before_action :assign_current_step, only: [:show, :update]
       # Assign the current step to resource
       def assign_current_step
-        if respond_to?(:current_user) && resource.respond_to?(:current_user=)
-          resource.current_user = current_user
-        end
-
         resource.current_step = step.to_sym
       end
 
