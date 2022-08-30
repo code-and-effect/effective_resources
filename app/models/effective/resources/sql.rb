@@ -64,7 +64,7 @@ module Effective
           :effective_obfuscation
         elsif name == 'roles' && defined?(EffectiveRoles) && klass.respond_to?(:with_role)
           :effective_roles
-        elsif (name.include?('_address') || name.include?('_addresses')) && defined?(EffectiveAddresses) && (klass.new rescue nil).respond_to?(:effective_addresses)
+        elsif (name.ends_with?('_address') || name.ends_with?('_addresses')) && defined?(EffectiveAddresses) && (klass.new rescue nil).respond_to?(name)
           :effective_addresses
         elsif name.ends_with?('_id')
           :integer
