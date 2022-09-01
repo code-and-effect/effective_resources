@@ -124,8 +124,32 @@ module Effective
         value.presence
       when :price # Integer * 100. Number of cents.
         value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f * 100.0).round
-      when :string, :email
+      when :string
         value.to_s
+      when :email
+        return nil unless value.kind_of?(String)
+
+        if value.include?('<') && value.include?('>')
+          value = value.match(/<(.+)>/)[1].to_s  # John Smith <john.smith@hotmail.com>
+        end
+
+        if value.include?(',')
+          value = value.split(',').find { |str| str.include?('@') }.to_s
+        end
+
+        if value.include?(' ')
+          value = value.split(' ').find { |str| str.include?('@') }.to_s
+        end
+
+        value = value.to_s.downcase.strip
+
+        return nil unless value.include?('@') && value.include?('.')
+
+        if defined?(Devise)
+          return nil unless Devise::email_regexp.match?(value)
+        end
+
+        value
       when :belongs_to_polymorphic
         value.to_s
       when :belongs_to, :has_many, :has_and_belongs_to_many, :has_one, :resource, :effective_addresses  # Returns an Array of ints, an Int or String
