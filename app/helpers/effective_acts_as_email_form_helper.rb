@@ -9,8 +9,8 @@ module EffectiveActsAsEmailFormHelper
     raise('expected an acts_as_email_form resource') unless resource.class.respond_to?(:acts_as_email_form?)
 
     # Load the template.
-    email_template = if action.present? && resource.email_form_effective_email_templates?
-      Effective::EmailTemplate.where(template_name: action).first!
+    email_template = if action.present? && defined?(EffectiveEmailTemplates)
+      action.kind_of?(Effective::EmailTemplate) ? action : Effective::EmailTemplate.where(template_name: action).first!
     end
 
     # These defaults are only used when there is no email_template
