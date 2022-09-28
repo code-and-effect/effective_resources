@@ -87,10 +87,7 @@ module EffectiveResources
   end
 
   def self.transaction(resource = nil, &block)
-    connection = 'ActiveRecord::Base'.safe_constantize
-    raise('unable to determine transaction class') unless connection.present?
-
-    connection.transaction { yield }
+    resource.class.transaction { yield }
   end
 
   # Used by streaming CSV export in datatables

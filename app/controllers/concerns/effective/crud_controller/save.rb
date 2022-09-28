@@ -29,45 +29,42 @@ module Effective
         end
 
         success = false
+        error = nil
 
-        EffectiveResources.transaction(resource) do
-          begin
-            run_callbacks(:resource_before_save)
+        begin
+          ActiveRecord::Base.transaction do
+            EffectiveResources.transaction(resource) do
+              run_callbacks(:resource_before_save)
 
-            if resource.public_send("#{save_action}!") == false
-              raise Effective::ActionFailed.new("failed to #{action}")
-            end
+              if resource.public_send("#{save_action}!") == false
+                raise Effective::ActionFailed.new("failed to #{action}")
+              end
 
-            yield if block_given?
+              yield if block_given?
 
-            run_callbacks(:resource_after_save)
+              run_callbacks(:resource_after_save)
 
-            success = true
-          rescue => e
-            if Rails.env.development?
-              Rails.logger.info "  \e[31m\e[1mFAILED\e[0m\e[22m" # bold red
-              Rails.logger.info "  Unable to #{action} #{resource} - #{e.class} #{e}"
-              e.backtrace.first(5).each { |line| Rails.logger.info('  ' + line) }
-            end
-
-            if resource.respond_to?(:restore_attributes) && resource.persisted?
-              resource.restore_attributes(['status', 'state'])
-            end
-
-            flash.now[:danger] = resource_flash(:danger, resource, action, e: e)
-
-            case e
-            when ActiveRecord::StaleObjectError
-              flash.now[:danger] = "#{flash.now[:danger]} <a href='#', class='alert-link' onclick='window.location.reload(true); return false;'>reload page and try again</a>"
-              raise(ActiveRecord::Rollback) # This is a soft error, we want to display the flash message to user
-            when Effective::ActionFailed
-              # Nothing to do
-            when ActiveRecord::RecordInvalid, RuntimeError
-              raise(ActiveRecord::Rollback) # This is a soft error, we want to display the flash message to user
-            else
-              raise(e) # This is a real error that should be sent to 500. Client should not see the message.
+              success = true
             end
           end
+        rescue => e
+          if Rails.env.development?
+            Rails.logger.info "  \e[31m\e[1mFAILED\e[0m\e[22m" # bold red
+            Rails.logger.info "  Unable to #{action} #{resource} - #{e.class} #{e}"
+            e.backtrace.first(5).each { |line| Rails.logger.info('  ' + line) }
+          end
+
+          if resource.respond_to?(:restore_attributes) && resource.persisted?
+            resource.restore_attributes(['status', 'state'])
+          end
+
+          flash.now[:danger] = resource_flash(:danger, resource, action, e: e)
+
+          if e.kind_of?(ActiveRecord::StaleObjectError)
+            flash.now[:danger] = "#{flash.now[:danger]} <a href='#', class='alert-link' onclick='window.location.reload(true); return false;'>reload page and try again</a>"
+          end
+
+          success = false
         end
 
         run_callbacks(success ? :resource_after_commit : :resource_error)
