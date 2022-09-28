@@ -29,7 +29,7 @@ module Effective
         end
 
         success = false
-        error = nil
+        exception = nil
 
         begin
           ActiveRecord::Base.transaction do
@@ -45,14 +45,18 @@ module Effective
               run_callbacks(:resource_after_save)
 
               success = true
+            rescue Effective::ActionFailed => e
+              exception = e   # Dont rollback
             end
           end
         rescue => e
-          if Rails.env.development?
-            Rails.logger.info "  \e[31m\e[1mFAILED\e[0m\e[22m" # bold red
-            Rails.logger.info "  Unable to #{action} #{resource} - #{e.class} #{e}"
-            e.backtrace.first(5).each { |line| Rails.logger.info('  ' + line) }
-          end
+          exception = e
+        end
+
+        if exception.present?
+          Rails.logger.info "  \e[31m\e[1mFAILED\e[0m\e[22m" # bold red
+          Rails.logger.info "  Unable to #{action} #{resource} - #{e.class} #{e}"
+          exception.backtrace.first(5).each { |line| Rails.logger.info('  ' + line) }
 
           if resource.respond_to?(:restore_attributes) && resource.persisted?
             resource.restore_attributes(['status', 'state'])
@@ -60,11 +64,9 @@ module Effective
 
           flash.now[:danger] = resource_flash(:danger, resource, action, e: e)
 
-          if e.kind_of?(ActiveRecord::StaleObjectError)
+          if exception.kind_of?(ActiveRecord::StaleObjectError)
             flash.now[:danger] = "#{flash.now[:danger]} <a href='#', class='alert-link' onclick='window.location.reload(true); return false;'>reload page and try again</a>"
           end
-
-          success = false
         end
 
         run_callbacks(success ? :resource_after_commit : :resource_error)
