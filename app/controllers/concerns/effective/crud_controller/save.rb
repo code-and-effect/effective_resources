@@ -33,7 +33,7 @@ module Effective
 
         begin
           ActiveRecord::Base.transaction do
-            EffectiveResources.transaction(resource) do
+            resource.transaction do
               run_callbacks(:resource_before_save)
 
               if resource.public_send("#{save_action}!") == false
@@ -55,14 +55,14 @@ module Effective
 
         if exception.present?
           Rails.logger.info "  \e[31m\e[1mFAILED\e[0m\e[22m" # bold red
-          Rails.logger.info "  Unable to #{action} #{resource} - #{e.class} #{e}"
+          Rails.logger.info "  Unable to #{action} #{resource} - #{exception.class} #{exception}"
           exception.backtrace.first(5).each { |line| Rails.logger.info('  ' + line) }
 
           if resource.respond_to?(:restore_attributes) && resource.persisted?
             resource.restore_attributes(['status', 'state'])
           end
 
-          flash.now[:danger] = resource_flash(:danger, resource, action, e: e)
+          flash.now[:danger] = resource_flash(:danger, resource, action, e: exception)
 
           if exception.kind_of?(ActiveRecord::StaleObjectError)
             flash.now[:danger] = "#{flash.now[:danger]} <a href='#', class='alert-link' onclick='window.location.reload(true); return false;'>reload page and try again</a>"

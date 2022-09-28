@@ -86,10 +86,6 @@ module EffectiveResources
     klass
   end
 
-  def self.transaction(resource = nil, &block)
-    resource.class.transaction { yield }
-  end
-
   # Used by streaming CSV export in datatables
   def self.with_resource_enumerator(&block)
     raise('expected a block') unless block_given?
