@@ -33,7 +33,7 @@ module Effective
 
         begin
           ActiveRecord::Base.transaction do
-            resource.transaction do
+            EffectiveResources.transaction(resource) do
               run_callbacks(:resource_before_save)
 
               if resource.public_send("#{save_action}!") == false

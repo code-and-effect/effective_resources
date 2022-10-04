@@ -159,4 +159,17 @@ module EffectiveResources
     duplicate
   end
 
+  def self.transaction(resource = nil, &block)
+    raise('expected a block') unless block_given?
+
+    if resource.respond_to?(:transaction)
+      resource.transaction { yield }
+    elsif resource.class.respond_to?(:transaction)
+      resource.class.transaction { yield }
+    else
+      ActiveRecord::Base.transaction { yield }
+    end
+
+  end
+
 end

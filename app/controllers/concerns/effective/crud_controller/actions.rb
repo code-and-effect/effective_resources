@@ -228,7 +228,7 @@ module Effective
 
         # No attributes are assigned or saved. We purely call action! on the resource
 
-        EffectiveResources.transaction do
+        ActiveRecord::Base.transaction do
           successes = resources.select do |resource|
             begin
               resource.public_send("#{action}!") if EffectiveResources.authorized?(self, action, resource)
