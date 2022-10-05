@@ -49,8 +49,11 @@ module Effective
               exception = e   # Dont rollback
             end
           end
+        rescue ActiveRecord::RecordInvalid => e
+          exception = e
         rescue => e
           exception = e
+          notify_exception(e, resource, action) unless e.class.name == 'RuntimeError'
         end
 
         if exception.present?
@@ -72,6 +75,14 @@ module Effective
         run_callbacks(success ? :resource_after_commit : :resource_error)
 
         success
+      end
+
+      def notify_exception(exception, resource, action)
+        if defined?(ExceptionNotifier)
+          ExceptionNotifier.notify_exception(exception, env: request.env, data: { resource: resource, action: action })
+        else
+          raise(exception)
+        end
       end
 
       def resource_flash(status, resource, action, e: nil)
