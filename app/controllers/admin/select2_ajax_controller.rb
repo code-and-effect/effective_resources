@@ -8,6 +8,12 @@ module Admin
     def users
       collection = current_user.class.all
 
+      if collection.respond_to?(:to_select2)
+        collection = collection.to_select2
+      elsif collection.respond_to?(:sorted)
+        collection = collection.sorted
+      end
+
       respond_with_select2_ajax(collection) do |user|
         { id: user.to_param, text: user.try(:to_select2) || to_select2(user) }
       end
@@ -16,7 +22,7 @@ module Admin
     private
 
     def to_select2(user)
-      "<span>#{user.first_name} #{user.last_name}</span> <small>#{user.email}</small>"
+      "<span>#{user}</span> <small>#{user.email}</small>"
     end
 
   end
