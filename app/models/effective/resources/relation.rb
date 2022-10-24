@@ -200,12 +200,20 @@ module Effective
           return relation.where(klass.primary_key => maybe_id) if (maybe_id.to_i.to_s == maybe_id)
         end
 
+        # If the user specifies columns. Filter out invalid ones for this klass
+        if columns.present?
+          columns = Array(columns).map(&:to_s) - [nil, '']
+          columns = (columns & search_columns)
+        end
+
         # Otherwise, we fall back to a string/text search of all columns
         columns = Array(columns || search_columns).reject do |column|
           DO_NOT_SEARCH_EQUALS.any? { |value| column == value } ||
           DO_NOT_SEARCH_INCLUDE.any? { |value| column.include?(value) } ||
           DO_NOT_SEARCH_END_WITH.any? { |value| column.end_with?(value) }
         end
+
+        return relation.none() if columns.blank?
 
         fuzzy = true unless fuzzy == false
 
