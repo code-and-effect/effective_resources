@@ -58,9 +58,13 @@ module Effective
             .order(Arel.sql("#{sql_column(:roles_mask)} #{sql_direction}"))
         when :time
           relation
-            .order("EXTRACT(hour from #{sql_column}) #{sql_direction}, EXTRACT(minute from #{sql_column}) #{sql_direction}")
+            .order(Arel.sql("EXTRACT(hour from #{sql_column}) #{sql_direction}, EXTRACT(minute from #{sql_column}) #{sql_direction}"))
+        when :string, :text
+          relation
+            .order(Arel.sql("#{sql_column}='' ASC, #{sql_column} #{sql_direction}"))
         else
-          relation.order(sql_column => sql_direction)
+          relation
+            .order(Arel.sql("#{sql_column} #{sql_direction}"))
         end
       end
 
