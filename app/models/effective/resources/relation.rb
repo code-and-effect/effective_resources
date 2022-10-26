@@ -49,19 +49,18 @@ module Effective
             .order(order_by_associated_conditions(associated(:addresses), sort: sort, direction: direction, limit: limit))
             .order(Arel.sql("#{sql_column(klass.primary_key)} #{sql_direction}"))
         when :active_storage
-          relation.send("with_attached_#{name}").references("#{name}_attachment")
+          relation
+            .send("with_attached_#{name}")
+            .references("#{name}_attachment")
             .order(Arel.sql("active_storage_blobs.filename #{sql_direction}"))
         when :effective_roles
-          relation.order(Arel.sql("#{sql_column(:roles_mask)} #{sql_direction}"))
-        when :string, :text
           relation
-            .order(Arel.sql(("ISNULL(#{sql_column}), " if mysql?).to_s + "#{sql_column}='' ASC, #{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?).to_s))
-          when :time
-            relation
-              .order(Arel.sql(("ISNULL(#{sql_column}), " if mysql?).to_s + "EXTRACT(hour from #{sql_column}) #{sql_direction}, EXTRACT(minute from #{sql_column}) #{sql_direction}" + (" NULLS LAST" if postgres?).to_s))
+            .order(Arel.sql("#{sql_column(:roles_mask)} #{sql_direction}"))
+        when :time
+          relation
+            .order("EXTRACT(hour from #{sql_column}) #{sql_direction}, EXTRACT(minute from #{sql_column}) #{sql_direction}")
         else
-          relation
-            .order(Arel.sql(("ISNULL(#{sql_column}), " if mysql?).to_s + "#{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?).to_s))
+          relation.order(sql_column => sql_direction)
         end
       end
 
