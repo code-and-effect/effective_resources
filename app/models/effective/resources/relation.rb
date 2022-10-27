@@ -59,9 +59,6 @@ module Effective
         when :time
           relation
             .order(Arel.sql("EXTRACT(hour from #{sql_column}) #{sql_direction}, EXTRACT(minute from #{sql_column}) #{sql_direction}"))
-        when :string, :text
-          relation
-            .order(Arel.sql("#{sql_column}='' ASC, #{sql_column} #{sql_direction}"))
         else
           relation
             .order(Arel.sql("#{sql_column} #{sql_direction}"))
