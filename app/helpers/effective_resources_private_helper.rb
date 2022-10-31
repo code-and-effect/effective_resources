@@ -36,20 +36,20 @@ module EffectiveResourcesPrivateHelper
       end
 
       # Replace resource name in any token strings
-      if opts['data-confirm'].present? && opts['data-confirm'].include?('@resource'.freeze)
-        opts['data-confirm'] = opts['data-confirm'].gsub('@resource'.freeze, resource_to_s)
+      if opts.key?('data-confirm') && opts['data-confirm'].to_s.include?('@resource')
+        opts['data-confirm'] = opts['data-confirm'].gsub('@resource', resource_to_s)
       end
 
       # Assign class
       opts[:class] ||= (
-        if opts['data-method'.freeze] == 'delete'.freeze
-          'btn btn-danger'.freeze
+        if opts['data-method'].to_s == 'delete'
+          'btn btn-danger'
         elsif h.length == 0
-          'btn btn-primary'.freeze
+          'btn btn-primary'
         elsif defined?(EffectiveBootstrap)
-          'btn btn-secondary'.freeze
+          'btn btn-secondary'
         else
-          'btn btn-default'.freeze
+          'btn btn-default'
         end
       )
 
