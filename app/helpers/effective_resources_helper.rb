@@ -293,4 +293,12 @@ module EffectiveResourcesHelper
     end
   end
 
+  def return_to_dashboard_path
+    path = (Tenant.routes.dashboard_path rescue nil) if defined?(Tenant) && Tenant.routes.respond_to?(:dashboard_path)
+    path ||= (main_app.dashboard_path rescue nil) if main_app.respond_to?(:dashboard_path)
+    path ||= (main_app.root_path rescue nil) if main_app.respond_to?(:root_path)
+
+    path || '/'
+  end
+
 end
