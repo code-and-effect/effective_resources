@@ -40,7 +40,7 @@ module ActsAsSlugged
       return super unless args.length == 1
       return super if block_given?
 
-      where(slug: args.first).or(where(id: args.first)).first || raise(::ActiveRecord::RecordNotFound.new("Couldn't find #{name} with 'slug'=#{args.first}"))
+      where(slug: args.first).first || raise(::ActiveRecord::RecordNotFound.new("Couldn't find #{name} with 'slug'=#{args.first}"))
     end
 
     def find_by_slug_or_id(*args)
