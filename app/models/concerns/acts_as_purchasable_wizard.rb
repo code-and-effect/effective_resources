@@ -68,6 +68,7 @@ module ActsAsPurchasableWizard
     order.billing_address = owner.billing_address if owner.try(:billing_address).present?
 
     # Important to add/remove anything
+    # This will update the prices, but the purchasables must be persisted
     order.save!
 
     order
