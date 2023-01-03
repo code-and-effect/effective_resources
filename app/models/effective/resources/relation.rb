@@ -159,42 +159,42 @@ module Effective
             reflection.source_reflection.klass
           end
 
-          foreign_key = if reflection.through_reflection.macro == :belongs_to
-            reflection.through_reflection.klass.primary_key # to do check this
-          else
-            reflection.through_reflection.foreign_key # user_id
-          end
-
-          source_key = if reflection.source_reflection.macro == :belongs_to
+          reflected_id = if reflection.source_reflection.macro == :belongs_to
             reflection.source_reflection.foreign_key # to do check this
           else
             reflection.source_reflection.klass.primary_key # group_id
           end
 
+          foreign_id = if reflection.through_reflection.macro == :belongs_to
+            reflection.through_reflection.klass.primary_key # to do check this
+          else
+            reflection.through_reflection.foreign_key # user_id
+          end
+
           # Build the through collection
-          through_collection = reflection.through_reflection.klass.all  # group mates
+          through = reflection.through_reflection.klass.all  # group mates
 
           if reflection.source_reflection.options[:polymorphic]
-            through_collection = through_collection.where(reflection.source_reflection.foreign_type => reflected_klass.name)
+            through = through.where(reflection.source_reflection.foreign_type => reflected_klass.name)
           end
 
           # Search the associated class
           associated = case operation
           when :associated_ids
-            associated = through_collection.where(source_key => value_ids)
-            relation.where(id: associated.select(foreign_key))
+            associated = through.where(reflected_id => value_ids)
+            relation.where(id: associated.select(foreign_id))
           when :associated_matches
-            searched = Resource.new(reflected_klass).search_any(value)
-            associated = through_collection.where(source_key => searched)
-            relation.where(id: associated.select(foreign_key))
+            reflected = Resource.new(reflected_klass).search_any(value)
+            associated = through.where(reflected_id => reflected)
+            relation.where(id: associated.select(foreign_id))
           when :associated_does_not_match
-            searched = Resource.new(reflected_klass).search_any(value)
-            associated = through_collection.where(source_key => searched)
-            relation.where.not(id: associated.select(foreign_key))
+            reflected = Resource.new(reflected_klass).search_any(value)
+            associated = through.where(reflected_id => reflected)
+            relation.where.not(id: associated.select(foreign_id))
           when :associated_sql
             if (reflected_klass.where(value_sql).present? rescue :invalid) != :invalid
-              searched = reflected_klass.where(value_sql)
-              associated = through_collection.where(source_key => searched)
+              reflected = reflected_klass.where(value_sql)
+              associated = through.where(reflected_id => reflected)
               relation.where(id: associated.select(foreign_id))
             else
               relation
