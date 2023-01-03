@@ -172,4 +172,10 @@ module EffectiveResources
 
   end
 
+  def self.replace_nested_attributes(attributes)
+    attributes.reject { |k, values| truthy?(values[:_destroy]) }.inject({}) do |h, (key, values)|
+      h[key] = values.reject { |k, v| k == 'id' || k == '_destroy' }; h
+    end
+  end
+
 end

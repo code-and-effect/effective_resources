@@ -65,7 +65,212 @@ module Effective
         end
       end
 
-      def search(name, value, as: nil, fuzzy: true, sql_column: nil)
+      def search(name, value, as: nil, column: nil, operation: nil)
+        raise 'expected relation to be present' unless relation
+
+        sql_as = (as || sql_type(name))
+        sql_column = (column || sql_column(name))
+        sql_operation = (operation || sql_operation(name, as: sql_as))
+        sql_association = associated(name)
+
+        if ['SUM(', 'COUNT(', 'MAX(', 'MIN(', 'AVG('].any? { |str| sql_column.to_s.include?(str) }
+          return relation.having("#{sql_column} = ?", value)
+        end
+
+        if value.to_s == 'nil' && ![:belongs_to, :belongs_to_polymorphic, :has_and_belongs_to_many, :has_many, :has_one, :effective_roles].include?(sql_as)
+          return relation.where(is_null(sql_column))
+        end
+
+        case sql_as
+        when :belongs_to, :belongs_to_polymorphic, :has_and_belongs_to_many, :has_many, :has_one
+          search_associated(name, value, as: sql_as, operation: sql_operation)
+        else
+          search_attribute(name, value, as: sql_as, operation: sql_operation)
+        end
+      end
+
+      def search_associated(name, value, as:, operation:)
+        raise 'expected relation to be present' unless relation
+
+        value_ids = (value.to_s.split(/,|\s|\|/) - [nil, '', ' '])
+        value_sql = Arel.sql(value.to_s)
+
+        reflection = relation.klass.reflect_on_all_associations.find { |reflection| reflection.name == name }
+        raise("expected to find #{relation.klass.name} #{name} reflection") unless reflection
+
+        case as
+        when :belongs_to
+          foreign_id = reflection.foreign_key
+          foreign_relation = reflection.klass.all
+
+          case operation
+          when :associated_ids
+            associated = foreign_relation.where(id: value_ids)
+            relation.where(foreign_id => associated.select(:id))
+          when :associated_matches
+            associated = Resource.new(foreign_relation).search_any(value)
+            relation.where(foreign_id => associated.select(:id))
+          when :associated_does_not_match
+            associated = Resource.new(foreign_relation).search_any(value)
+            relation.where.not(foreign_id => associated.select(:id))
+          when :associated_sql
+            if (foreign_relation.where(value_sql).present? rescue :invalid) != :invalid
+              associated = foreign_relation.where(value_sql)
+              relation.where(foreign_id => associated.select(:id))
+            end
+          end
+
+        when :belongs_to_polymorphic
+          raise('todo')
+
+        when :has_many, :has_one
+          foreign_id = reflection.foreign_key
+          foreign_type = reflection.foreign_key.to_s.chomp('_id') + '_type'
+
+          foreign_collection = reflection.klass.all
+          foreign_collection = reflection.klass.where(foreign_type => collection.klass.name) if reflection.klass.new.respond_to?(foreign_type)
+
+          binding.pry
+
+        else
+          raise("unsupported search associated operation: #{as}")
+        end
+      end
+
+      # def search_by_associated_conditions(association, value, fuzzy: nil)
+      #   resource = Effective::Resource.new(association)
+
+      #   # Search the target model for its matching records / keys
+      #   relation = resource.search_any(value, fuzzy: fuzzy)
+
+      #   if association.options[:as] # polymorphic
+      #     relation = relation.where(association.type => klass.name)
+      #   end
+
+      #   # key: the id, or associated_id on my table
+      #   # keys: the ids themselves as per the target table
+      #   if association.macro == :belongs_to && association.options[:polymorphic]
+      #     key = sql_column(association.foreign_key)
+      #     keys = relation.pluck((relation.klass.primary_key rescue nil))
+      #   elsif association.macro == :belongs_to
+      #     key = sql_column(association.foreign_key)
+      #     keys = relation.pluck(association.klass.primary_key)
+      #   elsif association.macro == :has_and_belongs_to_many
+      #     key = sql_column(klass.primary_key)
+      #     values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact
+
+      #     keys = if value == 'nil'
+      #       klass.where.not(klass.primary_key => klass.joins(association.name)).pluck(klass.primary_key)
+      #     else
+      #       klass.joins(association.name)
+      #         .where(association.name => { association.source_reflection.klass.primary_key => values })
+      #         .pluck(klass.primary_key)
+      #     end
+      #   elsif association.options[:through].present?
+      #     scope = association.through_reflection.klass.all
+
+      #     if association.source_reflection.options[:polymorphic]
+      #       reflected_klass = association.klass
+      #       scope = scope.where(association.source_reflection.foreign_type => reflected_klass.name)
+      #     else
+      #       reflected_klass = association.source_reflection.klass
+      #     end
+
+      #     if association.through_reflection.macro == :belongs_to
+      #       key = association.through_reflection.foreign_key
+      #       pluck_key = association.through_reflection.klass.primary_key
+      #     else
+      #       key = sql_column(klass.primary_key)
+      #       pluck_key = association.through_reflection.foreign_key
+      #     end
+
+      #     if value == 'nil'
+      #       keys = klass.where.not(klass.primary_key => scope.pluck(pluck_key)).pluck(klass.primary_key)
+      #     else
+      #       keys = scope.where(association.source_reflection.foreign_key => relation).pluck(pluck_key)
+      #     end
+
+      #   elsif association.macro == :has_many
+      #     key = sql_column(klass.primary_key)
+
+      #     keys = if value == 'nil'
+      #       klass.where.not(klass.primary_key => resource.klass.pluck(association.foreign_key)).pluck(klass.primary_key)
+      #     else
+      #       relation.pluck(association.foreign_key)
+      #     end
+
+      #   elsif association.macro == :has_one
+      #     key = sql_column(klass.primary_key)
+
+      #     keys = if value == 'nil'
+      #       klass.where.not(klass.primary_key => resource.klass.pluck(association.foreign_key)).pluck(klass.primary_key)
+      #     else
+      #       relation.pluck(association.foreign_key)
+      #     end
+      #   end
+
+      #   "#{key} IN (#{(keys.uniq.compact.presence || [0]).join(',')})"
+      # end
+
+
+      def search_attribute(name, value, as:, operation:)
+        raise 'expected relation to be present' unless relation
+
+        attribute = relation.arel_table[name]
+
+        # Normalize the term
+        term = Attribute.new(as).parse(value, name: name)
+
+        searched = case as
+          when :date, :datetime
+            if value.kind_of?(String)
+              end_at = (
+                case (value.to_s.scan(/(\d+)/).flatten).length
+                when 1 ; term.end_of_year     # Year
+                when 2 ; term.end_of_month    # Year-Month
+                when 3 ; term.end_of_day      # Year-Month-Day
+                when 4 ; term.end_of_hour     # Year-Month-Day Hour
+                when 5 ; term.end_of_minute   # Year-Month-Day Hour-Minute
+                when 6 ; term + 1.second      # Year-Month-Day Hour-Minute-Second
+                else term
+                end
+              )
+
+              relation.where(attribute.gteq(term)).where(attribute.lteq(end_at))
+            end
+          when :effective_obfuscation
+            term = Attribute.new(as, klass: (associated(name).try(:klass) || klass)).parse(value, name: name)
+            relation.where(attribute.eq((value == term ? 0 : term)))
+
+          when :effective_roles
+            relation.with_role(term)
+
+          when :active_storage
+            relation.send("with_attached_#{name}").references("#{name}_attachment").where(ActiveStorage::Blob.arel_table[:filename].matches("%#{term}%"))
+
+          when :time
+            timed = relation.where("EXTRACT(hour from #{sql_column}) = ?", term.utc.hour)
+            timed = timed.where("EXTRACT(minute from #{sql_column}) = ?", term.utc.min) if term.min > 0
+            timed
+        end
+
+        # Defaults
+        searched || case operation
+          when :eq then relation.where(attribute.eq(term))
+          when :not_eq then relation.where(attribute.not_eq(term))
+          when :matches then relation.where(attribute.matches("%#{term}%"))
+          when :does_not_match then relation.where(attribute.does_not_match("%#{term}%"))
+          when :starts_with then relation.where(attribute.matches("#{term}%"))
+          when :ends_with then relation.where(attribute.matches("%#{term}"))
+          when :gt then relation.where(attribute.gt(term))
+          when :gteq then relation.where(attribute.gteq(term))
+          when :lt then relation.where(attribute.lt(term))
+          when :lteq then relation.where(attribute.lteq(term))
+          else raise("Unexpected operation: #{operation}")
+        end
+      end
+
+      def searchOld(name, value, as: nil, fuzzy: true, sql_column: nil)
         raise 'expected relation to be present' unless relation
 
         sql_column ||= sql_column(name)
@@ -127,6 +332,7 @@ module Effective
             .where(ActiveStorage::Blob.arel_table[:filename].matches("%#{term}%"))
         when :boolean
           relation.where("#{sql_column} = ?", term)
+
         when :datetime, :date
           end_at = (
             case (value.to_s.scan(/(\d+)/).flatten).length
@@ -193,11 +399,6 @@ module Effective
         # Assume this is a set of IDs
         if value.kind_of?(Integer) || value.kind_of?(Array) || (value.to_i.to_s == value)
           return relation.where(klass.primary_key => value)
-        end
-
-        # If the value is 3-something-like-this
-        if (values = value.to_s.split('-')).length > 0 && (maybe_id = values.first).present?
-          return relation.where(klass.primary_key => maybe_id) if (maybe_id.to_i.to_s == maybe_id)
         end
 
         # If the user specifies columns. Filter out invalid ones for this klass
