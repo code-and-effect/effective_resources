@@ -82,136 +82,44 @@ module Effective
         end
 
         case sql_as
-        when :belongs_to, :belongs_to_polymorphic, :has_and_belongs_to_many, :has_many, :has_one
-          search_associated(name, value, as: sql_as, operation: sql_operation)
+        when :belongs_to
+          if value == 'nil'
+            relation.where(is_null(sql_association.foreign_key))
+          else
+            relation.where(search_by_associated_conditions(sql_association, value))
+          end
+        when :belongs_to_polymorphic
+          (type, id) = value.split('_')
+
+          if value == 'nil'
+            relation.where(is_null("#{sql_column}_id")).where(is_null("#{sql_column}_type"))
+          elsif type.present? && id.present? # This was from a polymorphic select
+            relation.where("#{sql_column}_id = ?", id).where("#{sql_column}_type = ?", type)
+          else # Maybe from a string field
+            collection = relation.none
+
+            relation.unscoped.distinct("#{name}_type").pluck("#{name}_type").each do |klass_name|
+              next if klass_name.nil?
+
+              resource = Effective::Resource.new(klass_name)
+              next unless resource.klass.present?
+
+              collection = collection.or(relation.where("#{name}_id": resource.search_any(value, fuzzy: true), "#{name}_type": klass_name))
+            end
+
+            collection
+          end
+        when :has_and_belongs_to_many, :has_many, :has_one
+          relation.where(search_by_associated_conditions(association, value, fuzzy: true))
+        when :effective_addresses
+          relation.where(id: Effective::Resource.new(association).search_any(value, fuzzy: true).pluck(:addressable_id))
+        when :active_storage
+          relation.send("with_attached_#{name}").references("#{name}_attachment").where(ActiveStorage::Blob.arel_table[:filename].matches("%#{value}%"))
         else
           search_attribute(name, value, as: sql_as, operation: sql_operation)
         end
+
       end
-
-      def search_associated(name, value, as:, operation:)
-        raise 'expected relation to be present' unless relation
-
-        value_ids = (value.to_s.split(/,|\s|\|/) - [nil, '', ' '])
-        value_sql = Arel.sql(value.to_s)
-
-        reflection = relation.klass.reflect_on_all_associations.find { |reflection| reflection.name == name }
-        raise("expected to find #{relation.klass.name} #{name} reflection") unless reflection
-
-        case as
-        when :belongs_to
-          foreign_id = reflection.foreign_key
-          foreign_relation = reflection.klass.all
-
-          case operation
-          when :associated_ids
-            associated = foreign_relation.where(id: value_ids)
-            relation.where(foreign_id => associated.select(:id))
-          when :associated_matches
-            associated = Resource.new(foreign_relation).search_any(value)
-            relation.where(foreign_id => associated.select(:id))
-          when :associated_does_not_match
-            associated = Resource.new(foreign_relation).search_any(value)
-            relation.where.not(foreign_id => associated.select(:id))
-          when :associated_sql
-            if (foreign_relation.where(value_sql).present? rescue :invalid) != :invalid
-              associated = foreign_relation.where(value_sql)
-              relation.where(foreign_id => associated.select(:id))
-            end
-          end
-
-        when :belongs_to_polymorphic
-          raise('todo')
-
-        when :has_many, :has_one
-          foreign_id = reflection.foreign_key
-          foreign_type = reflection.foreign_key.to_s.chomp('_id') + '_type'
-
-          foreign_collection = reflection.klass.all
-          foreign_collection = reflection.klass.where(foreign_type => collection.klass.name) if reflection.klass.new.respond_to?(foreign_type)
-
-          binding.pry
-
-        else
-          raise("unsupported search associated operation: #{as}")
-        end
-      end
-
-      # def search_by_associated_conditions(association, value, fuzzy: nil)
-      #   resource = Effective::Resource.new(association)
-
-      #   # Search the target model for its matching records / keys
-      #   relation = resource.search_any(value, fuzzy: fuzzy)
-
-      #   if association.options[:as] # polymorphic
-      #     relation = relation.where(association.type => klass.name)
-      #   end
-
-      #   # key: the id, or associated_id on my table
-      #   # keys: the ids themselves as per the target table
-      #   if association.macro == :belongs_to && association.options[:polymorphic]
-      #     key = sql_column(association.foreign_key)
-      #     keys = relation.pluck((relation.klass.primary_key rescue nil))
-      #   elsif association.macro == :belongs_to
-      #     key = sql_column(association.foreign_key)
-      #     keys = relation.pluck(association.klass.primary_key)
-      #   elsif association.macro == :has_and_belongs_to_many
-      #     key = sql_column(klass.primary_key)
-      #     values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact
-
-      #     keys = if value == 'nil'
-      #       klass.where.not(klass.primary_key => klass.joins(association.name)).pluck(klass.primary_key)
-      #     else
-      #       klass.joins(association.name)
-      #         .where(association.name => { association.source_reflection.klass.primary_key => values })
-      #         .pluck(klass.primary_key)
-      #     end
-      #   elsif association.options[:through].present?
-      #     scope = association.through_reflection.klass.all
-
-      #     if association.source_reflection.options[:polymorphic]
-      #       reflected_klass = association.klass
-      #       scope = scope.where(association.source_reflection.foreign_type => reflected_klass.name)
-      #     else
-      #       reflected_klass = association.source_reflection.klass
-      #     end
-
-      #     if association.through_reflection.macro == :belongs_to
-      #       key = association.through_reflection.foreign_key
-      #       pluck_key = association.through_reflection.klass.primary_key
-      #     else
-      #       key = sql_column(klass.primary_key)
-      #       pluck_key = association.through_reflection.foreign_key
-      #     end
-
-      #     if value == 'nil'
-      #       keys = klass.where.not(klass.primary_key => scope.pluck(pluck_key)).pluck(klass.primary_key)
-      #     else
-      #       keys = scope.where(association.source_reflection.foreign_key => relation).pluck(pluck_key)
-      #     end
-
-      #   elsif association.macro == :has_many
-      #     key = sql_column(klass.primary_key)
-
-      #     keys = if value == 'nil'
-      #       klass.where.not(klass.primary_key => resource.klass.pluck(association.foreign_key)).pluck(klass.primary_key)
-      #     else
-      #       relation.pluck(association.foreign_key)
-      #     end
-
-      #   elsif association.macro == :has_one
-      #     key = sql_column(klass.primary_key)
-
-      #     keys = if value == 'nil'
-      #       klass.where.not(klass.primary_key => resource.klass.pluck(association.foreign_key)).pluck(klass.primary_key)
-      #     else
-      #       relation.pluck(association.foreign_key)
-      #     end
-      #   end
-
-      #   "#{key} IN (#{(keys.uniq.compact.presence || [0]).join(',')})"
-      # end
-
 
       def search_attribute(name, value, as:, operation:)
         raise 'expected relation to be present' unless relation
@@ -245,9 +153,6 @@ module Effective
           when :effective_roles
             relation.with_role(term)
 
-          when :active_storage
-            relation.send("with_attached_#{name}").references("#{name}_attachment").where(ActiveStorage::Blob.arel_table[:filename].matches("%#{term}%"))
-
           when :time
             timed = relation.where("EXTRACT(hour from #{sql_column}) = ?", term.utc.hour)
             timed = timed.where("EXTRACT(minute from #{sql_column}) = ?", term.utc.min) if term.min > 0
@@ -270,128 +175,128 @@ module Effective
         end
       end
 
-      def searchOld(name, value, as: nil, fuzzy: true, sql_column: nil)
-        raise 'expected relation to be present' unless relation
+      # def searchOld(name, value, as: nil, fuzzy: true, sql_column: nil)
+      #   raise 'expected relation to be present' unless relation
 
-        sql_column ||= sql_column(name)
-        sql_type = (as || sql_type(name))
-        fuzzy = true unless fuzzy == false
+      #   sql_column ||= sql_column(name)
+      #   sql_type = (as || sql_type(name))
+      #   fuzzy = true unless fuzzy == false
 
-        if ['SUM(', 'COUNT(', 'MAX(', 'MIN(', 'AVG('].any? { |str| sql_column.to_s.include?(str) }
-          return relation.having("#{sql_column} = ?", value)
-        end
+      #   if ['SUM(', 'COUNT(', 'MAX(', 'MIN(', 'AVG('].any? { |str| sql_column.to_s.include?(str) }
+      #     return relation.having("#{sql_column} = ?", value)
+      #   end
 
-        association = associated(name)
+      #   association = associated(name)
 
-        term = Effective::Attribute.new(sql_type, klass: (association.try(:klass) rescue nil) || klass).parse(value, name: name)
+      #   term = Effective::Attribute.new(sql_type, klass: (association.try(:klass) rescue nil) || klass).parse(value, name: name)
 
-        # term == 'nil' rescue false is a Rails 4.1 fix, where you can't compare a TimeWithZone to 'nil'
-        if (term == 'nil' rescue false) && ![:has_and_belongs_to_many, :has_many, :has_one, :belongs_to, :belongs_to_polymorphic, :effective_roles].include?(sql_type)
-          return relation.where(is_null(sql_column))
-        end
+      #   # term == 'nil' rescue false is a Rails 4.1 fix, where you can't compare a TimeWithZone to 'nil'
+      #   if (term == 'nil' rescue false) && ![:has_and_belongs_to_many, :has_many, :has_one, :belongs_to, :belongs_to_polymorphic, :effective_roles].include?(sql_type)
+      #     return relation.where(is_null(sql_column))
+      #   end
 
-        case sql_type
-        when :belongs_to
-          if term == 'nil'
-            relation.where(is_null(association.foreign_key))
-          else
-            relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
-          end
-        when :belongs_to_polymorphic
-          (type, id) = term.split('_')
+      #   case sql_type
+      #   when :belongs_to
+      #     if term == 'nil'
+      #       relation.where(is_null(association.foreign_key))
+      #     else
+      #       relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
+      #     end
+      #   when :belongs_to_polymorphic
+      #     (type, id) = term.split('_')
 
-          if term == 'nil'
-            relation.where(is_null("#{sql_column}_id")).where(is_null("#{sql_column}_type"))
-          elsif type.present? && id.present? # This was from a polymorphic select
-            relation.where("#{sql_column}_id = ?", id).where("#{sql_column}_type = ?", type)
-          else # Maybe from a string field
-            collection = relation.none
+      #     if term == 'nil'
+      #       relation.where(is_null("#{sql_column}_id")).where(is_null("#{sql_column}_type"))
+      #     elsif type.present? && id.present? # This was from a polymorphic select
+      #       relation.where("#{sql_column}_id = ?", id).where("#{sql_column}_type = ?", type)
+      #     else # Maybe from a string field
+      #       collection = relation.none
 
-            relation.unscoped.distinct("#{name}_type").pluck("#{name}_type").each do |klass_name|
-              next if klass_name.nil?
+      #       relation.unscoped.distinct("#{name}_type").pluck("#{name}_type").each do |klass_name|
+      #         next if klass_name.nil?
 
-              resource = Effective::Resource.new(klass_name)
-              next unless resource.klass.present?
+      #         resource = Effective::Resource.new(klass_name)
+      #         next unless resource.klass.present?
 
-              collection = collection.or(relation.where("#{name}_id": resource.search_any(term, fuzzy: fuzzy), "#{name}_type": klass_name))
-            end
+      #         collection = collection.or(relation.where("#{name}_id": resource.search_any(term, fuzzy: fuzzy), "#{name}_type": klass_name))
+      #       end
 
-            collection
-          end
-        when :has_and_belongs_to_many, :has_many, :has_one
-          relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
-        when :effective_addresses
-          relation.where(id: Effective::Resource.new(association).search_any(value, fuzzy: fuzzy).pluck(:addressable_id))
-        when :effective_obfuscation
-          # If value == term, it's an invalid deobfuscated id
-          relation.where("#{sql_column} = ?", (value == term ? 0 : term))
-        when :effective_roles
-          relation.with_role(term)
-        when :active_storage
-          relation.send("with_attached_#{name}").references("#{name}_attachment")
-            .where(ActiveStorage::Blob.arel_table[:filename].matches("%#{term}%"))
-        when :boolean
-          relation.where("#{sql_column} = ?", term)
+      #       collection
+      #     end
+      #   when :has_and_belongs_to_many, :has_many, :has_one
+      #     relation.where(search_by_associated_conditions(association, term, fuzzy: fuzzy))
+      #   when :effective_addresses
+      #     relation.where(id: Effective::Resource.new(association).search_any(value, fuzzy: fuzzy).pluck(:addressable_id))
+      #   when :effective_obfuscation
+      #     # If value == term, it's an invalid deobfuscated id
+      #     relation.where("#{sql_column} = ?", (value == term ? 0 : term))
+      #   when :effective_roles
+      #     relation.with_role(term)
+      #   when :active_storage
+      #     relation.send("with_attached_#{name}").references("#{name}_attachment")
+      #       .where(ActiveStorage::Blob.arel_table[:filename].matches("%#{term}%"))
+      #   when :boolean
+      #     relation.where("#{sql_column} = ?", term)
 
-        when :datetime, :date
-          end_at = (
-            case (value.to_s.scan(/(\d+)/).flatten).length
-            when 1 ; term.end_of_year     # Year
-            when 2 ; term.end_of_month    # Year-Month
-            when 3 ; term.end_of_day      # Year-Month-Day
-            when 4 ; term.end_of_hour     # Year-Month-Day Hour
-            when 5 ; term.end_of_minute   # Year-Month-Day Hour-Minute
-            when 6 ; term + 1.second      # Year-Month-Day Hour-Minute-Second
-            else term
-            end
-          )
-          relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
-        when :time
-          timed = relation.where("EXTRACT(hour from #{sql_column}) = ?", term.utc.hour)
-          timed = timed.where("EXTRACT(minute from #{sql_column}) = ?", term.utc.min) if term.min > 0
-          timed
-        when :decimal, :currency
-          if fuzzy && (term.round(0) == term) && value.to_s.include?('.') == false
-            if term < 0
-              relation.where("#{sql_column} <= ? AND #{sql_column} > ?", term, term-1.0)
-            else
-              relation.where("#{sql_column} >= ? AND #{sql_column} < ?", term, term+1.0)
-            end
-          else
-            relation.where("#{sql_column} = ?", term)
-          end
-        when :duration
-          if fuzzy && (term % 60 == 0) && value.to_s.include?('m') == false
-            if term < 0
-              relation.where("#{sql_column} <= ? AND #{sql_column} > ?", term, term-60)
-            else
-              relation.where("#{sql_column} >= ? AND #{sql_column} < ?", term, term+60)
-            end
-          else
-            relation.where("#{sql_column} = ?", term)
-          end
-        when :integer
-          relation.where("#{sql_column} = ?", term)
-        when :percent
-          relation.where("#{sql_column} = ?", term)
-        when :price
-          relation.where("#{sql_column} = ?", term)
-        when :string, :text, :email
-          if fuzzy
-            relation.where("#{sql_column} #{ilike} ?", "%#{term}%")
-          else
-            relation.where("#{sql_column} = ?", term)
-          end
-        when :uuid
-          if fuzzy
-            relation.where("#{sql_column}::text #{ilike} ?", "%#{term}%")
-          else
-            relation.where("#{sql_column}::text = ?", term)
-          end
-        else
-          raise "unsupported sql type #{sql_type}"
-        end
-      end
+      #   when :datetime, :date
+      #     end_at = (
+      #       case (value.to_s.scan(/(\d+)/).flatten).length
+      #       when 1 ; term.end_of_year     # Year
+      #       when 2 ; term.end_of_month    # Year-Month
+      #       when 3 ; term.end_of_day      # Year-Month-Day
+      #       when 4 ; term.end_of_hour     # Year-Month-Day Hour
+      #       when 5 ; term.end_of_minute   # Year-Month-Day Hour-Minute
+      #       when 6 ; term + 1.second      # Year-Month-Day Hour-Minute-Second
+      #       else term
+      #       end
+      #     )
+      #     relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
+      #   when :time
+      #     timed = relation.where("EXTRACT(hour from #{sql_column}) = ?", term.utc.hour)
+      #     timed = timed.where("EXTRACT(minute from #{sql_column}) = ?", term.utc.min) if term.min > 0
+      #     timed
+      #   when :decimal, :currency
+      #     if fuzzy && (term.round(0) == term) && value.to_s.include?('.') == false
+      #       if term < 0
+      #         relation.where("#{sql_column} <= ? AND #{sql_column} > ?", term, term-1.0)
+      #       else
+      #         relation.where("#{sql_column} >= ? AND #{sql_column} < ?", term, term+1.0)
+      #       end
+      #     else
+      #       relation.where("#{sql_column} = ?", term)
+      #     end
+      #   when :duration
+      #     if fuzzy && (term % 60 == 0) && value.to_s.include?('m') == false
+      #       if term < 0
+      #         relation.where("#{sql_column} <= ? AND #{sql_column} > ?", term, term-60)
+      #       else
+      #         relation.where("#{sql_column} >= ? AND #{sql_column} < ?", term, term+60)
+      #       end
+      #     else
+      #       relation.where("#{sql_column} = ?", term)
+      #     end
+      #   when :integer
+      #     relation.where("#{sql_column} = ?", term)
+      #   when :percent
+      #     relation.where("#{sql_column} = ?", term)
+      #   when :price
+      #     relation.where("#{sql_column} = ?", term)
+      #   when :string, :text, :email
+      #     if fuzzy
+      #       relation.where("#{sql_column} #{ilike} ?", "%#{term}%")
+      #     else
+      #       relation.where("#{sql_column} = ?", term)
+      #     end
+      #   when :uuid
+      #     if fuzzy
+      #       relation.where("#{sql_column}::text #{ilike} ?", "%#{term}%")
+      #     else
+      #       relation.where("#{sql_column}::text = ?", term)
+      #     end
+      #   else
+      #     raise "unsupported sql type #{sql_type}"
+      #   end
+      # end
 
       def search_any(value, columns: nil, fuzzy: nil)
         raise 'expected relation to be present' unless relation
