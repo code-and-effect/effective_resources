@@ -70,56 +70,195 @@ module Effective
 
         sql_as = (as || sql_type(name))
         sql_column = (column || sql_column(name))
-        sql_operation = (operation || sql_operation(name, as: sql_as))
-        sql_association = associated(name)
+        sql_operation = (operation || sql_operation(name, as: sql_as)).to_sym
 
         if ['SUM(', 'COUNT(', 'MAX(', 'MIN(', 'AVG('].any? { |str| sql_column.to_s.include?(str) }
           return relation.having("#{sql_column} = ?", value)
         end
 
-        if value.to_s == 'nil' && ![:belongs_to, :belongs_to_polymorphic, :has_and_belongs_to_many, :has_many, :has_one, :effective_roles].include?(sql_as)
-          return relation.where(is_null(sql_column))
-        end
-
         case sql_as
-        when :belongs_to
-          if value == 'nil'
-            relation.where(is_null(sql_association.foreign_key))
-          else
-            relation.where(search_by_associated_conditions(sql_association, value))
-          end
-        when :belongs_to_polymorphic
+        when :belongs_to, :belongs_to_polymorphic, :has_and_belongs_to_many, :has_many, :has_one
+          search_associated(name, value, as: sql_as, operation: sql_operation)
+        else
+          return relation.where(is_null(sql_column)) if value.to_s == 'nil'
+          search_attribute(name, value, as: sql_as, operation: sql_operation)
+        end
+      end
+
+      def search_associated(name, value, as:, operation:)
+        reflection = associated(name)
+        raise("expected to find #{relation.klass.name} #{name} reflection") unless reflection
+        raise("expected association operation") unless [:associated_ids, :associated_matches, :associated_does_not_match, :associated_sql].include?(operation)
+
+        # Parse values
+        value = value.to_s
+        value_ids = (value.split(/,|\s|\|/) - [nil, '', ' '])
+        value_sql = Arel.sql(value)
+
+        # Foreign id and type
+        foreign_id = reflection.foreign_key
+        foreign_type = reflection.foreign_key.to_s.chomp('_id') + '_type'
+
+        # belongs_to polymorphic
+        retval = if as == :belongs_to_polymorphic
           (type, id) = value.split('_')
 
-          if value == 'nil'
-            relation.where(is_null("#{sql_column}_id")).where(is_null("#{sql_column}_type"))
-          elsif type.present? && id.present? # This was from a polymorphic select
-            relation.where("#{sql_column}_id = ?", id).where("#{sql_column}_type = ?", type)
+          if type.present? && id.present?  # This was from a polymorphic select
+            relation.where(foreign_id => id).where(foreign_type => type)
           else # Maybe from a string field
             collection = relation.none
 
-            relation.unscoped.distinct("#{name}_type").pluck("#{name}_type").each do |klass_name|
+            relation.unscoped.distinct(foreign_type).pluck(foreign_type).each do |klass_name|
               next if klass_name.nil?
 
               resource = Effective::Resource.new(klass_name)
               next unless resource.klass.present?
 
-              collection = collection.or(relation.where("#{name}_id": resource.search_any(value, fuzzy: true), "#{name}_type": klass_name))
+              collection = collection.or(relation.where(foreign_id => resource.search_any(value), foreign_type => klass_name))
             end
 
             collection
           end
-        when :has_and_belongs_to_many, :has_many, :has_one
-          relation.where(search_by_associated_conditions(association, value, fuzzy: true))
-        when :effective_addresses
-          relation.where(id: Effective::Resource.new(association).search_any(value, fuzzy: true).pluck(:addressable_id))
-        when :active_storage
-          relation.send("with_attached_#{name}").references("#{name}_attachment").where(ActiveStorage::Blob.arel_table[:filename].matches("%#{value}%"))
-        else
-          search_attribute(name, value, as: sql_as, operation: sql_operation)
+
+        elsif as == :belongs_to && reflection.options[:polymorphic]
+          raise('unsupported belongs to polymorphic')
+
+        # belongs_to non-polymorphic
+        elsif as == :belongs_to
+          foreign_collection = reflection.klass.all
+          foreign_collection = reflection.klass.where(foreign_type => relation.klass.name) if reflection.klass.new.respond_to?(foreign_type)
+
+          case operation
+          when :associated_ids
+            associated = foreign_collection.where(id: value_ids)
+            relation.where(foreign_id => associated.select(:id))
+          when :associated_matches
+            associated = Resource.new(foreign_collection).search_any(value)
+            relation.where(foreign_id => associated.select(:id))
+          when :associated_does_not_match
+            associated = Resource.new(foreign_collection).search_any(value)
+            relation.where.not(foreign_id => associated.select(:id))
+          when :associated_sql
+            if (foreign_collection.where(value_sql).present? rescue :invalid) != :invalid
+              associated = foreign_collection.where(value_sql)
+              relation.where(foreign_id => associated.select(:id))
+            else
+              relation
+            end
+          end
+
+        # has_and_belongs_to_many
+        elsif as == :has_and_belongs_to_many
+          raise('unsupported habtm')
+
+        # has_many through
+        elsif reflection.options[:through].present?
+          raise('unsupported through')
+
+        # has_many and has_one
+        elsif (as == :has_many || as == :has_one)
+          foreign_collection = reflection.klass.all
+          foreign_collection = reflection.klass.where(foreign_type => relation.klass.name) if reflection.klass.new.respond_to?(foreign_type)
+
+          case operation
+          when :associated_ids
+            associated = foreign_collection.where(id: value_ids)
+            relation.where(id: associated.select(foreign_id))
+          when :associated_matches
+            associated = Resource.new(foreign_collection).search_any(value)
+            relation.where(id: associated.select(foreign_id))
+          when :associated_does_not_match
+            associated = Resource.new(foreign_collection).search_any(value)
+            relation.where.not(id: associated.select(foreign_id))
+          when :associated_sql
+            if (foreign_collection.where(value_sql).present? rescue :invalid) != :invalid
+              associated = foreign_collection.where(value_sql)
+              relation.where(id: associated.select(foreign_id))
+            else
+              relation
+            end
+          end
         end
 
+        retval || raise("unable to search associated #{as} #{operation} #{name} for #{value}")
       end
+
+      # def search_by_associated_conditions(association, value, fuzzy: nil)
+      #   resource = Effective::Resource.new(association)
+
+      #   # Search the target model for its matching records / keys
+      #   relation = resource.search_any(value, fuzzy: fuzzy)
+
+      #   if association.options[:as] # polymorphic
+      #     relation = relation.where(association.type => klass.name)
+      #   end
+
+      #   # key: the id, or associated_id on my table
+      #   # keys: the ids themselves as per the target table
+      #   if association.macro == :belongs_to && association.options[:polymorphic]
+      #     key = sql_column(association.foreign_key)
+      #     keys = relation.pluck((relation.klass.primary_key rescue nil))
+      #   elsif association.macro == :belongs_to
+      #     key = sql_column(association.foreign_key)
+      #     keys = relation.pluck(association.klass.primary_key)
+      #   elsif association.macro == :has_and_belongs_to_many
+      #     key = sql_column(klass.primary_key)
+      #     values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact
+
+      #     keys = if value == 'nil'
+      #       klass.where.not(klass.primary_key => klass.joins(association.name)).pluck(klass.primary_key)
+      #     else
+      #       klass.joins(association.name)
+      #         .where(association.name => { association.source_reflection.klass.primary_key => values })
+      #         .pluck(klass.primary_key)
+      #     end
+      #   elsif association.options[:through].present?
+      #     scope = association.through_reflection.klass.all
+
+      #     if association.source_reflection.options[:polymorphic]
+      #       reflected_klass = association.klass
+      #       scope = scope.where(association.source_reflection.foreign_type => reflected_klass.name)
+      #     else
+      #       reflected_klass = association.source_reflection.klass
+      #     end
+
+      #     if association.through_reflection.macro == :belongs_to
+      #       key = association.through_reflection.foreign_key
+      #       pluck_key = association.through_reflection.klass.primary_key
+      #     else
+      #       key = sql_column(klass.primary_key)
+      #       pluck_key = association.through_reflection.foreign_key
+      #     end
+
+      #     if value == 'nil'
+      #       keys = klass.where.not(klass.primary_key => scope.pluck(pluck_key)).pluck(klass.primary_key)
+      #     else
+      #       keys = scope.where(association.source_reflection.foreign_key => relation).pluck(pluck_key)
+      #     end
+
+      #   elsif association.macro == :has_many
+      #     key = sql_column(klass.primary_key)
+
+      #     keys = if value == 'nil'
+      #       klass.where.not(klass.primary_key => resource.klass.pluck(association.foreign_key)).pluck(klass.primary_key)
+      #     else
+      #       relation.pluck(association.foreign_key)
+      #     end
+
+      #   elsif association.macro == :has_one
+      #     key = sql_column(klass.primary_key)
+
+      #     keys = if value == 'nil'
+      #       klass.where.not(klass.primary_key => resource.klass.pluck(association.foreign_key)).pluck(klass.primary_key)
+      #     else
+      #       relation.pluck(association.foreign_key)
+      #     end
+      #   end
+
+      #   "#{key} IN (#{(keys.uniq.compact.presence || [0]).join(',')})"
+      # end
+
+
 
       def search_attribute(name, value, as:, operation:)
         raise 'expected relation to be present' unless relation

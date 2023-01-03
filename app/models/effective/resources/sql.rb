@@ -38,19 +38,12 @@ module Effective
         name.to_s.downcase == 'desc' ? 'DESC' : 'ASC'
       end
 
-      # Not all attribute types support all operations
-      # Arel::Predications.instance_methods
-      # OPERATIONS = [
-      #   :eq, :not_eq, :matches, :does_not_match, :starts_with, :ends_with, :gt, :gteq, :lt, :lteq,
-      #   :associated_ids, :associated_matches, :associated_does_not_match, :associated_sql
-      # ]
-
       def sql_operation(name, as: nil)
         sql_type = (as || sql_type(name))
 
         case sql_type
         when :boolean, :integer, :price, :date, :datetime, :percent then :eq
-        when :belongs_to, :belongs_to_polymorphic then :associated_matches
+        when :belongs_to, :belongs_to_polymorphic, :has_and_belongs_to_many, :has_many, :has_one then :associated_matches
         else :matches
         end
       end
