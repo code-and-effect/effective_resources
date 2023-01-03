@@ -153,7 +153,80 @@ module Effective
 
         # has_many through
         elsif reflection.options[:through].present?
-          raise('unsupported through')
+          through_collection = reflection.through_reflection.klass.all  # group mates
+
+          binding.pry
+
+          if reflection.source_reflection.options[:polymorphic]
+            reflected_klass = reflection.klass
+            through_collection = through_collection.where(reflection.source_reflection.foreign_type => reflected_klass.name)
+          else
+            reflected_klass = reflection.source_reflection.klass # group
+          end
+
+          binding.pry
+
+          associated = Resource.new(reflected_klass).search_any(value)
+
+          binding.pry
+
+          foreign_key = if reflection.through_reflection.macro == :belongs_to
+            reflection.through_reflection.klass.primary_key # to do check this
+          else
+            reflection.through_reflection.foreign_key # user_id
+          end
+
+          binding.pry
+
+          records = through_collection.where(reflection.source_reflection.foreign_key => associated)
+
+          binding.pry
+
+          relation.where(id: records.select(foreign_key))
+
+
+
+          # if reflection.through_reflection.macro == :belongs_to
+          #   raise('todo')
+          # else
+          #   foreign_key = reflection.through_reflection.foreign_key
+
+          #   relation.where()
+
+          #   key = sql_column(klass.primary_key) # id
+          #   pluck_key = reflection.through_reflection.foreign_key # user_id
+          # end
+
+          # scope = reflection.through_reflection.klass.all # group mates
+
+          # if reflection.source_reflection.options[:polymorphic]
+          #   reflected_klass = reflection.klass
+          #   scope = scope.where(reflection.source_reflection.foreign_type => reflected_klass.name)
+          # else
+          #   reflected_klass = reflection.source_reflection.klass # group
+          # end
+
+          # if reflection.through_reflection.macro == :belongs_to
+          #   key = reflection.through_reflection.foreign_key
+          #   pluck_key = reflection.through_reflection.klass.primary_key
+          # else
+          #   key = sql_column(klass.primary_key) # id
+          #   pluck_key = reflection.through_reflection.foreign_key # user_id
+          # end
+
+          # binding.pry
+
+          # if value == 'nil'
+          #   relation.where()
+          # else
+          #   relation.where()
+          # end
+
+          # if value == 'nil'
+          #   keys = klass.where.not(klass.primary_key => scope.pluck(pluck_key)).pluck(klass.primary_key)
+          # else
+          #   keys = scope.where(association.source_reflection.foreign_key => relation).pluck(pluck_key)
+          # end
 
         # has_many and has_one
         elsif (as == :has_many || as == :has_one)
