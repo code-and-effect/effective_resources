@@ -87,8 +87,9 @@ module Effective
 
       def search_associated(name, value, as:, operation:)
         reflection = associated(name)
+
         raise("expected to find #{relation.klass.name} #{name} reflection") unless reflection
-        raise("expected association operation") unless [:eq, :matches, :does_not_match, :sql].include?(operation)
+        raise("unexpected search_associated operation #{operation || 'nil'}") unless [:eq, :matches, :does_not_match, :sql].include?(operation)
 
         # Parse values
         value_ids = value.kind_of?(Array) ? value : (value.to_s.split(/,|\s|\|/) - [nil, '', ' '])
