@@ -10,7 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 3) do
+ActiveRecord::Schema.define(version: 4) do
+
+  create_table "advanced_orders", force: :cascade do |t|
+    t.integer "user_id"
+    t.string "user_type"
+    t.string "title"
+  end
+
+  create_table "simple_orders", force: :cascade do |t|
+    t.integer "user_id"
+    t.string "title"
+  end
 
   create_table "thangs", force: :cascade do |t|
     t.string "title"
@@ -19,13 +30,26 @@ ActiveRecord::Schema.define(version: 3) do
 
   create_table "things", force: :cascade do |t|
     t.string "title"
+    t.date "date"
+    t.datetime "datetime"
+    t.integer "integer"
+    t.integer "price"
+    t.decimal "decimal"
+    t.boolean "boolean"
     t.text "body"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "thongs", force: :cascade do |t|
     t.string "title"
     t.text "body"
     t.text "wizard_steps"
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.string "first_name"
+    t.string "last_name"
   end
 
 end

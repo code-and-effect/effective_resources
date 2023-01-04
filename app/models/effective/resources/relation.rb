@@ -229,90 +229,14 @@ module Effective
         retval || raise("unable to search associated #{as} #{operation} #{name} for #{value}")
       end
 
-      # def search_by_associated_conditions(association, value, fuzzy: nil)
-      #   resource = Effective::Resource.new(association)
-
-      #   # Search the target model for its matching records / keys
-      #   relation = resource.search_any(value, fuzzy: fuzzy)
-
-      #   if association.options[:as] # polymorphic
-      #     relation = relation.where(association.type => klass.name)
-      #   end
-
-      #   # key: the id, or associated_id on my table
-      #   # keys: the ids themselves as per the target table
-      #   if association.macro == :belongs_to && association.options[:polymorphic]
-      #     key = sql_column(association.foreign_key)
-      #     keys = relation.pluck((relation.klass.primary_key rescue nil))
-      #   elsif association.macro == :belongs_to
-      #     key = sql_column(association.foreign_key)
-      #     keys = relation.pluck(association.klass.primary_key)
-      #   elsif association.macro == :has_and_belongs_to_many
-      #     key = sql_column(klass.primary_key)
-      #     values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact
-
-      #     keys = if value == 'nil'
-      #       klass.where.not(klass.primary_key => klass.joins(association.name)).pluck(klass.primary_key)
-      #     else
-      #       klass.joins(association.name)
-      #         .where(association.name => { association.source_reflection.klass.primary_key => values })
-      #         .pluck(klass.primary_key)
-      #     end
-      #   elsif association.options[:through].present?
-      #     scope = association.through_reflection.klass.all
-
-      #     if association.source_reflection.options[:polymorphic]
-      #       reflected_klass = association.klass
-      #       scope = scope.where(association.source_reflection.foreign_type => reflected_klass.name)
-      #     else
-      #       reflected_klass = association.source_reflection.klass
-      #     end
-
-      #     if association.through_reflection.macro == :belongs_to
-      #       key = association.through_reflection.foreign_key
-      #       pluck_key = association.through_reflection.klass.primary_key
-      #     else
-      #       key = sql_column(klass.primary_key)
-      #       pluck_key = association.through_reflection.foreign_key
-      #     end
-
-      #     if value == 'nil'
-      #       keys = klass.where.not(klass.primary_key => scope.pluck(pluck_key)).pluck(klass.primary_key)
-      #     else
-      #       keys = scope.where(association.source_reflection.foreign_key => relation).pluck(pluck_key)
-      #     end
-
-      #   elsif association.macro == :has_many
-      #     key = sql_column(klass.primary_key)
-
-      #     keys = if value == 'nil'
-      #       klass.where.not(klass.primary_key => resource.klass.pluck(association.foreign_key)).pluck(klass.primary_key)
-      #     else
-      #       relation.pluck(association.foreign_key)
-      #     end
-
-      #   elsif association.macro == :has_one
-      #     key = sql_column(klass.primary_key)
-
-      #     keys = if value == 'nil'
-      #       klass.where.not(klass.primary_key => resource.klass.pluck(association.foreign_key)).pluck(klass.primary_key)
-      #     else
-      #       relation.pluck(association.foreign_key)
-      #     end
-      #   end
-
-      #   "#{key} IN (#{(keys.uniq.compact.presence || [0]).join(',')})"
-      # end
-
-
-
       def search_attribute(name, value, as:, operation:)
         raise 'expected relation to be present' unless relation
 
         attribute = relation.arel_table[name]
 
-        # Normalize the term
-        term = Attribute.new(as).parse(value, name: name)
+        # Normalize the term.
+        # If you pass an email attribute it can return nil so we return the full value
+        term = Attribute.new(as).parse(value, name: name) || value
 
         searched = case as
           when :date, :datetime
@@ -331,9 +255,15 @@ module Effective
 
               relation.where(attribute.gteq(term)).where(attribute.lteq(end_at))
             end
+
           when :effective_obfuscation
             term = Attribute.new(as, klass: (associated(name).try(:klass) || klass)).parse(value, name: name)
             relation.where(attribute.eq((value == term ? 0 : term)))
+
+          when :effective_addresses
+            association = associated(name)
+            associated = Resource.new(association).search_any(value)
+            relation.where(id: associated.where(addressable_type: klass.name).select(:addressable_id))
 
           when :effective_roles
             relation.with_role(term)
@@ -344,8 +274,10 @@ module Effective
             timed
         end
 
-        # Defaults
-        searched || case operation
+        return searched if searched
+
+        # Simple operation search
+        case operation
           when :eq then relation.where(attribute.eq(term))
           when :not_eq then relation.where(attribute.not_eq(term))
           when :matches then relation.where(attribute.matches("%#{term}%"))

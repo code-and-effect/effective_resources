@@ -3,6 +3,15 @@ class Thing < ApplicationRecord
   effective_resource do
     title       :string
     body        :text
+
+    date        :date
+    datetime    :datetime
+    integer     :integer
+    price       :integer
+    decimal     :decimal
+    boolean     :boolean
+
+    timestamps
   end
 
   validates :title, presence: true
