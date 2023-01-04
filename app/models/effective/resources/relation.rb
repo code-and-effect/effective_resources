@@ -88,12 +88,11 @@ module Effective
       def search_associated(name, value, as:, operation:)
         reflection = associated(name)
         raise("expected to find #{relation.klass.name} #{name} reflection") unless reflection
-        raise("expected association operation") unless [:associated_ids, :associated_matches, :associated_does_not_match, :associated_sql].include?(operation)
+        raise("expected association operation") unless [:eq, :matches, :does_not_match, :sql].include?(operation)
 
         # Parse values
-        value = value.to_s
-        value_ids = (value.split(/,|\s|\|/) - [nil, '', ' '])
-        value_sql = Arel.sql(value)
+        value_ids = value.kind_of?(Array) ? value : (value.to_s.split(/,|\s|\|/) - [nil, '', ' '])
+        value_sql = Arel.sql(value) if value.kind_of?(String)
 
         # Foreign id and type
         foreign_id = reflection.foreign_key
@@ -101,7 +100,7 @@ module Effective
 
         # belongs_to polymorphic
         retval = if as == :belongs_to_polymorphic
-          (type, id) = value.split('_')
+          (type, id) = value.to_s.split('_')
 
           if type.present? && id.present?  # This was from a polymorphic select
             relation.where(foreign_id => id).where(foreign_type => type)
@@ -120,25 +119,22 @@ module Effective
             collection
           end
 
-        elsif as == :belongs_to && reflection.options[:polymorphic]
-          raise('unsupported belongs to polymorphic')
-
         # belongs_to non-polymorphic
         elsif as == :belongs_to
           foreign_collection = reflection.klass.all
           foreign_collection = reflection.klass.where(foreign_type => relation.klass.name) if reflection.klass.new.respond_to?(foreign_type)
 
           case operation
-          when :associated_ids
+          when :eq
             associated = foreign_collection.where(id: value_ids)
             relation.where(foreign_id => associated.select(:id))
-          when :associated_matches
+          when :matches
             associated = Resource.new(foreign_collection).search_any(value)
             relation.where(foreign_id => associated.select(:id))
-          when :associated_does_not_match
+          when :does_not_match
             associated = Resource.new(foreign_collection).search_any(value)
             relation.where.not(foreign_id => associated.select(:id))
-          when :associated_sql
+          when :sql
             if (foreign_collection.where(value_sql).present? rescue :invalid) != :invalid
               associated = foreign_collection.where(value_sql)
               relation.where(foreign_id => associated.select(:id))
@@ -180,18 +176,18 @@ module Effective
 
           # Search the associated class
           associated = case operation
-          when :associated_ids
+          when :eq
             associated = through.where(reflected_id => value_ids)
             relation.where(id: associated.select(foreign_id))
-          when :associated_matches
+          when :matches
             reflected = Resource.new(reflected_klass).search_any(value)
             associated = through.where(reflected_id => reflected)
             relation.where(id: associated.select(foreign_id))
-          when :associated_does_not_match
+          when :does_not_match
             reflected = Resource.new(reflected_klass).search_any(value)
             associated = through.where(reflected_id => reflected)
             relation.where.not(id: associated.select(foreign_id))
-          when :associated_sql
+          when :sql
             if (reflected_klass.where(value_sql).present? rescue :invalid) != :invalid
               reflected = reflected_klass.where(value_sql)
               associated = through.where(reflected_id => reflected)
@@ -207,16 +203,16 @@ module Effective
           foreign_collection = reflection.klass.where(foreign_type => relation.klass.name) if reflection.klass.new.respond_to?(foreign_type)
 
           case operation
-          when :associated_ids
+          when :eq
             associated = foreign_collection.where(id: value_ids)
             relation.where(id: associated.select(foreign_id))
-          when :associated_matches
+          when :matches
             associated = Resource.new(foreign_collection).search_any(value)
             relation.where(id: associated.select(foreign_id))
-          when :associated_does_not_match
+          when :does_not_match
             associated = Resource.new(foreign_collection).search_any(value)
             relation.where.not(id: associated.select(foreign_id))
-          when :associated_sql
+          when :sql
             if (foreign_collection.where(value_sql).present? rescue :invalid) != :invalid
               associated = foreign_collection.where(value_sql)
               relation.where(id: associated.select(foreign_id))

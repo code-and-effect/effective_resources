@@ -73,13 +73,13 @@ module Effective
           { as: :string }
         else
           if res.klass.unscoped.respond_to?(:datatables_scope)
-            { collection: res.klass.datatables_scope.map { |obj| [obj.to_s, obj.to_param] } }
+            { collection: res.klass.datatables_scope.map { |obj| [obj.to_s, obj.id] } }
           elsif res.klass.unscoped.respond_to?(:datatables_filter)
-            { collection: res.klass.datatables_filter.map { |obj| [obj.to_s, obj.to_param] } }
+            { collection: res.klass.datatables_filter.map { |obj| [obj.to_s, obj.id] } }
           elsif res.klass.unscoped.respond_to?(:sorted)
-            { collection: res.klass.sorted.map { |obj| [obj.to_s, obj.to_param] } }
+            { collection: res.klass.sorted.map { |obj| [obj.to_s, obj.id] } }
           else
-            { collection: res.klass.all.map { |obj| [obj.to_s, obj.to_param] }.sort { |x, y| x[0] <=> y[0] } }
+            { collection: res.klass.all.map { |obj| [obj.to_s, obj.id] }.sort { |x, y| x[0] <=> y[0] } }
           end
         end
       end

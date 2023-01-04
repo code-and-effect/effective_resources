@@ -42,8 +42,7 @@ module Effective
         sql_type = (as || sql_type(name))
 
         case sql_type
-        when :boolean, :integer, :price, :date, :datetime, :percent then :eq
-        when :belongs_to, :belongs_to_polymorphic, :has_and_belongs_to_many, :has_many, :has_one then :associated_matches
+        when :boolean, :decimal, :integer, :price, :date, :datetime, :percent then :eq
         else :matches
         end
       end
