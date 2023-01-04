@@ -103,9 +103,22 @@ module Effective
           (type, id) = value.to_s.split('_')
 
           if type.present? && id.present?  # This was from a polymorphic select
-            relation.where(foreign_id => id).where(foreign_type => type)
+            case operation
+            when :eq
+              relation.where(foreign_type => type, foreign_id => id)
+            when :matches
+              relation.where(foreign_type => type, foreign_id => id)
+            when :does_not_match
+              relation.where.not(foreign_type => type, foreign_id => id)
+            when :sql
+              if (relation.where(value_sql).present? rescue :invalid) != :invalid
+                relation.where(value_sql)
+              else
+                relation
+              end
+            end
           else # Maybe from a string field
-            collection = relation.none
+            associated = relation.none
 
             relation.unscoped.distinct(foreign_type).pluck(foreign_type).each do |klass_name|
               next if klass_name.nil?
@@ -113,10 +126,23 @@ module Effective
               resource = Effective::Resource.new(klass_name)
               next unless resource.klass.present?
 
-              collection = collection.or(relation.where(foreign_id => resource.search_any(value), foreign_type => klass_name))
+              associated = associated.or(relation.where(foreign_id => resource.search_any(value), foreign_type => klass_name))
             end
 
-            collection
+            case operation
+            when :eq
+              relation.where(id: associated.select(:id))
+            when :matches
+              relation.where(id: associated.select(:id))
+            when :does_not_match
+              relation.where.not(id: associated.select(:id))
+            when :sql
+              if (relation.where(value_sql).present? rescue :invalid) != :invalid
+                relation.where(value_sql)
+              else
+                relation
+              end
+            end
           end
 
         # belongs_to non-polymorphic

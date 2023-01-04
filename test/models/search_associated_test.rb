@@ -65,6 +65,9 @@ class SearchAssociatedTest < ActiveSupport::TestCase
 
     search = Effective::Resource.new(User).search(:simple_orders, 'First')
     assert_equal [user1], search.to_a
+
+    search = Effective::Resource.new(User).search(:simple_orders, 'First', operation: :does_not_match)
+    assert_equal [user2], search.to_a
   end
 
 end
