@@ -19,6 +19,9 @@ class SearchAssociatedTest < ActiveSupport::TestCase
 
     search = Effective::Resource.new(SimpleOrder).search(:user, 'First')
     assert_equal [order1], search.to_a
+
+    search = Effective::Resource.new(SimpleOrder).search(:user, 'First', operation: :does_not_match)
+    assert_equal [order2], search.to_a
   end
 
   test 'search belongs_to_polymorphic' do
@@ -39,6 +42,9 @@ class SearchAssociatedTest < ActiveSupport::TestCase
 
     search = Effective::Resource.new(AdvancedOrder).search(:user, 'First')
     assert_equal [order1], search.to_a
+
+    search = Effective::Resource.new(AdvancedOrder).search(:user, 'First', operation: :does_not_match)
+    assert_equal [order2], search.to_a
   end
 
   test 'search has_many' do
