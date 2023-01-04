@@ -283,6 +283,10 @@ module Effective
         term = Attribute.new(as).parse(value, name: name) || value
 
         searched = case as
+          when :active_storage
+            relation.send("with_attached_#{name}").references("#{name}_attachment")
+              .where(ActiveStorage::Blob.arel_table[:filename].matches("%#{term}%"))
+
           when :date, :datetime
             if value.kind_of?(String)
               end_at = (
