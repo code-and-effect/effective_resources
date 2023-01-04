@@ -145,7 +145,26 @@ module Effective
 
         # has_and_belongs_to_many
         elsif as == :has_and_belongs_to_many
-          raise('unsupported habtm')
+          #raise('unsupported habtm')
+
+          # key = sql_column(klass.primary_key)
+          # values = relation.pluck(association.source_reflection.klass.primary_key).uniq.compact
+
+          # keys = if value == 'nil'
+          #   klass.where.not(klass.primary_key => klass.joins(association.name)).pluck(klass.primary_key)
+          # else
+          #   klass.joins(association.name)
+          #     .where(association.name => { association.source_reflection.klass.primary_key => values })
+          #     .pluck(klass.primary_key)
+          # end
+
+          reflected_klass = reflection.source_reflection.klass
+          foreign_key = reflection.foreign_key
+
+          through_reflection = reflected_klass.reflect_on_all_associations.find { |ass| ass.macro == :has_and_belongs_to_many && ass.join_table == reflection.join_table }
+
+          associated = Resource.new(reflected_klass).search_any(value)
+          relation.where(id: associated.joins(through_reflection.name).select(foreign_key))
 
         # has_many through
         elsif reflection.options[:through].present?
