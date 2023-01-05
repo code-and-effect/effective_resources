@@ -31,7 +31,7 @@ module Effective
 
         # Duplicate if possible
         if params[:duplicate_id]
-          duplicate = resource_scope.find(params[:duplicate_id])
+          duplicate = resource_scope.find_by_id(params[:duplicate_id])
           EffectiveResources.authorize!(self, :show, duplicate)
 
           self.resource = duplicate_resource(duplicate)
