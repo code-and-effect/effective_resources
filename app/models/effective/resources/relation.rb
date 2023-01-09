@@ -284,7 +284,7 @@ module Effective
         term = Attribute.new(as).parse(value, name: name) || value
 
         # If using the joined syntax from datatables
-        joined = sql_column.to_s.include?('.')
+        joined = (sql_column.to_s.split('.').first.to_s.include?(relation.arel_table.name) == false)
 
         searched = case as
           when :active_storage
@@ -338,7 +338,7 @@ module Effective
           when :eq then
             joined ? relation.where("#{sql_column} = ?", term) : relation.where(attribute.eq(term))
           when :matches then
-            joined ? relation.where("#{sql_column} #{ilike} ?", "%#{term}%") : relation.where(attribute.eq(term))
+            joined ? relation.where("#{sql_column} #{ilike} ?", "%#{term}%") : relation.where(attribute.matches("%#{term}%"))
           when :not_eq then relation.where(attribute.not_eq(term))
           when :does_not_match then relation.where(attribute.does_not_match("%#{term}%"))
           when :starts_with then relation.where(attribute.matches("#{term}%"))
