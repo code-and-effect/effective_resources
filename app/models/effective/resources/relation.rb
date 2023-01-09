@@ -81,7 +81,7 @@ module Effective
           search_associated(name, value, as: sql_as, operation: sql_operation)
         else
           return relation.where(is_null(sql_column)) if value.to_s == 'nil'
-          search_attribute(name, value, as: sql_as, operation: sql_operation)
+          search_attribute(name, value, as: sql_as, operation: sql_operation, sql_column: sql_column)
         end
       end
 
@@ -274,7 +274,7 @@ module Effective
         retval || raise("unable to search associated #{as} #{operation} #{name} for #{value}")
       end
 
-      def search_attribute(name, value, as:, operation:)
+      def search_attribute(name, value, as:, operation:, sql_column:)
         raise 'expected relation to be present' unless relation
 
         attribute = relation.arel_table[name]
@@ -282,6 +282,9 @@ module Effective
         # Normalize the term.
         # If you pass an email attribute it can return nil so we return the full value
         term = Attribute.new(as).parse(value, name: name) || value
+
+        # If using the joined syntax from datatables
+        joined = sql_column.to_s.include?('.')
 
         searched = case as
           when :active_storage
@@ -302,7 +305,12 @@ module Effective
                 end
               )
 
-              relation.where(attribute.gteq(term)).where(attribute.lteq(end_at))
+              if joined
+                relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
+              else
+                relation.where(attribute.gteq(term)).where(attribute.lteq(end_at))
+              end
+
             end
 
           when :effective_obfuscation
@@ -327,9 +335,11 @@ module Effective
 
         # Simple operation search
         case operation
-          when :eq then relation.where(attribute.eq(term))
+          when :eq then
+            joined ? relation.where("#{sql_column} = ?", term) : relation.where(attribute.eq(term))
+          when :matches then
+            joined ? relation.where("#{sql_column} #{ilike} ?", "%#{term}%") : relation.where(attribute.eq(term))
           when :not_eq then relation.where(attribute.not_eq(term))
-          when :matches then relation.where(attribute.matches("%#{term}%"))
           when :does_not_match then relation.where(attribute.does_not_match("%#{term}%"))
           when :starts_with then relation.where(attribute.matches("#{term}%"))
           when :ends_with then relation.where(attribute.matches("%#{term}"))
