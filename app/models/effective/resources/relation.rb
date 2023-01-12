@@ -305,12 +305,7 @@ module Effective
                 end
               )
 
-              if joined
-                relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
-              else
-                relation.where(attribute.gteq(term)).where(attribute.lteq(end_at))
-              end
-
+              relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
             end
 
           when :effective_obfuscation
@@ -334,11 +329,11 @@ module Effective
         return searched if searched
 
         # Simple operation search
+        # The Arel operator eq and matches bug out with serialized Array columns. So we avoid for datatables usage.
+
         case operation
-          when :eq then
-            joined ? relation.where("#{sql_column} = ?", term) : relation.where(attribute.eq(term))
-          when :matches then
-            joined ? relation.where("#{sql_column} #{ilike} ?", "%#{term}%") : relation.where(attribute.matches("%#{term}%"))
+          when :eq then relation.where("#{sql_column} = ?", term)
+          when :matches then relation.where("#{sql_column} #{ilike} ?", "%#{term}%")
           when :not_eq then relation.where(attribute.not_eq(term))
           when :does_not_match then relation.where(attribute.does_not_match("%#{term}%"))
           when :starts_with then relation.where(attribute.matches("#{term}%"))
