@@ -280,7 +280,7 @@ module EffectiveResourcesHelper
     end
 
     content_tag(:div, class: 'card') do
-      content_tag(:div, class: 'card-body yo') do
+      content_tag(:div, class: 'card-body') do
         content_tag(:div, class: 'row') do
           content_tag(:div, class: 'col-sm') do
             content_tag(:h5, title, class: 'card-title')

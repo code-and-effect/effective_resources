@@ -2,12 +2,17 @@
 
 module EffectiveResourcesWizardHelper
 
-  def render_wizard_sidebar(resource, numbers: true, horizontal: false, &block)
+  def render_wizard_sidebar(resource, numbers: true, path: nil, horizontal: false, &block)
+    if path.present?
+      raise('expected path to be a string with /build/ in it ') unless path.to_s.include?('/build/')
+      path = path.split('/build/').first + '/build/'
+    end
+
     klasses = ['wizard-sidebar', 'list-group', ('list-group-horizontal' if horizontal)].compact.join(' ')
 
     sidebar = content_tag(:div, class: klasses) do
       resource.sidebar_steps.map.with_index do |nav_step, index|
-        render_wizard_sidebar_item(resource, nav_step, (index + 1 if numbers))
+        render_wizard_sidebar_item(resource, nav_step: nav_step, index: (index + 1 if numbers), path: (path + nav_step.to_s if path))
       end.join.html_safe
     end
 
@@ -19,7 +24,7 @@ module EffectiveResourcesWizardHelper
     end
   end
 
-  def render_wizard_sidebar_item(resource, nav_step, index = nil)
+  def render_wizard_sidebar_item(resource, nav_step:, path: nil, index: nil)
     # From Controller
     current = (nav_step == step)
     title = resource_wizard_step_title(resource, nav_step)
@@ -33,7 +38,7 @@ module EffectiveResourcesWizardHelper
     if (current || disabled)
       content_tag(:a, label, class: klass)
     else
-      link_to(label, wizard_path(nav_step), class: klass)
+      link_to(label, path || wizard_path(nav_step), class: klass)
     end
   end
 
