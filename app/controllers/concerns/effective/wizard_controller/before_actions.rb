@@ -47,8 +47,9 @@ module Effective
         return if resource.try(:done?)
         return unless resource_scope.respond_to?(:in_progress)
 
-        existing = resource_scope.in_progress.where.not(id: resource).first
+        existing = resource_scope.in_progress.order(:id).where.not(id: resource).first
         return unless existing.present?
+        return if (existing.id > resource.id) # Otherwise we get an infinite loop
 
         flash[:success] = "You have been redirected to your in-progress wizard"
         redirect_to resource_wizard_path(existing, existing.next_step)
