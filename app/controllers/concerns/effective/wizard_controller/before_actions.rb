@@ -49,7 +49,7 @@ module Effective
 
         existing = resource_scope.in_progress.order(:id).where.not(id: resource).first
         return unless existing.present?
-        return if (existing.id > resource.id) # Otherwise we get an infinite loop
+        return if resource.persisted? && (existing.id > resource.id) # Otherwise we get an infinite loop
 
         flash[:success] = "You have been redirected to your in-progress wizard"
         redirect_to resource_wizard_path(existing, existing.next_step)
