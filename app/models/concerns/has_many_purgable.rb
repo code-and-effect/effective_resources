@@ -1,11 +1,14 @@
 # HasManyPurgable
 #
-# Mark your model with 'has_many_purgable' or 'has_one_purgable' to allow any has_many or has_one to be purgable
-# Pass 'has_many_purgable :files, :avatar' to only allow the files and avatar to be purged.
-# Works with effective_bootstrap file_field to display a Delete file on save checkbox
-# to submit a _purge_attached array or association names to purge.
+# Mark your model with 'has_many_purgable' or 'has_one_purgable' (both the same thing)
+# to allow any has_many_attached or has_one_attached to be purgable.
 #
-# You must permit the attribute _purge_attached: []
+# Pass 'has_many_purgable :files, :avatar' to only allow the files and avatar to be purged.
+#
+# Works with effective_bootstrap file_field to display a Delete file on save checkbox
+# to submit a _purge array of attachments to purge.
+#
+# You must permit the attribute _purge: []
 
 module HasManyPurgable
   extend ActiveSupport::Concern
@@ -30,13 +33,13 @@ module HasManyPurgable
     options = @has_many_purgable_options
     self.send(:define_method, :has_many_purgable_options) { options }
 
-    attr_accessor :_purge_attached
+    attr_accessor :_purge
 
     effective_resource do
-      _purge_attached     :permitted_param
+      _purge  :permitted_param
     end
 
-    with_options(if: -> { _purge_attached.present? }) do
+    with_options(if: -> { _purge.present? }) do
       before_validation { has_many_purgable_mark_for_destruction }
       after_save { has_many_purgable_purge }
     end
@@ -62,7 +65,7 @@ module HasManyPurgable
 
   # As submitted by the form and permitted by our associations and options
   def has_many_purgable_attachments
-    submitted = (Array(_purge_attached) - [nil, '', '0', ' ', 'false', 'f', 'off']).map(&:to_sym)
+    submitted = (Array(_purge) - [nil, '', '0', ' ', 'false', 'f', 'off']).map(&:to_sym)
     submitted & has_many_purgable_names
   end
 
