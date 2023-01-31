@@ -4,6 +4,8 @@
 # Pass 'has_many_purgable :files, :avatar' to only allow the files and avatar to be purged.
 # Works with effective_bootstrap file_field to display a Delete file on save checkbox
 # to submit a _purge_attached array or association names to purge.
+#
+# You must permit the attribute _purge_attached: []
 
 module HasManyPurgable
   extend ActiveSupport::Concern
@@ -29,6 +31,10 @@ module HasManyPurgable
     self.send(:define_method, :has_many_purgable_options) { options }
 
     attr_accessor :_purge_attached
+
+    effective_resource do
+      _purge_attached     :permitted_param
+    end
 
     with_options(if: -> { _purge_attached.present? }) do
       before_validation { has_many_purgable_mark_for_destruction }
