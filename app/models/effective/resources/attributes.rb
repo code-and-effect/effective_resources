@@ -7,11 +7,11 @@ module Effective
       # This is the attributes as defined by ActiveRecord table
       # { :name => [:string], ... }
       def attributes
-        (klass_attributes.presence || model_attributes.presence)
+        klass_attributes.presence || model_attributes.presence
       end
 
       def primary_key_attribute
-        {klass.primary_key.to_sym => [:integer]}
+        { klass.primary_key.to_sym => [:integer] }
       end
 
       # The attributes for each belongs_to

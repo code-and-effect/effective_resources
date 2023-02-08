@@ -84,6 +84,10 @@ module Effective
       effective_resource.relation
     end
 
+    def resource_klass # Thing
+      effective_resource.klass
+    end
+
     def resource_name # 'thing'
       effective_resource.name
     end
@@ -92,16 +96,16 @@ module Effective
       (effective_resource.name + '_id').to_sym
     end
 
-    def resource_klass # Thing
-      effective_resource.klass
+    def resource_plural_name # 'things'
+      effective_resource.plural_name
     end
 
-    def resource_human_name
+    def resource_human_name # I18n
       effective_resource.human_name
     end
 
-    def resource_plural_name # 'things'
-      effective_resource.plural_name
+    def resource_human_plural_name # I18n
+      effective_resource.human_plural_name
     end
 
     def resource_datatable_attributes
