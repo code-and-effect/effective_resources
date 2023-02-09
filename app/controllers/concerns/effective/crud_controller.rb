@@ -23,7 +23,7 @@ module Effective
       def effective_resource
         @_effective_resource ||= begin
           controller = new()
-          klass = controller.resource_scope_relation.call().try(:klass) if controller.respond_to?(:resource_scope_relation)
+          klass = (controller.resource_scope_relation.call().try(:klass) rescue false) if controller.respond_to?(:resource_scope_relation)
 
           if klass.present?
             namespace = controller_path.split('/')[0...-1].join('/').presence
