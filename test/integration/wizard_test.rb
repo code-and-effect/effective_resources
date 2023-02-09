@@ -19,7 +19,7 @@ class WizardTest < ActionDispatch::IntegrationTest
     thong = Thong.create!(title: 'Title', body: 'Body', current_step: :start)
 
     delete thong_path(thong)
-    assert_equal 'Successfully deleted thong', flash[:success]
+    assert_equal 'Successfully deleted Thong', flash[:success]
     assert_redirected_to thongs_path
   end
 
