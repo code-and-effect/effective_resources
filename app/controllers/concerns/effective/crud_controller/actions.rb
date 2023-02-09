@@ -6,7 +6,7 @@ module Effective
         Rails.logger.info 'Processed by Effective::CrudController#index'
 
         EffectiveResources.authorize!(self, :index, resource_klass)
-        @page_title ||= resource_plural_name.titleize
+        @page_title ||= resource_human_plural_name
 
         self.resources ||= resource_scope.all if resource_scope.respond_to?(:all)
         @datatable = resource_datatable()
@@ -42,12 +42,12 @@ module Effective
 
           if (message = flash[:success].to_s).present?
             flash.delete(:success)
-            flash.now[:success] = "#{message.chomp('.')}. Adding another #{resource_name.titleize} based on previous."
+            flash.now[:success] = "#{message.chomp('.')}. Adding another #{resource_human_name} based on previous."
           end
         end
 
         EffectiveResources.authorize!(self, :new, resource)
-        @page_title ||= "New #{resource_name.titleize}"
+        @page_title ||= "New #{resource_human_name}"
 
         run_callbacks(:resource_render)
 
@@ -74,7 +74,7 @@ module Effective
         resource.assign_attributes(send(resource_params_method_name))
 
         EffectiveResources.authorize!(self, action, resource)
-        @page_title ||= "New #{resource_name.titleize}"
+        @page_title ||= "New #{resource_human_name}"
 
         if save_resource(resource, action)
           respond_with_success(resource, action)
@@ -211,7 +211,7 @@ module Effective
         self.resources ||= resource_scope.all
 
         EffectiveResources.authorize!(self, action, resource_klass)
-        @page_title ||= "#{action.to_s.titleize} #{resource_plural_name.titleize}"
+        @page_title ||= "#{action.to_s.titleize} #{resource_human_name}"
 
         if request.get?
           @datatable = resource_datatable()
@@ -238,7 +238,7 @@ module Effective
           end.length
         end
 
-        render json: { status: 200, message: "Successfully #{action_verb(action)} #{successes} / #{resources.length} selected #{resource_plural_name}" }
+        render json: { status: 200, message: "Successfully #{action_verb(action)} #{successes} / #{resources.length} selected #{resource_human_plural_name.downcase}" }
       end
     end
 

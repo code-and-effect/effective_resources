@@ -8,6 +8,7 @@ module Effective
     include Effective::Resources::Instance
     include Effective::Resources::Forms
     include Effective::Resources::Generator
+    include Effective::Resources::I18n
     include Effective::Resources::Klass
     include Effective::Resources::Model
     include Effective::Resources::Naming
@@ -31,7 +32,7 @@ module Effective
     end
 
     def to_s
-      name
+      human_name
     end
 
   end

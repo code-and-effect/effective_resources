@@ -63,13 +63,6 @@ module Effective
         @namespaces || []
       end
 
-      def human_name
-        name.gsub('::', ' ').underscore.gsub('_', ' ')
-      end
-
-      def human_plural_name
-        name.pluralize.gsub('::', ' ').underscore.gsub('_', ' ')
-      end
     end
   end
 end

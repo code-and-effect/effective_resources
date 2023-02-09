@@ -301,4 +301,23 @@ module EffectiveResourcesHelper
     path || '/'
   end
 
+  def effective_translate(resource, attribute = nil)
+    return translate(resource) unless resource.respond_to?(:model_name)
+
+    if attribute.blank?
+      resource.model_name.human
+    elsif resource.respond_to?(:human_attribute_name)
+      resource.human_attribute_name(attribute)
+    else
+      resource.class.human_attribute_name(attribute)
+    end
+  end
+
+  def effective_translates(resource, attribute = nil)
+    effective_translate(resource, attribute).pluralize
+  end
+
+  alias_method :et, :effective_translate
+  alias_method :ets, :effective_translates
+
 end

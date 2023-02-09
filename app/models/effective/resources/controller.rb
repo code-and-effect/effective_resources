@@ -54,11 +54,11 @@ module Effective
           end
 
           if collection_get_actions.find { |a| a == :index }
-            buttons["All #{human_plural_name}".titleize] = { action: :index, default: true }
+            buttons["All #{human_plural_name}"] = { action: :index, default: true }
           end
 
           if collection_get_actions.find { |a| a == :new }
-            buttons["New #{human_name}".titleize] = { action: :new, default: true }
+            buttons["New #{human_name}"] = { action: :new, default: true }
           end
 
           (collection_get_actions - crud_actions).each do |action|
@@ -122,11 +122,11 @@ module Effective
       def resource_klass_actions
         {}.tap do |buttons|
           if collection_get_actions.find { |a| a == :index }
-            buttons["All #{human_plural_name}".titleize] = { action: :index, default: true }
+            buttons["All #{human_plural_name}"] = { action: :index, default: true }
           end
 
           if collection_get_actions.find { |a| a == :new }
-            buttons["New #{human_name}".titleize] = { action: :new, default: true }
+            buttons["New #{human_name}"] = { action: :new, default: true }
           end
 
           (collection_get_actions - crud_actions).each do |action|

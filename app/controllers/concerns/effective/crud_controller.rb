@@ -21,7 +21,17 @@ module Effective
       # This is used for the buttons/submits/ons
       # It doesn't really work with the resource_scope correctly but the routes are important here
       def effective_resource
-        @_effective_resource ||= Effective::Resource.new(controller_path)
+        @_effective_resource ||= begin
+          controller = new()
+          klass = (controller.resource_scope_relation.call().try(:klass) rescue false) if controller.respond_to?(:resource_scope_relation)
+
+          if klass.present?
+            namespace = controller_path.split('/')[0...-1].join('/').presence
+            Effective::Resource.new(klass, namespace: namespace)
+          else
+            Effective::Resource.new(controller_path)
+          end
+        end
       end
     end
 
@@ -84,6 +94,10 @@ module Effective
       effective_resource.relation
     end
 
+    def resource_klass # Thing
+      effective_resource.klass
+    end
+
     def resource_name # 'thing'
       effective_resource.name
     end
@@ -92,16 +106,16 @@ module Effective
       (effective_resource.name + '_id').to_sym
     end
 
-    def resource_klass # Thing
-      effective_resource.klass
+    def resource_plural_name # 'things'
+      effective_resource.plural_name
     end
 
-    def resource_human_name
+    def resource_human_name # I18n
       effective_resource.human_name
     end
 
-    def resource_plural_name # 'things'
-      effective_resource.plural_name
+    def resource_human_plural_name # I18n
+      effective_resource.human_plural_name
     end
 
     def resource_datatable_attributes

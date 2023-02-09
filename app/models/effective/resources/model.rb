@@ -10,7 +10,7 @@ module Effective
         @model.read(&block)
 
         # If effective_developer is in live mode, this will cause it to refresh the class
-        ActiveSupport.run_load_hooks(:effective_resource, self)
+        # ActiveSupport.run_load_hooks(:effective_resource, self)
       end
 
       def model

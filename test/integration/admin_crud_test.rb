@@ -90,7 +90,7 @@ class AdminCrudTest < ActionDispatch::IntegrationTest
     thing = Thing.create!(title: 'Title', body: 'Body')
 
     delete admin_thing_url(thing)
-    assert_equal 'Successfully deleted thing', flash[:success]
+    assert_equal 'Successfully deleted Thing', flash[:success]
     assert_redirected_to admin_things_path
   end
 
