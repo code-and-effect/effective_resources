@@ -4,10 +4,8 @@ module Effective
 
       # Based on the incoming params[:commit] or passed action. Merges all options.
       def commit_action(action = nil)
-        #config = (['create', 'update'].include?(params[:action]) ? self.class.submits : self.class.buttons)
-
-        config = self.class.submits
-        ons = self.class.ons
+        config = self.submits()
+        ons = self.ons()
 
         commit = config[params[:commit].to_s]
         commit ||= config.find { |_, v| v[:action] == action }.try(:last)

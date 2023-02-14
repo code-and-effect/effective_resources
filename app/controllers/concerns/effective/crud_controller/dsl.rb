@@ -34,8 +34,10 @@ module Effective
       # submit :toggle, 'Blacklist', if: -> { sync? }, class: 'btn btn-primary'
       # submit :toggle, 'Whitelist', if: -> { !sync? }, class: 'btn btn-primary'
       # submit :save, 'Save', success: -> { "#{resource} was saved okay!" }
-      def submit(action, label = nil, args = {})
-        _insert_submit(action, label, args)
+      def submit(action, label, args = {})
+        instance_exec do
+          before_action { _insert_submit(action, label, args) }
+        end
       end
 
       # This controls the resource buttons section of the page
@@ -46,13 +48,17 @@ module Effective
       # button :approve, 'Approve', unless: -> { resource.approved? }, redirect: :show
       # button :decline, false
       def button(action, label = nil, args = {})
-        _insert_button(action, label, args)
+        instance_exec do
+          before_action { _insert_button(action, label, args) }
+        end
       end
 
       # This is a way of defining the redirect, flash etc of any action without tweaking defaults
       # submit and buttons options will be merged ontop of these
       def on(action, args = {})
-        _insert_on(action, args)
+        instance_exec do
+          before_action { _insert_on(action, args) }
+        end
       end
 
       # page_title 'My Title', only: [:new]
