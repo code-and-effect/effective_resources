@@ -18,21 +18,7 @@ module Effective
     module ClassMethods
       include Effective::CrudController::Dsl
 
-      # This is used for the buttons/submits/ons
-      # It doesn't really work with the resource_scope correctly but the routes are important here
-      def effective_resource
-        @_effective_resource ||= begin
-          controller = new()
-          klass = (controller.resource_scope_relation.call().try(:klass) rescue false) if controller.respond_to?(:resource_scope_relation)
-
-          if klass.present?
-            namespace = controller_path.split('/')[0...-1].join('/').presence
-            Effective::Resource.new(klass, namespace: namespace)
-          else
-            Effective::Resource.new(controller_path)
-          end
-        end
-      end
+      def effective_crud_controller?; true; end
     end
 
     def resource # @thing

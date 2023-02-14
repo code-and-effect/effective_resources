@@ -178,4 +178,20 @@ module EffectiveResources
     end
   end
 
+  def self.et(resource, attribute = nil)
+    return I18n.t(resource) unless resource.respond_to?(:model_name)
+
+    if attribute.blank?
+      resource.model_name.human
+    elsif resource.respond_to?(:human_attribute_name)
+      resource.human_attribute_name(attribute)
+    else
+      resource.class.human_attribute_name(attribute)
+    end
+  end
+
+  def self.ets(resource, attribute = nil)
+    et(resource, attribute).pluralize
+  end
+
 end

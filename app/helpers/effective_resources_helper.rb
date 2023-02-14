@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 module EffectiveResourcesHelper
-
   # effective_bootstrap
   def effective_submit(form, options = {}, &block)
-    actions = (controller.respond_to?(:effective_resource) ? controller.class : find_effective_resource).submits
+    actions = controller.try(:submits) || raise('controller must be an Effective::CrudController')
     actions = actions.select { |k, v| v[:default] != true } if options.delete(:defaults) == false
     actions = permitted_resource_actions(form.object, actions)
 
@@ -17,7 +16,7 @@ module EffectiveResourcesHelper
 
   # effective_form_inputs
   def simple_form_submit(form, options = {}, &block)
-    actions = (controller.respond_to?(:effective_resource) ? controller.class : find_effective_resource).submits
+    actions = controller.try(:submits) || raise('controller must be an Effective::CrudController')
     actions = permitted_resource_actions(form.object, actions)
 
     submits = actions.map { |name, opts| form.button(:submit, name, opts.except(:action, :title, 'data-method')) }
@@ -38,7 +37,7 @@ module EffectiveResourcesHelper
 
   def render_resource_buttons(resource, atts = {}, &block)
     effective_resource = find_effective_resource
-    actions = (controller.respond_to?(:effective_resource) ? controller.class : effective_resource).buttons
+    actions = controller.try(:buttons) || raise('controller must be an Effective::CrudController')
 
     actions = if resource.kind_of?(Class)
       actions.select { |_, v| effective_resource.collection_get_actions.include?(v[:action]) }
@@ -302,19 +301,11 @@ module EffectiveResourcesHelper
   end
 
   def effective_translate(resource, attribute = nil)
-    return translate(resource) unless resource.respond_to?(:model_name)
-
-    if attribute.blank?
-      resource.model_name.human
-    elsif resource.respond_to?(:human_attribute_name)
-      resource.human_attribute_name(attribute)
-    else
-      resource.class.human_attribute_name(attribute)
-    end
+    EffectiveResources.et(resource, attribute)
   end
 
   def effective_translates(resource, attribute = nil)
-    effective_translate(resource, attribute).pluralize
+    EffectiveResources.ets(resource, attribute)
   end
 
   alias_method :et, :effective_translate
