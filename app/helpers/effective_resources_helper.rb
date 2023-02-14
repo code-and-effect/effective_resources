@@ -300,15 +300,26 @@ module EffectiveResourcesHelper
     path || '/'
   end
 
-  def effective_translate(resource, attribute = nil)
+  # effective_translate
+  def et(resource, attribute = nil)
     EffectiveResources.et(resource, attribute)
   end
 
-  def effective_translates(resource, attribute = nil)
+  # effective_translate_plural
+  def etd(resource, attribute = nil)
+    EffectiveResources.etd(resource, attribute)
+  end
+
+  # effective_translate_plural
+  def ets(resource, attribute = nil)
     EffectiveResources.ets(resource, attribute)
   end
 
-  alias_method :et, :effective_translate
-  alias_method :ets, :effective_translates
+  # effective_translate_plural
+  def etsd(resource, attribute = nil)
+    EffectiveResources.etsd(resource, attribute)
+  end
+
+
 
 end

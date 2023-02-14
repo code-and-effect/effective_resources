@@ -179,9 +179,11 @@ module EffectiveResources
   end
 
   def self.et(resource, attribute = nil)
-    return I18n.t(resource) unless resource.respond_to?(:model_name)
-
-    if attribute.blank?
+    if resource.respond_to?(:model_name) == false
+      value = I18n.t(resource)
+      raise("Missing translation: #{resource}") if value.start_with?('translation missing:')
+      value
+    elsif attribute.blank?
       resource.model_name.human
     elsif resource.respond_to?(:human_attribute_name)
       resource.human_attribute_name(attribute)
@@ -190,8 +192,16 @@ module EffectiveResources
     end
   end
 
+  def self.etd(resource, attribute = nil)
+    et(resource, attribute).downcase
+  end
+
   def self.ets(resource, attribute = nil)
     et(resource, attribute).pluralize
+  end
+
+  def self.etsd(resource, attribute = nil)
+    et(resource, attribute).pluralize.downcase
   end
 
 end
