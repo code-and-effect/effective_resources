@@ -42,6 +42,7 @@ module Effective
         when :nil         ; :nil
         when :resource    ; :resource
         when :select      ; :string
+        when :radios      ; :string
         when :string      ; :string
         when :text        ; :string
         when :time        ; :time
