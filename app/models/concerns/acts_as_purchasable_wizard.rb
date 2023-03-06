@@ -51,6 +51,11 @@ module ActsAsPurchasableWizard
     order = submit_order || orders.build(user: owner) # This is polymorphic user, might be an organization
     fees = submit_fees().reject { |fee| fee.marked_for_destruction? }
 
+    # Make sure all Fees are valid
+    fees.each do |fee|
+      raise('expected a valid fee') unless fee.valid?
+    end
+
     # A membership could go from individual to organization
     order.user = owner
 
