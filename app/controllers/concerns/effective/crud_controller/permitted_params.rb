@@ -95,6 +95,8 @@ module Effective
 
         # Recursively add any accepts_nested_resources
         effective_resource.accepts_nested_attributes.each do |nested|
+          next if nested.options[:polymorphic] # ArgumentError: Polymorphic associations do not support computing the class.
+
           next if @permitted_params_for_seen_klasses.include?(nested.klass)
 
           if (nested_params = permitted_params_for(nested.klass, namespaces)).present?
