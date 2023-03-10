@@ -179,7 +179,9 @@ module EffectiveResources
   end
 
   def self.et(resource, attribute = nil)
-    if resource.respond_to?(:model_name) == false
+    if resource.respond_to?(:datatable_name)
+      resource.datatable_name
+    elsif resource.respond_to?(:model_name) == false
       value = I18n.t(resource)
       raise("Missing translation: #{resource}") if value.start_with?('translation missing:')
       value
