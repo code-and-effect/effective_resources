@@ -71,7 +71,7 @@ module HasManyPurgable
 
   def has_many_purgable_mark_for_destruction
     has_many_purgable_attachments.each do |name|
-      Array(public_send(name)).each { |attachment| attachment.mark_for_destruction }
+      Array(public_send(name)).each { |attachment| attachment.mark_for_destruction unless attachment.new_record? }
     end
 
     true
@@ -80,7 +80,7 @@ module HasManyPurgable
   def has_many_purgable_purge
     has_many_purgable_attachments.each do |name|
       Rails.logger.info "[has_many_purgable] Purging #{name} attachments"
-      Array(public_send(name)).each { |attachment| attachment.purge }
+      Array(public_send(name)).each { |attachment| attachment.purge if attachment.marked_for_destruction? }
     end
 
     true
