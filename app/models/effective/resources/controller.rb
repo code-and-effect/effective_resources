@@ -25,44 +25,45 @@ module Effective
       end
 
       def buttons
+        human_index = EffectiveResources.et("effective_resources.actions.index")
+        human_new = EffectiveResources.et("effective_resources.actions.new")
+
         {}.tap do |buttons|
           member_get_actions.each do |action| # default true means it will be overwritten by dsl methods
-            buttons[action.to_s.titleize] = { action: action, default: true }
+            buttons[human_action_name(action)] = { action: action, default: true }
           end
 
           (member_post_actions - crud_actions).each do |action| # default true means it will be overwritten by dsl methods
-            action_name = action.to_s.titleize
+            name = human_action_name(action)
+            confirm = human_action_confirm(action)
 
-            buttons[action_name] = case action
+            buttons[name] = case action
             when :archive
-              { action: action, default: true, if: -> { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action_name} @resource?"}
+              { action: action, default: true, if: -> { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => confirm }
             when :unarchive
-              { action: action, default: true, if: -> { resource.archived? }, 'data-method' => :post, 'data-confirm' => "Really #{action_name} @resource?" }
+              { action: action, default: true, if: -> { resource.archived? }, 'data-method' => :post, 'data-confirm' => confirm }
             else
-              { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action_name} @resource?"}
+              { action: action, default: true, 'data-method' => :post, 'data-confirm' => confirm }
             end
           end
 
           member_delete_actions.each do |action|
-            action_name = action.to_s.titleize
+            name = human_action_name(action)
+            confirm = human_action_confirm(action)
 
-            if action == :destroy
-              buttons['Delete'] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really delete @resource?" }
-            else
-              buttons[action_name] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really #{action_name} @resource?" }
-            end
+            buttons[name] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => confirm }
           end
 
           if collection_get_actions.find { |a| a == :index }
-            buttons["All #{human_plural_name}"] = { action: :index, default: true }
+            buttons["#{human_index} #{human_plural_name}"] = { action: :index, default: true }
           end
 
           if collection_get_actions.find { |a| a == :new }
-            buttons["New #{human_name}"] = { action: :new, default: true }
+            buttons["#{human_new} #{human_name}"] = { action: :new, default: true }
           end
 
           (collection_get_actions - crud_actions).each do |action|
-            buttons[action.to_s.titleize] = { action: action, default: true }
+            buttons[human_action_name(action)] = { action: action, default: true }
           end
         end
       end
@@ -73,37 +74,35 @@ module Effective
         {}.tap do |actions|
           member_get_actions.reverse_each do |action|
             next unless crud_actions.include?(action)
-            actions[action.to_s.titleize] = { action: action, default: true }
+            actions[human_action_name(action)] = { action: action, default: true }
           end
 
           member_get_actions.each do |action|
             next if crud_actions.include?(action)
-            actions[action.to_s.titleize] = { action: action, default: true }
+            actions[human_action_name(action)] = { action: action, default: true }
           end
 
           member_post_actions.each do |action|
             next if crud_actions.include?(action)
 
-            action_name = action.to_s.titleize
+            name = human_action_name(action)
+            confirm = human_action_confirm(action)
 
-            actions[action_name] = case action
+            actions[name] = case action
             when :archive
-              { action: action, default: true, if: -> { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => "Really #{action_name} @resource?"}
+              { action: action, default: true, if: -> { !resource.archived? }, class: 'btn btn-danger', 'data-method' => :post, 'data-confirm' => confirm }
             when :unarchive
-              { action: action, default: true, if: -> { resource.archived? }, 'data-method' => :post, 'data-confirm' => "Really #{action_name} @resource?" }
+              { action: action, default: true, if: -> { resource.archived? }, 'data-method' => :post, 'data-confirm' => confirm }
             else
-              { action: action, default: true, 'data-method' => :post, 'data-confirm' => "Really #{action_name} @resource?" }
+              { action: action, default: true, 'data-method' => :post, 'data-confirm' => confirm }
             end
           end
 
           member_delete_actions.each do |action|
-            action_name = action.to_s.titleize
+            name = human_action_name(action)
+            confirm = human_action_confirm(action)
 
-            if action == :destroy
-              actions['Delete'] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really delete @resource?" }
-            else
-              actions[action_name] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => "Really #{action_name} @resource?" }
-            end
+            actions[name] = { action: action, default: true, 'data-method' => :delete, 'data-confirm' => confirm }
           end
         end
       end
@@ -111,26 +110,29 @@ module Effective
       # Used by datatables
       def fallback_resource_actions
         {
-          'Show': { action: :show, default: true },
-          'Edit': { action: :edit, default: true },
-          'Delete': { action: :destroy, default: true, 'data-method' => :delete, 'data-confirm' => "Really delete @resource?" }
+          human_action_name(:show) => { action: :show, default: true },
+          human_action_name(:edit) => { action: :edit, default: true },
+          human_action_name(:destroy) => { action: :destroy, default: true, 'data-method' => :delete, 'data-confirm' => human_action_confirm(:destroy) }
         }
       end
 
       # This is the fallback for render_resource_actions when no actions are specified, but a class is given
       # Used by Datatables new
       def resource_klass_actions
+        human_index = EffectiveResources.et("effective_resources.actions.index")
+        human_new = EffectiveResources.et("effective_resources.actions.new")
+
         {}.tap do |buttons|
           if collection_get_actions.find { |a| a == :index }
-            buttons["All #{human_plural_name}"] = { action: :index, default: true }
+            buttons["#{human_index} #{human_plural_name}"] = { action: :index, default: true }
           end
 
           if collection_get_actions.find { |a| a == :new }
-            buttons["New #{human_name}"] = { action: :new, default: true }
+            buttons["#{human_new} #{human_name}"] = { action: :new, default: true }
           end
 
           (collection_get_actions - crud_actions).each do |action|
-            buttons[action.to_s.titleize] = { action: action, default: true }
+            buttons[human_action_name(action)] = { action: action, default: true }
           end
         end
       end

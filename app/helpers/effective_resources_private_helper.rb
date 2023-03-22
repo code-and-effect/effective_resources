@@ -3,6 +3,7 @@
 module EffectiveResourcesPrivateHelper
   REPLACE_PAGE_ACTIONS = {'update' => :edit, 'create' => :new}
   BLACKLIST = [:default, :only, :except, :if, :unless, :redirect, :success, :danger, :klass]
+  REPLACE_RESOURCE_METHODS = Regexp.new('@resource\.\w+')
 
   def permitted_resource_actions(resource, actions)
     page_action = REPLACE_PAGE_ACTIONS[params[:action]] || params[:action].try(:to_sym) || :save
@@ -20,7 +21,7 @@ module EffectiveResourcesPrivateHelper
       next unless permitted
 
       opts = args.except(:default, :only, :except, :if, :unless, :redirect, :success, :danger, :klass)
-      resource_to_s = resource.to_s.presence || resource.class.name.underscore
+      resource_to_s = resource.to_s.presence || EffectiveResources.et(resource)
 
       # Transform data: { ... } hash into 'data-' keys
       if opts.key?(:data)
@@ -35,9 +36,16 @@ module EffectiveResourcesPrivateHelper
         opts[:href] = opts.delete(:url)
       end
 
-      # Replace resource name in any token strings
+      # Replaces @resource.emails_send_to and @resource in data-confirm
       if opts.key?('data-confirm') && opts['data-confirm'].to_s.include?('@resource')
-        opts['data-confirm'] = opts['data-confirm'].gsub('@resource', resource_to_s)
+        confirm = opts['data-confirm']
+
+        confirm.gsub!(REPLACE_RESOURCE_METHODS) do |value|
+          method = value.to_s.split('.').last
+          resource.public_send(method)
+        end
+
+        opts['data-confirm'] = confirm.gsub('@resource', resource_to_s)
       end
 
       # Assign class
@@ -56,10 +64,10 @@ module EffectiveResourcesPrivateHelper
       # Assign title
       opts[:title] ||= case opts[:action]
         when :save then commit
-        when :edit then "Edit #{resource_to_s}"
+        when :edit then "#{et("effective_resources.actions.edit")} #{resource_to_s}"
         when :show then "#{resource_to_s}"
-        when :destroy then "Delete #{resource_to_s}"
-        when :index then "All #{resource.class.name.gsub('::', ' ').underscore.gsub('_', ' ').titleize.pluralize}"
+        when :destroy then "#{et("effective_resources.actions.destroy")} #{resource_to_s}"
+        when :index then "#{et("effective_resources.actions.index")} #{ets(resource)}"
         else "#{opts[:action].to_s.titleize} #{resource_to_s}"
       end
 

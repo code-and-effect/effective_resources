@@ -1,0 +1,10 @@
+en:
+  effective_resources:
+    name: 'Effective Resources'
+
+    actions:
+      index: 'All'
+      new: 'New'
+      edit: 'Edit'
+      show: 'Show'
+      destroy: 'Delete'
