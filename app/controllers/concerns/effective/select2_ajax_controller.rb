@@ -17,7 +17,7 @@ module Effective
 
       # Search
       if (term = params[:term]).present? && !skip_search
-        collection = Effective::Resource.new(collection).search_any(term)
+        collection = Effective::Resource.new(collection).search_any(term, columns: [:email, :first_name, :last_name])
       end
 
       # Paginate
