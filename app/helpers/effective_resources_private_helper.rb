@@ -40,7 +40,7 @@ module EffectiveResourcesPrivateHelper
       if opts.key?('data-confirm') && opts['data-confirm'].to_s.include?('@resource')
         confirm = opts['data-confirm']
 
-        confirm.gsub!(REPLACE_RESOURCE_METHODS) do |value|
+        confirm = confirm.gsub(REPLACE_RESOURCE_METHODS) do |value|
           method = value.to_s.split('.').last
           resource.public_send(method)
         end
