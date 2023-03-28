@@ -37,7 +37,7 @@ module EffectiveResourcesHelper
 
   def render_resource_buttons(resource, atts = {}, &block)
     effective_resource = find_effective_resource
-    actions = controller.try(:buttons) || raise('controller must be an Effective::CrudController')
+    actions = controller.try(:buttons) || effective_resource.buttons()
 
     actions = if resource.kind_of?(Class)
       actions.select { |_, v| effective_resource.collection_get_actions.include?(v[:action]) }
@@ -278,7 +278,7 @@ module EffectiveResourcesHelper
       link_to('Edit', wizard_path(step), title: "Edit #{title}")
     end
 
-    content_tag(:div, class: 'card') do
+    content_tag(:div, class: 'card mb-4') do
       content_tag(:div, class: 'card-body') do
         content_tag(:div, class: 'row') do
           content_tag(:div, class: 'col-sm') do
