@@ -281,7 +281,8 @@ module Effective
 
         # Normalize the term.
         # If you pass an email attribute it can return nil so we return the full value
-        term = Attribute.new(as).parse(value, name: name) || value
+        term = Attribute.new(as).parse(value, name: name)
+        term = value if term.nil?
 
         # If using the joined syntax from datatables
         joined = (sql_column.to_s.split('.').first.to_s.include?(relation.arel_table.name) == false)
@@ -305,7 +306,14 @@ module Effective
                 end
               )
 
+              if as == :date
+                term = term.to_date
+                end_at = end_at.to_date
+              end
+
               relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
+            elsif value.respond_to?(:strftime) && operation == :eq
+              relation.where(attribute.matches(value))
             end
 
           when :effective_obfuscation

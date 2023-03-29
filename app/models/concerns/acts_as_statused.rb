@@ -24,67 +24,6 @@ module ActsAsStatused
     end
   end
 
-  module CanCan
-    # The idea here is you can go forward but you can't go back.
-    def acts_as_statused(klass, only: nil, except: nil)
-      raise "klass does not implement acts_as_statused" unless klass.acts_as_statused?
-
-      statuses = klass.const_get(:STATUSES)
-      instance = klass.new
-
-      only = Array(only).compact
-      except = Array(except).compact
-
-      statuses.each_with_index do |status, index|
-        action = status_active_verb(status, instance)
-
-        next if action.blank?
-        next if only.present? && !only.include?(action)
-        next if except.present? && except.include?(action)
-
-        if index == 0
-          can(action, klass) and next
-        end
-
-        if status == :approved && statuses.include?(:declined)
-          if (position = statuses.index { |status| (status == :approved || status == :declined) }) > 0
-            can(action, klass) { |obj| obj.public_send("#{statuses[position-1]}?") || obj.declined? }
-            next
-          end
-        end
-
-        if status == :declined && statuses.include?(:approved)
-          if (position = statuses.index { |status| (status == :approved || status == :declined) }) > 0
-            can(action, klass) { |obj| obj.public_send("#{statuses[position-1]}?") }
-            next
-          end
-        end
-
-        can(action, klass) { |obj| obj.public_send("#{statuses[index-1]}?") }
-      end
-    end
-
-    private
-
-    # requested -> request, approved -> approve, declined -> decline, pending -> pending
-    def status_active_verb(status, instance)
-      status = status.to_s.strip
-
-      if status.end_with?('ied')
-        action = status[0...-3] + 'y'
-        return action.to_sym if instance.respond_to?(action + '!')
-      end
-
-      # ed, e, ing
-      [-1, -2, -3].each do |index|
-        action = status[0...index]
-        return action.to_sym if instance.respond_to?(action + '!')
-      end
-
-      nil
-    end
-  end
-
   included do
     acts_as_statused_options = @acts_as_statused_options
 
@@ -103,38 +42,85 @@ module ActsAsStatused
       self.status ||= self.class.const_get(:STATUSES).first
 
       # Set an existing belongs_to automatically
-      if respond_to?("#{status}_by=") && respond_to?("#{status}_by") && send("#{status}_by").blank?
+      if respond_to?("#{status}_by") && send("#{status}_by").blank?
         self.send("#{status}_by=", current_user)
       end
 
       # Set an existing timestamp automatically
-      if respond_to?("#{status}_at=") && respond_to?("#{status}_at") && send("#{status}_at").blank?
+      if respond_to?("#{status}_at") && send("#{status}_at").blank?
         self.send("#{status}_at=", Time.zone.now)
       end
 
+      if current_user.present?
+        self.status_steps["#{status}_by_id".to_sym] ||= current_user.id
+        self.status_steps["#{status}_by_type".to_sym] ||= current_user.class.name
+      end
+
       self.status_steps["#{status}_at".to_sym] ||= Time.zone.now
-      self.status_steps["#{status}_by".to_sym] ||= current_user.try(:id)
     end
 
     validates :status, presence: true, inclusion: { in: const_get(:STATUSES).map(&:to_s) }
 
     # Create an received scope and approved? method for each status
     acts_as_statused_options[:statuses].each do |sym|
+      sym_at = "#{sym}_at".to_sym
+      sym_by = "#{sym}_by".to_sym
+      sym_by_id = "#{sym}_by_id".to_sym
+      sym_by_type = "#{sym}_by_type".to_sym
+
       scope(sym, -> { where(status: sym.to_s) })
 
+      # approved?
       define_method("#{sym}?") { status == sym.to_s }
-      define_method("was_#{sym}?") { send("#{sym}_at").present? }
 
-      #unless has_attribute?("#{sym}_at")
-        define_method("#{sym}_at") { status_steps["#{sym}_at".to_sym] }
-        define_method("#{sym}_at=") { |value| status_steps["#{sym}_at".to_sym] = value }
-      #end
+      # was_approved?
+      define_method("was_#{sym}?") { send(sym_at).present? }
 
-      #unless has_attribute?("#{sym}_by_id")
-        define_method("#{sym}_by") { acts_as_statused_by_user(sym) }
-        define_method("#{sym}_by_id") { status_steps["#{sym}_by".to_sym] }
-        define_method("#{sym}_by_id=") { |value| status_steps["#{sym}_by".to_sym] = value }
-      #end
+      # approved_at
+      define_method(sym_at) { self[sym_at.to_s] || status_steps[sym_at] }
+
+      # approved_by_id
+      define_method(sym_by_id) { self[sym_by_id.to_s] || status_steps[sym_by_id] }
+
+      # approved_by_type
+      define_method(sym_by_type) { self[sym_by_type.to_s] || status_steps[sym_by_type] }
+
+      # approved_by
+      define_method(sym_by) do
+        user = (super() if attributes.key?(sym_by_id.to_s))
+
+        user ||= begin
+          id = status_steps[sym_by_id]
+          klass = status_steps[sym_by_type]
+
+          klass.constantize.find(id) if id.present? && klass.present?
+        end
+      end
+
+      # approved_at=
+      define_method("#{sym_at}=") do |value|
+        super(value) if attributes.key?(sym_at.to_s)
+        status_steps[sym_at] = value
+      end
+
+      # approved_by_id=
+      define_method("#{sym_by_id}=") do |value|
+        super(value) if attributes.key?(sym_by_id.to_s)
+        status_steps[sym_by_id] = value
+      end
+
+      # approved_by_type=
+      define_method("#{sym_by_type}=") do |value|
+        super(value) if attributes.key?(sym_by_type.to_s)
+        status_steps[sym_by_type] = value
+      end
+
+      # approved_by=
+      define_method("#{sym_by}=") do |value|
+        super(value) if attributes.key?(sym_by_id.to_s)
+        status_steps[sym_by_id] = value&.id
+        status_steps[sym_by_type] = value&.class&.name
+      end
 
       # approved!
       define_method("#{sym}!") do |atts = {}|
@@ -146,16 +132,17 @@ module ActsAsStatused
       define_method("un#{sym}!") do
         self.status = nil if (status == sym.to_s)
 
-        status_steps.delete("#{sym}_at".to_sym)
-        status_steps.delete("#{sym}_by".to_sym)
-
-        if respond_to?("#{sym}_at=") && respond_to?("#{sym}_at") && send("#{sym}_at").present?
+        if respond_to?("#{sym}_at") && send("#{sym}_at").present?
           self.send("#{sym}_at=", nil)
         end
 
-        if respond_to?("#{sym}_by=") && respond_to?("#{sym}_by") && send("#{sym}_by").present?
+        if respond_to?("#{sym}_by") && send("#{sym}_by").present?
           self.send("#{sym}_by=", nil)
         end
+
+        status_steps.delete(sym_at)
+        status_steps.delete(sym_by_id)
+        status_steps.delete(sym_by_type)
 
         true
       end
@@ -165,18 +152,6 @@ module ActsAsStatused
 
   module ClassMethods
     def acts_as_statused?; true; end
-  end
-
-  private
-
-  def acts_as_statused_by_user(status)
-    return nil if status_steps["#{status}_by".to_sym].blank?
-
-    @acts_as_statused_by_users ||= begin
-      User.where(id: status_steps.map { |k, v| v.presence if k.to_s.end_with?('_by') }.compact).all.inject({}) { |h, user| h[user.id] = user; h }
-    end
-
-    @acts_as_statused_by_users[status_steps["#{status}_by".to_sym]]
   end
 
 end

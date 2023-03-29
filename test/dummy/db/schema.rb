@@ -10,12 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 4) do
+ActiveRecord::Schema.define(version: 5) do
 
   create_table "advanced_orders", force: :cascade do |t|
     t.integer "user_id"
     t.string "user_type"
     t.string "title"
+  end
+
+  create_table "posts", force: :cascade do |t|
+    t.integer "submitted_by_id"
+    t.string "title"
+    t.string "status"
+    t.text "status_steps"
+    t.datetime "submitted_at"
+    t.datetime "approved_at"
   end
 
   create_table "simple_orders", force: :cascade do |t|
