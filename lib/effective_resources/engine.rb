@@ -50,7 +50,6 @@ module EffectiveResources
           end
 
           CanCan::Ability.include(ActsAsArchived::CanCan)
-          CanCan::Ability.include(ActsAsStatused::CanCan)
         end
       end
     end

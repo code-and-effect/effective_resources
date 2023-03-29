@@ -116,6 +116,12 @@ class SearchAttributeTest < ActiveSupport::TestCase
     search = Effective::Resource.new(Thing).search(:date, now, operation: :gteq)
     assert_equal [thing1, thing2, thing3], search.to_a
 
+    search = Effective::Resource.new(Thing).search(:date, "#{now.strftime('%F')}", operation: :eq)
+    assert_equal [thing1], search.to_a
+
+    search = Effective::Resource.new(Thing).search(:date, "#{now.year}-#{now.month}-#{now.day}", operation: :eq)
+    assert_equal [thing1], search.to_a
+
     search = Effective::Resource.new(Thing).search(:date, "#{now.year}-#{now.month}", operation: :eq)
     assert_equal [thing1], search.to_a
 
