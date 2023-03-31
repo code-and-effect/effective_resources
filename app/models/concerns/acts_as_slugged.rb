@@ -63,8 +63,9 @@ module ActsAsSlugged
       slug = "#{slug}-#{self.class.name.demodulize.parameterize}"
     end
 
-    if (count = self.class.where(slug: slug).count) > 0
-      slug = "#{slug}-#{count+1}"
+    if (count = self.class.where('slug ILIKE ?', "#{slug}%").count) > 0
+      uid = (Time.zone.now.to_i - 1_500_000_000).to_s(36) # This is a unique 6 digit url safe string
+      slug = "#{slug}-#{uid}"
     end
 
     slug
