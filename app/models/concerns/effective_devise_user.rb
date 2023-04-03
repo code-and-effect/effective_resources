@@ -142,6 +142,11 @@ module EffectiveDeviseUser
     super && (respond_to?(:archived?) ? !archived? : true)
   end
 
+  # Allow users to sign in even if they have a pending invitation
+  def block_from_invitation?
+    false
+  end
+
   def inactive_message
     (respond_to?(:archived?) && archived?) ? :archived : super
   end

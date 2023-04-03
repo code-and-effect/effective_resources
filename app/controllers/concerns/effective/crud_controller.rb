@@ -141,6 +141,7 @@ module Effective
       end
 
       # Built in ones
+      return 'resource_admin_permitted_params' if effective_resource.model.present? && effective_resource.namespaces == ['admin']
       return 'resource_permitted_params' if effective_resource.model.present?
       return 'resource_active_model_permitted_params' if effective_resource.active_model?
 

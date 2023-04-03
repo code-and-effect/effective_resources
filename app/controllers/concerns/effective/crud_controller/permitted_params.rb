@@ -20,6 +20,21 @@ module Effective
         params.require(permitted_name).permit(*permitted_params)
       end
 
+      # Permit all params for the admin namespace
+      def resource_admin_permitted_params
+        raise 'expected resource class to have effective_resource do .. end' if effective_resource.model.blank?
+        raise 'expected to be called only on admin namespace' unless effective_resource.namespaces == ['admin']
+
+        permitted_name = params.key?(effective_resource.name) ? effective_resource.name : effective_resource.resource_name
+
+        if Rails.env.development?
+          Rails.logger.info "Effective::CrudController#resource_admin_permitted_params:"
+          Rails.logger.info "params.require(:#{permitted_name}).permit!"
+        end
+
+        params.require(permitted_name).permit!
+      end
+
       # If the resource is ActiveModel, just permit all
       # This can still be overridden by a controller
       def resource_active_model_permitted_params

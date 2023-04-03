@@ -6,12 +6,14 @@ module Effective
 
       def module_name
         return nil unless class_name.split('::').length > 1
+
         class_name.split('::').first
       end
 
       # Acpa
       def module_namespace
         return nil unless namespaces.present?
+
         Array(namespaces + [nil]).map { |name| name.to_s.classify } * '::'
       end
 
@@ -44,7 +46,6 @@ module Effective
       def tenant_class_name
         (Tenant.module_name + '::' + class_name) if tenant?
       end
-
     end
   end
 end
