@@ -137,6 +137,10 @@ module ActsAsWizard
       has_completed_step?(required_steps.last)
     end
 
+    def reset_wizard_steps!
+      update!(wizard_steps: {})
+    end
+
     def without_current_step(&block)
       existing = current_step
 

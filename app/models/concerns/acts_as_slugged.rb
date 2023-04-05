@@ -64,7 +64,7 @@ module ActsAsSlugged
     end
 
     if (count = self.class.where(slug: slug).count) > 0
-      uid = (Time.zone.now.to_i - 1_600_000_000).to_s(16) # This is a unique 7-8 digit url safe hex string
+      uid = Time.zone.now.nsec.to_s(16) # This is a unique 7-8 digit url safe hex string
       slug = "#{slug}-#{uid}"
     end
 
