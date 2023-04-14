@@ -53,7 +53,7 @@ module ActsAsPurchasableWizard
 
     # Make sure all Fees are valid
     fees.each do |fee|
-      raise('expected a valid fee') unless fee.valid?
+      raise("expected a valid fee but #{fee.id} had errors #{fee.errors.inspect}") unless fee.valid?
     end
 
     # A membership could go from individual to organization
