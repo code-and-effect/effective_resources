@@ -74,14 +74,14 @@ module Effective
       super
     end
 
+    def resource_klass # Thing
+      effective_resource.klass
+    end
+
     private
 
     def resource_scope
       effective_resource.relation
-    end
-
-    def resource_klass # Thing
-      effective_resource.klass
     end
 
     def resource_name # 'thing'
