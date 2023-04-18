@@ -57,6 +57,10 @@ module ActsAsWizard
       self.class.const_get(:WIZARD_STEPS).keys
     end
 
+    def all_steps
+      wizard_step_keys
+    end
+
     def completed_steps
       wizard_steps.keys
     end
@@ -89,7 +93,7 @@ module ActsAsWizard
     # For use in the summary partials. Does not include summary.
     def render_steps
       blacklist = [:start, :billing, :checkout, :submitted, :summary]
-      (required_steps + completed_steps - blacklist).select { |step| has_completed_step?(step) }
+      ((required_steps | completed_steps) - blacklist).select { |step| has_completed_step?(step) }
     end
 
     def wizard_step_title(step)
