@@ -76,6 +76,9 @@ module ActsAsStatused
       # was_approved?
       define_method("was_#{sym}?") { send(sym_at).present? }
 
+      # just_approved?
+      define_method("just_#{sym}?") { status == sym.to_s && status_was != sym.to_s }
+
       # approved_at
       define_method(sym_at) { self[sym_at.to_s] || status_steps[sym_at] }
 
