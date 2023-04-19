@@ -29,6 +29,10 @@ module Effective
         end
       end
 
+      def belong_tos_names_attributes
+        belong_tos.inject({}) { |h, ass| h[ass.name] = [:belongs_to]; h }
+      end
+
       def has_manys_attributes
         has_manys_ids.inject({}) { |h, ass| h[ass] = [:array]; h }
       end
@@ -82,6 +86,7 @@ module Effective
       end
 
       # All table attributes. includes primary_key and belongs_tos
+      # THINK THIS IS DEPRECATED
       def table_attributes
         attributes = (klass.new().attributes rescue nil)
         return {} unless attributes
@@ -121,6 +126,14 @@ module Effective
         end
 
         sort ? sort_by_model_attributes(attributes) : attributes
+      end
+
+      # Similar to klass_attributes
+      # Used by table_builder
+      def resource_attributes
+        belong_tos_names_attributes
+          .merge(klass_attributes(sort: true))
+          .merge(effective_addresses_attributes)
       end
 
       private
