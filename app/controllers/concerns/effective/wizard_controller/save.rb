@@ -25,7 +25,7 @@ module Effective
             redirect_to_finish_wizard(options, params)
           end
         else
-          flash.now[:danger] = options.delete(:error) || resource_flash(:danger, resource, action)
+          flash.now[:danger] ||= options.delete(:error) || resource_flash(:danger, resource, action)
           render_step(wizard_value(step), options)
         end
       end
