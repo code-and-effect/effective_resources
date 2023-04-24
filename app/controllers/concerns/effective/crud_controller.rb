@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Effective
   module CrudController
     extend ActiveSupport::Concern

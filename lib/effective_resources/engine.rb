@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module EffectiveResources
   class Engine < ::Rails::Engine
     engine_name 'effective_resources'

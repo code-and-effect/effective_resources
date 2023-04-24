@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Effective Engine concern
 
 module EffectiveGem
@@ -13,12 +15,12 @@ module EffectiveGem
 
     # Define getters
     (config_keys - EXCLUDED_GETTERS).each do |key|
-      self.singleton_class.define_method(key) { config()[key] }
+      self.singleton_class.delegate(key, to: :config)
     end
 
     # Define setters
     config_keys.each do |key|
-      self.singleton_class.define_method("#{key}=") { |value| config()[key] = value }
+      self.singleton_class.delegate("#{key}=", to: :config)
     end
 
   end

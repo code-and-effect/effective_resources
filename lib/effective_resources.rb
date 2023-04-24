@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'effective_resources/engine'
 require 'effective_resources/version'
 require 'effective_resources/effective_gem'
