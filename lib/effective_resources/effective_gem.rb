@@ -15,12 +15,12 @@ module EffectiveGem
 
     # Define getters
     (config_keys - EXCLUDED_GETTERS).each do |key|
-      self.singleton_class.delegate(key, to: :config)
+      self.singleton_class.define_method(key) { config()[key] }
     end
 
     # Define setters
     config_keys.each do |key|
-      self.singleton_class.delegate("#{key}=", to: :config)
+      self.singleton_class.define_method("#{key}=") { |value| config()[key] = value }
     end
 
   end
