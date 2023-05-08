@@ -153,7 +153,7 @@ module EffectiveResources
       path = service.path_for(blob.key)
       duplicate_path = service.path_for(duplicate.key)
       FileUtils.mkdir_p(File.dirname(duplicate_path))
-      FileUtils.ln(path, duplicate_path) if File.exists?(path)
+      FileUtils.ln(path, duplicate_path) if File.exist?(path)
     else
       raise "unknown storage service #{service.class.name}"
     end
