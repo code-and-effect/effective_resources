@@ -42,4 +42,20 @@ module EffectiveResourcesWizardHelper
     end
   end
 
+  def render_wizard_resource(resource, as: nil, path: nil)
+    effective_resource = Effective::Resource.new(resource)
+
+    as ||= effective_resource.name
+    path ||= effective_resource.view_file_path(nil)
+    raise('expected a path') unless path.present?
+
+    resource.render_path = path.to_s.chomp('/')
+
+    resource.render_steps.map do |partial|
+      resource.render_step = partial
+
+      render_if_exists("#{path}/#{partial}", as.to_sym => resource) || render('effective/acts_as_wizard/wizard_step', resource: resource, resource_path: path)
+    end.join.html_safe
+  end
+
 end

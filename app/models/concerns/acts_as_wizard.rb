@@ -31,6 +31,7 @@ module ActsAsWizard
 
     # Used by the view when rendering each partial. Not the current step.
     attr_accessor :render_step
+    attr_accessor :render_path
 
     if Rails.env.test? # So our tests can override the required_steps method
       cattr_accessor :test_required_steps
@@ -92,7 +93,7 @@ module ActsAsWizard
 
     # For use in the summary partials. Does not include summary.
     def render_steps
-      blacklist = [:start, :billing, :checkout, :submitted, :summary]
+      blacklist = [:start, :billing, :checkout, :submit, :submitted, :summary]
       ((required_steps | completed_steps) - blacklist).select { |step| has_completed_step?(step) }
     end
 

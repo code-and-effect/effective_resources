@@ -1,0 +1,3 @@
+= wizard_card(resource) do
+  = effective_table_with(resource) do |f|
+    = render(template: "#{resource.render_path}/#{resource.render_step}", f: f)
