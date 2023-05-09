@@ -206,7 +206,7 @@ module EffectiveResourcesHelper
   end
   alias_method :render_resource, :render_resource_partial
 
-  def render_if_exists(partial, atts = {})
+  def render_partial_exists?(partial, atts = {})
     raise('expected a path') unless partial.kind_of?(String)
     raise('path should not include spaces') if partial.include?(' ')
 
@@ -215,12 +215,11 @@ module EffectiveResourcesHelper
     file = pieces.last
     path = pieces[0..-2].join('/')
 
-    if lookup_context.exists?(file, [path], :partial)
-      render(partial, atts)
-    else
-      Rails.logger.info "Skipped Render (effective_resources) render_if_exists: #{partial}"
-      nil
-    end
+    lookup_context.exists?(file, [path], :partial)
+  end
+
+  def render_if_exists(partial, atts = {})
+    render(partial, atts) if render_partial_exists?(partial, atts)
   end
 
   # Tableize attributes
