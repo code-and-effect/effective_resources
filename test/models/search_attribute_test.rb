@@ -94,6 +94,44 @@ class SearchAttributeTest < ActiveSupport::TestCase
     assert_equal [], search.to_a
   end
 
+  test 'search days ago' do
+    now = Time.zone.now.beginning_of_day
+
+    thing1 = Thing.create!(title: 'one', body: 'body', date: now)
+    thing2 = Thing.create!(title: 'one', body: 'body', date: now - 1.day)
+    thing3 = Thing.create!(title: 'two', body: 'body', date: now - 30.days)
+
+    # eq
+    # search = Effective::Resource.new(Thing).search(:date, 0, operation: :days_ago_eq)
+    # assert_equal [thing1], search.to_a
+
+    # search = Effective::Resource.new(Thing).search(:date, 0, operation: :days_ago_eq)
+    # assert_equal [thing2], search.to_a
+
+    # search = Effective::Resource.new(Thing).search(:date, 31, operation: :days_ago_eq)
+    # assert_equal [thing3], search.to_a
+
+    # gteq
+    search = Effective::Resource.new(Thing).search(:date, 0, operation: :days_ago_gteq)
+    assert_equal [thing1, thing2, thing3], search.to_a
+
+    search = Effective::Resource.new(Thing).search(:date, 1, operation: :days_ago_gteq)
+    assert_equal [thing2, thing3], search.to_a
+
+    search = Effective::Resource.new(Thing).search(:date, 2, operation: :days_ago_gteq)
+    assert_equal [thing3], search.to_a
+
+    # lteq. This is a bit hokey edge cases.
+    search = Effective::Resource.new(Thing).search(:date, 1, operation: :days_ago_lteq)
+    assert_equal [thing1], search.to_a
+
+    search = Effective::Resource.new(Thing).search(:date, 2, operation: :days_ago_lteq)
+    assert_equal [thing1, thing2], search.to_a
+
+    search = Effective::Resource.new(Thing).search(:date, 31, operation: :days_ago_lteq)
+    assert_equal [thing1, thing2, thing3], search.to_a
+  end
+
   test 'search dates' do
     now = Time.zone.now.beginning_of_year
 
