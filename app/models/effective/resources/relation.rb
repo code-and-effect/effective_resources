@@ -341,7 +341,7 @@ module Effective
 
         case operation
           when :eq then relation.where("#{sql_column} = ?", term)
-          when :matches then relation.where("#{sql_column} #{ilike} ?", "%#{term}%")
+          when :matches then search_columns_by_ilike_term(relation, term, columns: name)
           when :not_eq then relation.where(attribute.not_eq(term))
           when :does_not_match then relation.where(attribute.does_not_match("%#{term}%"))
           when :starts_with then relation.where(attribute.matches("#{term}%"))
@@ -383,12 +383,37 @@ module Effective
         end
 
         return relation.none() if columns.blank?
+        search_columns_by_ilike_term(relation, value, columns: columns, fuzzy: fuzzy)
+      end
 
-        fuzzy = true unless fuzzy == false
+      private
 
-        # Retval
-        searched = relation
-        terms = value.split(' ') - [nil, '']
+      def search_columns_by_ilike_term(collection, value, columns:, fuzzy: nil)
+        return collection if value.blank?
+
+        raise('unsupported OR and AND syntax') if value.include?(' OR ') && value.include?(' AND ')
+        raise('expected columns') unless columns.present?
+
+        terms = []
+        join = ''
+
+        if value.include?(' OR ')
+          terms = value.split(' OR ')
+          join = ' OR '
+        elsif value.include?(' AND ')
+          terms = value.split(' AND ')
+          join = ' AND '
+        else
+          terms = value.split(' ')
+          join = ' OR '
+        end
+
+        terms = (terms - [nil, '', ' ']).map(&:strip)
+        columns = Array(columns)
+        fuzzy = true if fuzzy.nil?
+
+        # Do the search
+        searched = collection
 
         terms.each do |term|
           conditions = (
@@ -397,15 +422,13 @@ module Effective
             else
               columns.map { |name| "#{sql_column(name)} = :term" }
             end
-          ).join(' OR ')
+          ).join(join)
 
-          searched = searched.where(conditions, fuzzy: "%#{term}%", term: term)
+          searched = collection.where(conditions, fuzzy: "%#{term}%", term: term)
         end
 
         searched
       end
-
-      private
 
       def order_by_associated_conditions(association, sort: nil, direction: :asc, limit: nil)
         resource = Effective::Resource.new(association)
