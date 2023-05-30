@@ -72,7 +72,7 @@ module Effective
         return collection_action(action)
       end
 
-      super
+      params[:id].present? ? member_action(action) : collection_action(action)
     end
 
     def resource_klass # Thing
