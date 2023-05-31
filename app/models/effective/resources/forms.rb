@@ -75,7 +75,14 @@ module Effective
           if res.klass.unscoped.respond_to?(:datatables_scope)
             { collection: res.klass.datatables_scope.map { |obj| [obj.to_s, obj.id] } }
           elsif res.klass.unscoped.respond_to?(:datatables_filter)
-            { collection: res.klass.datatables_filter.map { |obj| [obj.to_s, obj.id] } }
+            collection = res.klass.datatables_filter
+
+            if collection.kind_of?(Array)
+              { collection: collection }
+            else
+              { collection: collection.map { |obj| [obj.to_s, obj.id] } }
+            end
+
           elsif res.klass.unscoped.respond_to?(:sorted)
             { collection: res.klass.sorted.map { |obj| [obj.to_s, obj.id] } }
           else
