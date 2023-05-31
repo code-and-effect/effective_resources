@@ -391,6 +391,8 @@ module Effective
       def search_columns_by_ilike_term(collection, value, columns:, fuzzy: nil)
         return collection if value.blank?
 
+        value = value.to_s
+
         raise('unsupported OR and AND syntax') if value.include?(' OR ') && value.include?(' AND ')
         raise('expected columns') unless columns.present?
 
