@@ -61,7 +61,7 @@ module Effective
             .order(Arel.sql("EXTRACT(hour from #{sql_column}) #{sql_direction}, EXTRACT(minute from #{sql_column}) #{sql_direction}"))
         else
           relation
-            .order(Arel.sql("#{sql_column} #{sql_direction}"))
+            .order(Arel.sql(("ISNULL(#{sql_column}), " if mysql?).to_s + "#{sql_column}='' ASC, #{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?).to_s))
         end
       end
 
