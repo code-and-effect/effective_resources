@@ -62,6 +62,9 @@ module Effective
         when :string, :text
           relation
             .order(Arel.sql(("ISNULL(#{sql_column}), " if mysql?).to_s + "#{sql_column}='' ASC, #{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?).to_s))
+        when :date, :datetime
+          relation
+            .order(Arel.sql(("ISNULL(#{sql_column}), " if mysql?).to_s + "#{sql_column} #{sql_direction}" + (" NULLS LAST" if postgres?).to_s))
         else
           relation
             .order(Arel.sql("#{sql_column} #{sql_direction}"))
