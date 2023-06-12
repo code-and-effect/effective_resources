@@ -413,29 +413,25 @@ module Effective
           join = ' AND '
         else
           terms = value.split(' ')
-          join = ' OR '
+          join = ' AND '
         end
 
         terms = (terms - [nil, '', ' ']).map(&:strip)
         columns = Array(columns)
         fuzzy = true if fuzzy.nil?
 
-        # Do the search
-        searched = collection
-
-        terms.each do |term|
-          conditions = (
-            if fuzzy
-              columns.map { |name| "#{sql_column(name)} #{ilike} :fuzzy" }
-            else
-              columns.map { |name| "#{sql_column(name)} = :term" }
-            end
-          ).join(join)
-
-          searched = collection.where(conditions, fuzzy: "%#{term}%", term: term)
+        terms = terms.inject({}) do |hash, term|
+          hash["term_#{hash.length}".to_sym] = (fuzzy ? "%#{term}%" : term); hash
         end
 
-        searched
+        # Do any of these columns contain all the terms?
+        conditions = columns.map do |name|
+          keys = terms.keys.map { |key| (fuzzy ? "#{sql_column(name)} #{ilike} :#{key}" : "#{sql_column(name)} = :#{key}") }
+          '(' + keys.join(' AND ') + ')'
+        end.join(' OR ')
+
+        # Do the search
+       collection.where(conditions, terms)
       end
 
       def order_by_associated_conditions(association, sort: nil, direction: :asc, limit: nil)
