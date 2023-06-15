@@ -12,6 +12,10 @@ module ActsAsPaginable
     end
   end
 
+  module ClassMethods
+    def acts_as_paginable?; true; end
+  end
+
   included do
     scope :paginate, -> (page: nil, per_page: nil) {
       page = (page || 1).to_i
