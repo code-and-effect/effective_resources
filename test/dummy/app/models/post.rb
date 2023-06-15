@@ -1,5 +1,7 @@
 class Post < ApplicationRecord
 
+  acts_as_paginable
+
   acts_as_statused :draft, :submitted, :approved
 
   belongs_to :submitted_by, class_name: 'User', optional: true

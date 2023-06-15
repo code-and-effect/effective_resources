@@ -17,9 +17,18 @@ module ActsAsPaginable
   end
 
   included do
+    def self.default_per_page=(per_page)
+      @default_per_page = per_page
+    end
+
+    def self.default_per_page
+      @default_per_page || 12 # because we often do 3 columns of 4 elements layouts
+    end
+
     scope :paginate, -> (page: nil, per_page: nil) {
+      per_page = (per_page || default_per_page).to_i
       page = (page || 1).to_i
-      offset = [(page - 1), 0].max * per_page
+      offset = [(page - 1), 0].max * (per_page).to_i
 
       all.limit(per_page).offset(offset)
     }
