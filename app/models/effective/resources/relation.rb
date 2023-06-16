@@ -347,7 +347,7 @@ module Effective
 
         case operation
           when :eq then relation.where("#{sql_column} = ?", term)
-          when :matches then search_columns_by_ilike_term(relation, term, columns: name)
+          when :matches then search_columns_by_ilike_term(relation, term, columns: (sql_column.presence || name))
           when :not_eq then relation.where(attribute.not_eq(term))
           when :does_not_match then relation.where(attribute.does_not_match("%#{term}%"))
           when :starts_with then relation.where(attribute.matches("#{term}%"))
@@ -426,7 +426,10 @@ module Effective
 
         # Do any of these columns contain all the terms?
         conditions = columns.map do |name|
-          keys = terms.keys.map { |key| (fuzzy ? "#{sql_column(name)} #{ilike} :#{key}" : "#{sql_column(name)} = :#{key}") }
+          column = (name.to_s.include?('.') ? name : sql_column(name))
+          raise("expected an sql column for #{name}") if column.blank?
+
+          keys = terms.keys.map { |key| (fuzzy ? "#{column} #{ilike} :#{key}" : "#{column} = :#{key}") }
           '(' + keys.join(' AND ') + ')'
         end.join(' OR ')
 
