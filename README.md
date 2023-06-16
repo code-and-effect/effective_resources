@@ -213,6 +213,19 @@ Just put another `app/views/posts/index.html.haml` in the posts directory to ove
 
 Sure why not. These don't really fit into my code base anywhere else.
 
+### acts_as_paginable
+
+Quickly adds a `paginate` scope to your model that can then be used in your views and also integrates well with `effective_bootstrap`. The pagination method is `Limit and Offset`.
+
+```ruby
+# Given any model you just need to call it like
+class Thing < ApplicationRecord
+  acts_as_paginable
+end
+
+# Now you can use it like:
+Thing.all.paginate(page: 1, per_page: 5)
+```
 ### acts_as_tokened
 
 Quickly adds rails 5 `has_secure_token` to your model, along with some `Post.find()` enhancements to work with tokens instead of IDs.
