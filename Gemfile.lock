@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    effective_resources (2.7.20)
+    effective_resources (2.8.1)
       rails (>= 4.0.0)
 
 GEM
@@ -100,8 +100,8 @@ GEM
     erubi (1.10.0)
     execjs (2.7.0)
     ffi (1.13.1)
-    globalid (0.4.2)
-      activesupport (>= 4.2.0)
+    globalid (1.1.0)
+      activesupport (>= 5.0)
     haml (5.2.0)
       temple (>= 0.8.0)
       tilt
@@ -123,20 +123,20 @@ GEM
     marcel (1.0.0)
     method_source (1.0.0)
     mini_mime (1.0.3)
-    mini_portile2 (2.5.0)
+    mini_portile2 (2.8.2)
     minitest (5.14.4)
     nio4r (2.5.7)
-    nokogiri (1.11.2)
-      mini_portile2 (~> 2.5.0)
+    nokogiri (1.15.2)
+      mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     popper_js (1.16.0)
-    pry (0.13.1)
+    pry (0.14.2)
       coderay (~> 1.1)
       method_source (~> 1.0)
-    pry-byebug (3.9.0)
+    pry-byebug (3.10.1)
       byebug (~> 11.0)
-      pry (~> 0.13.0)
-    racc (1.5.2)
+      pry (>= 0.13, < 0.15)
+    racc (1.7.1)
     rack (2.2.3)
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
@@ -215,6 +215,9 @@ DEPENDENCIES
   pry-byebug
   sqlite3
   wicked
+
+RUBY VERSION
+   ruby 3.1.2p20
 
 BUNDLED WITH
    2.1.4
