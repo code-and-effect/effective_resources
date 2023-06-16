@@ -142,6 +142,9 @@ class SearchAttributeTest < ActiveSupport::TestCase
     search = Effective::Resource.new(Thing).search(:date, now, operation: :eq)
     assert_equal [thing1], search.to_a
 
+    search = Effective::Resource.new(Thing).search(:date, now.to_date, operation: :eq)
+    assert_equal [thing1], search.to_a
+
     search = Effective::Resource.new(Thing).search(:date, now, operation: :not_eq)
     assert_equal [thing2, thing3], search.to_a
 

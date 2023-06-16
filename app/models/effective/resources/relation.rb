@@ -313,11 +313,10 @@ module Effective
               )
 
               if as == :date
-                term = term.to_date
-                end_at = end_at.to_date
+                relation.where("#{sql_column} >= ? AND #{sql_column} < ?", term.to_date, (end_at + 1.day).to_date)
+              else
+                relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
               end
-
-              relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
             elsif value.respond_to?(:strftime) && operation == :eq
               relation.where(attribute.matches(value))
             end
