@@ -15,7 +15,7 @@ class ContentTypeValidator < ActiveModel::EachValidator
     calendar:     %i[ics],
     spreadsheet:  %i[xlsx xls],
     video:        %i[mpeg mpg mp3 m4a mpg4 aac webm mp4 m4v],
-  }
+  }.freeze
 
   def validate_each(record, attribute, value)
     # Support for optional attachments
@@ -25,7 +25,7 @@ class ContentTypeValidator < ActiveModel::EachValidator
     values = EXPANSIONS.values.flatten
     options = instance_values["options"]
     message = options.try(:[], :message) || "must have a valid content type"
-    types = options[:in]
+    types = options[:with] || options[:in]
 
     # Ensure array and ensure symbols
     types = [types].flatten.compact.map(&:to_sym)
