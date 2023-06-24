@@ -29,7 +29,7 @@ class ContentTypeValidator < ActiveModel::EachValidator
 
     # Ensure array and ensure symbols
     types = [types].flatten.compact.map(&:to_sym)
-    puts "types: #{types.inspect}"
+
     allowed_types = []
     types.each do |types|
       if types.in?(keys)
