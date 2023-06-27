@@ -7,8 +7,8 @@
 #
 # class Thing < ApplicationRecord
 #   has_many :comments
-#   acts_as_archivable cascade: :comments
-#   acts_as_archivable cascade: :comments, strategy: :archive|:archive_all|:active_job
+#   acts_as_archived cascade: :comments
+#   acts_as_archived cascade: :comments, strategy: :archive|:archive_all|:active_job
 # end
 
 # Each controller needs its own archive and unarchive action.
