@@ -31,10 +31,7 @@ module Effective
 
         # Duplicate if possible
         if params[:duplicate_id].present?
-          duplicate = (resource_scope.find(params[:duplicate_id]) rescue nil)
-          duplicate ||= (resource_scope.find_by_id(params[:duplicate_id]) rescue nil)
-
-          raise ActiveRecord::RecordNotFound unless duplicate.present?
+          duplicate = resource_scope.find(params[:duplicate_id])
 
           EffectiveResources.authorize!(self, :show, duplicate)
 
