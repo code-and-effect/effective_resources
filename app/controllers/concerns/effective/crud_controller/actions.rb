@@ -19,9 +19,16 @@ module Effective
 
         self.resource ||= resource_scope.new
 
+        # Assign attributes from the query string
         to_assign = if view_context.respond_to?(:inline_datatable?) && view_context.inline_datatable?
           EffectiveDatatables.find(params[:_datatable_id], params[:_datatable_attributes]).attributes
-        elsif params.present?
+        end
+
+        to_assign ||= if params[resource_name].present? && params[resource_name].respond_to?(:to_unsafe_h)
+          params[resource_name].to_unsafe_h
+        end
+
+        to_assign ||= if params.present?
           params.to_unsafe_h.except(:controller, :action, :id, :duplicate_id)
         end
 
