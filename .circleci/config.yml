@@ -38,12 +38,12 @@ jobs:
       - run:
           name: Install Bundle
           command: |
-            bundle install --path=vendor/bundle --jobs=4 --retry=3
+            bundle install --jobs=4 --retry=3
 
       - save_cache:
           key: effective-gem-{{ checksum "Gemfile.lock" }}
           paths:
-            - ~/upside/vendor/bundle
+            - ./vendor/bundle
 
       - run:
           name: Run Unit Tests
