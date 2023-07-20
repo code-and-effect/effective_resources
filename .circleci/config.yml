@@ -41,6 +41,8 @@ jobs:
 
       - save_cache:
           key: effective-gem-{{ checksum "Gemfile.lock" }}
+          paths:
+            - ./vendor/bundle
 
       - run:
           name: Run Unit Tests
