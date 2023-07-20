@@ -11,7 +11,6 @@ container: &container
       environment:
         RAILS_ENV: test
     - image: cimg/postgres:15.1
-      command: postgres -c max_connections=300
 
 workflows:
   version: 2
@@ -42,8 +41,6 @@ jobs:
 
       - save_cache:
           key: effective-gem-{{ checksum "Gemfile.lock" }}
-          paths:
-            - ./vendor/bundle
 
       - run:
           name: Run Unit Tests
