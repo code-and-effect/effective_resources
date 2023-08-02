@@ -90,7 +90,7 @@ class CrudTest < ActionDispatch::IntegrationTest
     thing = Thing.create!(title: 'Title', body: 'Body')
 
     delete thing_url(thing)
-    assert_equal 'Successfully deleted Thing', flash[:success]
+    assert_equal 'Successfully deleted Cool Thing', flash[:success]
     assert_redirected_to things_path
   end
 

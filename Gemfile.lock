@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    effective_resources (2.8.1)
+    effective_resources (2.8.7)
       rails (>= 4.0.0)
 
 GEM
@@ -106,7 +106,7 @@ GEM
       temple (>= 0.8.0)
       tilt
     holidays (8.4.1)
-    i18n (1.8.9)
+    i18n (1.14.1)
       concurrent-ruby (~> 1.0)
     inline_svg (1.7.1)
       activesupport (>= 3.0)

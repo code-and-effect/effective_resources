@@ -30,4 +30,12 @@
 # available at https://guides.rubyonrails.org/i18n.html.
 
 en:
-  hello: "Hello world"
+  hello: "Hello dummy world"
+
+  activerecord:
+    models:
+      thing: 'Cool Thing'
+
+    attributes:
+      thing:
+        title: 'Cool Thing Title'
