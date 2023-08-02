@@ -180,12 +180,13 @@ module EffectiveResources
     end
   end
 
+  # effective_translate
   def self.et(resource, attribute = nil)
     if resource.respond_to?(:datatable_name)
       resource.datatable_name
-    elsif resource.respond_to?(:model_name) == false
+    elsif resource.respond_to?(:model_name) == false # Just a string. Fees will do this
       value = I18n.t(resource)
-      raise("Missing translation: #{resource}") if value.start_with?('translation missing:')
+      raise StandardError.new("Missing translation: #{resource}") if value.start_with?('translation missing:')
       value
     elsif attribute.blank?
       resource.model_name.human
