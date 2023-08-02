@@ -5,8 +5,10 @@ module Effective
     module I18n
       def human_action_name(action)
         if klass.respond_to?(:model_name)
-          value = ::I18n.t("activerecord.actions.#{klass.model_name.i18n_key}.#{action}")
-          return value unless value.start_with?('translation missing:')
+          key = "activerecord.actions.#{klass.model_name.i18n_key}.#{action}"
+
+          value = ::I18n.t(key)
+          return value unless value.include?(key) # missing translation
         end
 
         if crud_actions.include?(action)
@@ -19,8 +21,10 @@ module Effective
 
       def human_action_confirm(action)
         if klass.respond_to?(:model_name)
-          value = ::I18n.t("activerecord.actions.#{klass.model_name.i18n_key}.#{action}_confirm")
-          return value unless value.start_with?('translation missing:')
+          key = "activerecord.actions.#{klass.model_name.i18n_key}.#{action}_confirm"
+
+          value = ::I18n.t(key)
+          return value unless value.include?(key) # missing translation
         end
 
         "Really #{human_action_name(action)} @resource?"
