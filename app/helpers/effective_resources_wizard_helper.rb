@@ -42,19 +42,32 @@ module EffectiveResourcesWizardHelper
     end
   end
 
-  def render_wizard_resource(resource, as: nil, path: nil)
+  def render_wizard_resource_step(resource, step, as: nil, path: nil)
+    render_wizard_resource(resource, only: step, as: as, path: path)
+  end
+
+  def render_wizard_resource(resource, only: [], except: [], as: nil, path: nil)
     effective_resource = Effective::Resource.new(resource)
 
+    # Render path
     as ||= effective_resource.name
-    path ||= effective_resource.view_file_path(nil)
+    path ||= effective_resource.wizard_file_path(resource)
     raise('expected a path') unless path.present?
 
     resource.render_path = path.to_s.chomp('/')
 
-    resource.render_steps.map do |partial|
-      resource.render_step = partial
+    # Render steps
+    only = Array(only)
+    except = Array(except)
 
-      render_if_exists("#{path}/#{partial}", as.to_sym => resource) || render('effective/acts_as_wizard/wizard_step', resource: resource, resource_path: path)
+    steps = resource.render_steps
+    steps = (steps - except) if except.present?
+    steps = (steps & only) if only.present?
+
+    steps.map do |step|
+      resource.render_step = step
+
+      render_if_exists("#{path}/#{step}", as.to_sym => resource) || render('effective/acts_as_wizard/wizard_step', resource: resource, resource_path: path)
     end.join.html_safe
   end
 

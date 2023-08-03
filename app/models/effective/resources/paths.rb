@@ -35,6 +35,15 @@ module Effective
         File.join(*[tenant_path, 'app/datatables', namespace, "effective_#{plural_name}_datatable.rb"].compact)
       end
 
+      # Wizards are kinda weird, we need some help for effective_memberships
+      def wizard_file_path(resource)
+        if resource.class.try(:effective_memberships_applicant?) || resource.class.try(:effective_memberships_applicant_review?)
+          File.join(*['effective', plural_name].compact)
+        else
+          view_file_path(nil)
+        end
+      end
+
       # Views
       def view_file(action = :index, partial: false)
         File.join(*[tenant_path, 'app/views', class_path, namespace, plural_name, "#{'_' if partial}#{action}.html.haml"].compact)
