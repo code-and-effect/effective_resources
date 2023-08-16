@@ -39,7 +39,7 @@ module ActsAsStatused
     const_set(:STATUSES, acts_as_statused_options[:statuses])
 
     before_validation do
-      self.status ||= self.class.const_get(:STATUSES).first
+      self.status ||= all_statuses.first
 
       # Set an existing belongs_to automatically
       if respond_to?("#{status}_by") && send("#{status}_by").blank?
@@ -132,25 +132,51 @@ module ActsAsStatused
       end
 
       # unapproved!
-      define_method("un#{sym}!") do
-        self.status = nil if (status == sym.to_s)
+      define_method("un#{sym}!") do |atts = {}|
+        raise 'expected a Hash of passed attributes' unless atts.kind_of?(Hash)
 
-        if respond_to?("#{sym}_at") && send("#{sym}_at").present?
-          self.send("#{sym}_at=", nil)
-        end
-
-        if respond_to?("#{sym}_by") && send("#{sym}_by").present?
-          self.send("#{sym}_by=", nil)
-        end
+        self.try("#{sym}_at=", nil)
+        self.try("#{sym}_by=", nil)
+        self.try("#{sym}_by_id=", nil)
+        self.try("#{sym}_by_type=", nil)
 
         status_steps.delete(sym_at)
         status_steps.delete(sym_by_id)
         status_steps.delete(sym_by_type)
 
-        true
-      end
+        if status == sym.to_s # I was just this status
+          assign_attributes(status: last_completed_status || all_statuses.first)
+        end
 
+        # Assign atts if present
+        assign_attributes(atts) if atts.present?
+
+        save!
+      end
     end
+
+    # Regular instance methods
+    # Sort of matches acts_as_wizard
+    def status_keys
+      self.class.const_get(:STATUSES)
+    end
+
+    def all_statuses
+      status_keys
+    end
+
+    def completed_statuses
+      all_statuses.select { |status| has_completed_status?(status) }
+    end
+
+    def last_completed_status
+      all_statuses.reverse.find { |status| has_completed_status?(status) }
+    end
+
+    def has_completed_status?(status)
+      (errors.present? ? status_steps_was : status_steps)["#{status}_at".to_sym].present?
+    end
+
   end
 
   module ClassMethods

@@ -116,7 +116,8 @@ class ActsAsStatusedTest < ActiveSupport::TestCase
 
     assert post.unsubmitted!
 
-    assert post.status.nil?
+    # It rolled back to previous status
+    assert post.draft?
 
     refute post.submitted?
     refute post.was_submitted?

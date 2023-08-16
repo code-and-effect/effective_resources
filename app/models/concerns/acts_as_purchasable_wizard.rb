@@ -89,7 +89,9 @@ module ActsAsPurchasableWizard
     raise('already has purchased submit fees') if fees.any?(&:purchased?)
 
     order = find_or_build_submit_order()
+    raise('expected an Effective::Order') unless order.kind_of?(Effective::Order)
     raise('already has purchased submit order') if order.purchased?
+    raise('unable to proceed with a voided submit order') if order.try(:voided?)
 
     true
   end
