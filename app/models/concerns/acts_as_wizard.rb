@@ -146,8 +146,14 @@ module ActsAsWizard
       has_completed_step?(required_steps.last)
     end
 
-    def reset_wizard_steps!
+    def reset_all_wizard_steps!
       update!(wizard_steps: {})
+    end
+
+    def complete_all_wizard_steps!
+      now = Time.zone.now
+      required_steps.each { |step| wizard_steps[step] ||= now }
+      save!
     end
 
     def without_current_step(&block)
