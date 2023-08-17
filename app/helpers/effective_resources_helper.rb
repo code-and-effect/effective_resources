@@ -189,13 +189,15 @@ module EffectiveResourcesHelper
     safe = atts.delete(:safe)
     atts = { :namespace => (effective_resource.namespace.to_sym if effective_resource.namespace), effective_resource.name.to_sym => resource }.compact.merge(atts)
 
-    if lookup_context.template_exists?(effective_resource.name, controller._prefixes, :partial)
-      return render(effective_resource.name, atts)
+    partial = (action.present? ? action.to_s : effective_resource.name)
+
+    if lookup_context.template_exists?(partial, controller._prefixes, :partial)
+      return render(partial, atts)
     end
 
     effective_resource.view_paths.each do |view_path|
-      if lookup_context.template_exists?(effective_resource.name, [view_path], :partial)
-        return render(view_path + '/' + effective_resource.name, atts)
+      if lookup_context.template_exists?(partial, [view_path], :partial)
+        return render(view_path + '/' + partial, atts)
       end
     end
 

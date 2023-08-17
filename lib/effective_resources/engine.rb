@@ -46,10 +46,8 @@ module EffectiveResources
       app.config.to_prepare do
         if defined?(CanCan::Ability)
           CanCan::Ability.module_eval do
-            CRUD_ACTIONS = [:index, :new, :create, :edit, :update, :show, :destroy]
-
             def crud
-              CRUD_ACTIONS
+              [:index, :new, :create, :edit, :update, :show, :destroy]
             end
           end
 

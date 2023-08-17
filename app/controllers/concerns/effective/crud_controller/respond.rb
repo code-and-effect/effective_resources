@@ -103,9 +103,10 @@ module Effective
         flash[:danger] ||= danger
       end
 
-      def template_present?(action)
+      def template_present?(action, format: nil)
+        format = Array(format).presence
         formats = [(request.format.symbol.to_s.sub('json', 'js').presence || 'html').to_sym]
-        lookup_context.template_exists?(action, _prefixes, formats: formats)
+        lookup_context.template_exists?(action, _prefixes, formats: (format || formats))
       end
 
     end
