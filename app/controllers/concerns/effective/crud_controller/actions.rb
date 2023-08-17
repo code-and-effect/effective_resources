@@ -185,8 +185,10 @@ module Effective
           respond_to do |format|
             format.html { }
             format.js do
+              html_template = action if template_present?(action, format: :html)
               template = template_present?(action) ? action : 'member_action'
-              render(template, formats: :js, locals: { action: action })
+
+              render(template, formats: :js, locals: { action: action, html_template: html_template })
             end
           end
 
