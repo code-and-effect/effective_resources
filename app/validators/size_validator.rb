@@ -15,9 +15,15 @@ class SizeValidator < ActiveModel::EachValidator
     max_size = options.try(:[], :less_than) || 2.megabytes
     message = options.try(:[], :message) || "is too large, please upload a file smaller than #{max_size / 1.megabyte}MB"
 
-    if value.blob.byte_size > max_size
-      record.errors.add(attribute, message)
+    blobs = value.try(:blobs) || value.try(:blob) || raise('unable to find blobs')
+
+    Array(blobs).each do |blob|
+      if blob.byte_size > max_size
+        record.errors.add(attribute, message)
+        break
+      end
     end
 
+    true
   end
 end
