@@ -1,7 +1,7 @@
 <% resource = (@_effective_resource || Effective::Resource.new(controller_path)) %>
 <% @resource = instance_variable_get('@' + resource.name) if resource.name %>
 
-<% if html_template.present? %>
+<% if local_assigns[:html_template].present? %>
   EffectiveForm.remote_form_payload = "<%= j(render_resource_partial(@resource, action: action)) %>";
 <% else %>
   EffectiveForm.remote_form_payload = "<%= j(render_resource_form(@resource, action: action, safe: true).presence || render_resource_partial(@resource)) %>";
