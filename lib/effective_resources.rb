@@ -145,7 +145,7 @@ module EffectiveResources
     duplicate = ActiveStorage::Blob.create_before_direct_upload!(**atts)
 
     case service.class.name
-    when 'ActiveStorage::Service::S3Service'
+    when 'ActiveStorage::Service::S3Service', 'ActiveStorage::Service::S3NoDeleteService'
       bucket = service.bucket
       object = bucket.object(blob.key)
       object.copy_to(bucket.object(duplicate.key))

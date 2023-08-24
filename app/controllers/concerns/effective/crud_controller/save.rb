@@ -51,7 +51,7 @@ module Effective
           exception = e
         rescue => e
           exception = e
-          notify_exception(e, resource, action) unless e.class.name == 'RuntimeError'
+          notify_exception(e, resource, action)
         end
 
         if exception.present?
