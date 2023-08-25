@@ -21,6 +21,18 @@ module ActsAsWizard
     end
   end
 
+  module ClassMethods
+    def acts_as_wizard?; true; end
+
+    def wizard_steps_hash
+      const_get(:WIZARD_STEPS)
+    end
+
+    def all_wizard_steps
+      const_get(:WIZARD_STEPS).keys
+    end
+  end
+
   included do
     acts_as_wizard_options = @acts_as_wizard_options
 
@@ -180,17 +192,6 @@ module ActsAsWizard
 
   end
 
-  module ClassMethods
-    def acts_as_wizard?; true; end
 
-    def wizard_steps_hash
-      const_get(:WIZARD_STEPS)
-    end
-
-    def all_wizard_steps
-      const_get(:WIZARD_STEPS).keys
-    end
-
-  end
 
 end

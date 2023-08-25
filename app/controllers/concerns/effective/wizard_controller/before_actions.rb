@@ -45,9 +45,11 @@ module Effective
         return if step == 'wicked_finish'
         return if resource.blank?
         return if resource.try(:done?)
-        return unless resource_scope.respond_to?(:in_progress)
+        return unless resource_scope.respond_to?(:in_progress_for) || resource_scope.respond_to?(:in_progress)
 
-        existing = resource_scope.in_progress.order(:id).where.not(id: resource).first
+        in_progress = resource_scope.try(:in_progress_for, current_user) || resource_scope.try(:in_progress)
+        existing = in_progress.order(:id).where.not(id: resource).first
+
         return unless existing.present?
         return if resource.persisted? && (existing.id > resource.id) # Otherwise we get an infinite loop
 
