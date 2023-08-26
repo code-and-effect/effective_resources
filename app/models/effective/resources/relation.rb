@@ -356,12 +356,14 @@ module Effective
           when :lt then relation.where(attribute.lt(term))
           when :lteq then relation.where(attribute.lteq(term))
           when :days_ago_eq
-            date = (Time.zone.now - (term.to_i).days)
+            date = Time.zone.now.advance(days: -term.to_i)
             relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", date.beginning_of_day, date.end_of_day)
           when :days_ago_lteq # 30 days or less ago.
-            relation.where("#{sql_column} >= ?", Time.zone.now - (term.to_i).days)
+            date = Time.zone.now.advance(days: -term.to_i)
+            relation.where("#{sql_column} >= ?", date)
           when :days_ago_gteq # 30 days or more ago
-            relation.where("#{sql_column} <= ?", Time.zone.now - (term.to_i).days)
+            date = Time.zone.now.advance(days: -term.to_i)
+            relation.where("#{sql_column} <= ?", date)
           else raise("Unexpected operation: #{operation}")
         end
       end
