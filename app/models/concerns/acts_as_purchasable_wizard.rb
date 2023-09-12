@@ -40,7 +40,7 @@ module ActsAsPurchasableWizard
   end
 
   def submit_order
-    orders.first
+    orders.last
   end
 
   def find_or_build_submit_fees
@@ -49,6 +49,8 @@ module ActsAsPurchasableWizard
 
   def find_or_build_submit_order
     order = submit_order || orders.build(user: owner) # This is polymorphic user, might be an organization
+    order = orders.build(user: owner) if order.declined? # Make a new order, if the previous one was declined
+
     fees = submit_fees().reject { |fee| fee.marked_for_destruction? }
 
     # Make sure all Fees are valid
