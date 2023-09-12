@@ -121,7 +121,7 @@ module Effective
       datatable_klass = effective_resource.datatable_klass
       return unless datatable_klass.present?
 
-      datatable = datatable_klass.new(resource_datatable_attributes)
+      datatable = EffectiveResources.best(datatable_klass.name).new(resource_datatable_attributes)
       datatable.effective_resource = effective_resource if datatable.respond_to?(:effective_resource=)
       datatable
     end
