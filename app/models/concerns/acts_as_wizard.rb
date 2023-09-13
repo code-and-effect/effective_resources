@@ -172,7 +172,8 @@ module ActsAsWizard
       existing = current_step
 
       begin
-        self.current_step = nil; yield
+        self.current_step = nil
+        yield
       ensure
         self.current_step = existing
       end
@@ -191,7 +192,4 @@ module ActsAsWizard
     end
 
   end
-
-
-
 end

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    effective_resources (2.9.6)
+    effective_resources (2.10.0)
       rails (>= 4.0.0)
 
 GEM

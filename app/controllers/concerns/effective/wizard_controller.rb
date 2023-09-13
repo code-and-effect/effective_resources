@@ -46,8 +46,10 @@ module Effective
       helper EffectiveResourcesWizardHelper
 
       rescue_from Wicked::Wizard::InvalidStepError do |exception|
-        flash[:danger] = "Unknown step. You have been moved to the #{resource_wizard_steps.first} step."
-        redirect_to wizard_path(resource_wizard_steps.first)
+        step = resource.required_steps.first || resource_wizard_steps.first
+
+        flash[:danger] = "Unknown step. You have been moved to the #{step} step."
+        redirect_to wizard_path(step)
       end
 
       # effective_resources on save callback
