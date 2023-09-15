@@ -45,6 +45,10 @@ module EffectiveDeviseUser
       avatar_url              :string
     end
 
+    with_options(if: -> { alternate_email.present? }) do
+      validates :alternate_email, uniqueness: { case_sensitive: false }
+    end
+
     # Devise invitable ignores model validations, so we manually check for duplicate email addresses.
     before_save(if: -> { new_record? && invitation_sent_at.present? }) do
       if email.blank?
@@ -160,6 +164,32 @@ module EffectiveDeviseUser
 
       recoverable.send_reset_password_instructions if recoverable.errors.blank?
       recoverable
+    end
+
+    # https://github.com/heartcombo/devise/blob/f6e73e5b5c8f519f4be29ac9069c6ed8a2343ce4/lib/devise/models/authenticatable.rb#L276
+    def find_first_by_auth_conditions(tainted_conditions, opts = {})
+      conditions = devise_parameter_filter.filter(tainted_conditions).merge(opts)
+      email = conditions[:email]
+      conditions.delete(:email)
+
+      user = to_adapter.find_first(conditions.merge(email: email))
+      return user if user.present? && user.persisted?
+
+      to_adapter.find_first(conditions.merge(alternate_email: email))
+    end
+
+    # https://github.com/heartcombo/devise/blob/f6e73e5b5c8f519f4be29ac9069c6ed8a2343ce4/lib/devise/models/database_authenticatable.rb#L216
+    def find_for_database_authentication(warden_conditions)
+      conditions = warden_conditions.dup.presence || {}
+      primary_or_alternate_email = conditions[:email]
+      conditions.delete(:email)
+
+      raise "Expected an email or alternate email but got [#{primary_or_alternate_email}] instead" if primary_or_alternate_email.blank?
+
+      all
+        .where(conditions)
+        .where("lower(email) = :value OR lower(alternate_email) = :value", value: primary_or_alternate_email.strip.downcase)
+        .take
     end
 
   end
