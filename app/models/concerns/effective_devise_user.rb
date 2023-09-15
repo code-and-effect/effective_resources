@@ -189,7 +189,7 @@ module EffectiveDeviseUser
       all
         .where(conditions)
         .where("lower(email) = :value OR lower(alternate_email) = :value", value: primary_or_alternate_email.strip.downcase)
-        .take
+        .first
     end
 
   end
