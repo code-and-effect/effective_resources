@@ -45,7 +45,7 @@ module EffectiveDeviseUser
       avatar_url              :string
     end
 
-    with_options(if: -> { alternate_email.present? }) do
+    with_options(if: -> { respond_to?(:alternate_email) && alternate_email.present? }) do
       validates :alternate_email, uniqueness: { case_sensitive: false }
     end
 
