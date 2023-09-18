@@ -1,4 +1,5 @@
 class User < ApplicationRecord
+  effective_devise_user
 
   has_many :simple_orders
   has_many :advanced_orders, as: :user # Polymorphic

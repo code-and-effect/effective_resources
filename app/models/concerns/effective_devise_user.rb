@@ -46,7 +46,7 @@ module EffectiveDeviseUser
     end
 
     # Devise invitable ignores model validations, so we manually check for duplicate email addresses.
-    before_save(if: -> { new_record? && invitation_sent_at.present? }) do
+    before_save(if: -> { new_record? && try(:invitation_sent_at).present? }) do
       if email.blank?
         self.errors.add(:email, "can't be blank")
         raise("email can't be blank")
@@ -62,6 +62,28 @@ module EffectiveDeviseUser
     before_save(if: -> { persisted? && encrypted_password_changed? }) do
       assign_attributes(provider: nil, access_token: nil, refresh_token: nil, token_expires_at: nil)
     end
+
+    # Uniqueness validation of emails and alternate emails across all users
+    validate(if: -> { respond_to?(:alternate_email) }) do
+      records = self.class.where.not(id: self.id) # exclude self
+      email_duplicates = records.where("lower(email) = :email OR lower(alternate_email) = :email", email: email.to_s.strip.downcase)
+      alternate_email_duplicates = records.where("lower(email) = :alternate_email OR lower(alternate_email) = :alternate_email", alternate_email: alternate_email.to_s.strip.downcase)
+
+      # Check if a uniqueness validation was already performed before triggering the exists query
+      if !self.errors.added?(:email, 'has already been taken') && email_duplicates.exists?
+        self.errors.add(:email, 'has already been taken')
+      end
+
+      # Check if the alternate email is set before triggering the exists query
+      if try(:alternate_email).present? && alternate_email_duplicates.exists?
+        self.errors.add(:alternate_email, 'has already been taken')
+      end
+    end
+
+    with_options(if: -> { respond_to?(:alternate_email) }) do
+      validates :alternate_email, email: true, allow_blank: true
+    end
+
   end
 
   module ClassMethods
@@ -162,9 +184,47 @@ module EffectiveDeviseUser
       recoverable
     end
 
+    # https://github.com/heartcombo/devise/blob/f6e73e5b5c8f519f4be29ac9069c6ed8a2343ce4/lib/devise/models/authenticatable.rb#L276
+    def find_first_by_auth_conditions(tainted_conditions, opts = {})
+      conditions = devise_parameter_filter.filter(tainted_conditions).merge(opts)
+      email = conditions[:email]
+      conditions.delete(:email)
+
+      user = to_adapter.find_first(conditions.merge(email: email))
+      return user if user.present? && user.persisted?
+
+      to_adapter.find_first(conditions.merge(alternate_email: email)) if respond_to?(:alternate_email)
+    end
+
+    # https://github.com/heartcombo/devise/blob/f6e73e5b5c8f519f4be29ac9069c6ed8a2343ce4/lib/devise/models/database_authenticatable.rb#L216
+    def find_for_database_authentication(warden_conditions)
+      conditions = warden_conditions.dup.presence || {}
+      primary_or_alternate_email = conditions[:email]
+      conditions.delete(:email)
+
+      has_alternate_email = 'alternate_email'.in? column_names
+
+      raise "Expected an email #{has_alternate_email ? 'or alternate email' : ''} but got [#{primary_or_alternate_email}] instead" if primary_or_alternate_email.blank?
+
+      query = if has_alternate_email
+                "lower(email) = :value OR lower(alternate_email) = :value"
+              else
+                "lower(email) = :value"
+              end
+
+      all
+        .where(conditions)
+        .where(query, value: primary_or_alternate_email.strip.downcase)
+        .first
+    end
+
   end
 
   # EffectiveDeviseUser Instance Methods
+
+  def alternate_email=(value)
+    super(value.to_s.strip.downcase.presence)
+  end
 
   def reinvite!
     invite!
