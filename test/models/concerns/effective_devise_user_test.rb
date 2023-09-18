@@ -3,7 +3,7 @@ require 'test_helper'
 class EffectiveDeviseUserTest < ActiveSupport::TestCase
 
   test 'email uniqueness' do
-    User.create(first_name: "A", last_name: "User", email: "user@mail.com",  alternate_email: "alter@mail.com")
+    User.create!(first_name: "A", last_name: "User", email: "user@mail.com",  alternate_email: "alter@mail.com")
 
     user = User.new(first_name: "B", last_name: "User", email: "valid@mail.com")
     assert user.valid?

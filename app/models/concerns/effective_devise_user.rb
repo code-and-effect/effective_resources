@@ -52,7 +52,7 @@ module EffectiveDeviseUser
         raise("email can't be blank")
       end
 
-      if !respond_to?(:alternate_email) && self.class.where(email: email.downcase.strip).exists?
+      if self.class.where(email: email.downcase.strip).exists?
         self.errors.add(:email, 'has already been taken')
         raise("email has already been taken")
       end
@@ -64,7 +64,7 @@ module EffectiveDeviseUser
     end
 
     # Uniqueness validation of emails and alternate emails across all users
-    validate({ if: -> { respond_to?(:alternate_email) } }) do
+    validate(if: -> { respond_to?(:alternate_email) }) do
       records = self.class.where.not(id: self.id) # exclude self
       email_duplicates = records.where("lower(email) = :email OR lower(alternate_email) = :email", email: email.to_s.strip.downcase)
       alternate_email_duplicates = records.where("lower(email) = :alternate_email OR lower(alternate_email) = :alternate_email", alternate_email: alternate_email.to_s.strip.downcase)
@@ -75,7 +75,7 @@ module EffectiveDeviseUser
       end
 
       # Check if the alternate email is set before triggering the exists query
-      if alternate_email.present? && alternate_email_duplicates.exists?
+      if try(:alternate_email).present? && alternate_email_duplicates.exists?
         self.errors.add(:alternate_email, 'has already been taken')
       end
     end
@@ -193,7 +193,7 @@ module EffectiveDeviseUser
       user = to_adapter.find_first(conditions.merge(email: email))
       return user if user.present? && user.persisted?
 
-      to_adapter.find_first(conditions.merge(alternate_email: email))
+      to_adapter.find_first(conditions.merge(alternate_email: email)) if respond_to?(:alternate_email)
     end
 
     # https://github.com/heartcombo/devise/blob/f6e73e5b5c8f519f4be29ac9069c6ed8a2343ce4/lib/devise/models/database_authenticatable.rb#L216
@@ -202,11 +202,19 @@ module EffectiveDeviseUser
       primary_or_alternate_email = conditions[:email]
       conditions.delete(:email)
 
-      raise "Expected an email or alternate email but got [#{primary_or_alternate_email}] instead" if primary_or_alternate_email.blank?
+      has_alternate_email = 'alternate_email'.in? column_names
+
+      raise "Expected an email #{has_alternate_email ? 'or alternate email' : ''} but got [#{primary_or_alternate_email}] instead" if primary_or_alternate_email.blank?
+
+      query = if has_alternate_email
+                "lower(email) = :value OR lower(alternate_email) = :value"
+              else
+                "lower(email) = :value"
+              end
 
       all
         .where(conditions)
-        .where("lower(email) = :value OR lower(alternate_email) = :value", value: primary_or_alternate_email.strip.downcase)
+        .where(query, value: primary_or_alternate_email.strip.downcase)
         .first
     end
 
@@ -214,10 +222,8 @@ module EffectiveDeviseUser
 
   # EffectiveDeviseUser Instance Methods
 
-  if defined?(:alternate_email)
-    def alternate_email=(value)
-      super(value.to_s.strip.downcase.presence)
-    end
+  def alternate_email=(value)
+    super(value.to_s.strip.downcase.presence)
   end
 
   def reinvite!
