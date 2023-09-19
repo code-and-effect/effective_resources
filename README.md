@@ -392,6 +392,43 @@ def to_select2
 end
 ```
 
+## Authentication
+Effective Resources is designed to work with Devise. It also adds support for an `alternate email`
+for authentication. You just need to add an `alternate_email` column to your `User` model table.
+
+After that column is added, any user would be able to log in with either their `email` or their
+`alternate_email`.
+
+You can also create another mailer for `devise` in order to send password reset emails to the both
+the primary `email` and also the `alternate_email`, like this:
+
+```ruby
+class DeviseMailer < Devise::Mailer
+  # Overriding Devise's #headers_for to support alternate_email when present
+  def headers_for(action, opts)
+    headers = super(action, opts)
+
+    if [:reset_password_instructions].include?(action)
+      headers.merge!(
+        to: [resource.email, resource.try(:alternate_email)].compact.uniq
+      )
+    end
+
+    headers
+  end
+end
+```
+
+and set this new mailer to be used by `devise` in `config/initializers/devise.rb`:
+
+```ruby
+Devise.setup do |config|
+  # ...
+  config.mailer = 'DeviseMailer'
+  # ...
+end
+```
+
 ## Testing
 
 Run tests by:
