@@ -187,13 +187,11 @@ module EffectiveDeviseUser
     # https://github.com/heartcombo/devise/blob/f6e73e5b5c8f519f4be29ac9069c6ed8a2343ce4/lib/devise/models/authenticatable.rb#L276
     def find_first_by_auth_conditions(tainted_conditions, opts = {})
       conditions = devise_parameter_filter.filter(tainted_conditions).merge(opts)
-      email = conditions[:email]
-      conditions.delete(:email)
 
-      user = to_adapter.find_first(conditions.merge(email: email))
+      user = to_adapter.find_first(conditions)
       return user if user.present? && user.persisted?
 
-      to_adapter.find_first(conditions.merge(alternate_email: email)) if respond_to?(:alternate_email)
+      to_adapter.find_first(alternate_email: conditions[:email]) if has_alternate_email?
     end
 
     # https://github.com/heartcombo/devise/blob/f6e73e5b5c8f519f4be29ac9069c6ed8a2343ce4/lib/devise/models/database_authenticatable.rb#L216
@@ -202,11 +200,9 @@ module EffectiveDeviseUser
       primary_or_alternate_email = conditions[:email]
       conditions.delete(:email)
 
-      has_alternate_email = 'alternate_email'.in? column_names
+      raise "Expected an email #{has_alternate_email? ? 'or alternate email' : ''} but got [#{primary_or_alternate_email}] instead" if primary_or_alternate_email.blank?
 
-      raise "Expected an email #{has_alternate_email ? 'or alternate email' : ''} but got [#{primary_or_alternate_email}] instead" if primary_or_alternate_email.blank?
-
-      query = if has_alternate_email
+      query = if has_alternate_email?
                 "lower(email) = :value OR lower(alternate_email) = :value"
               else
                 "lower(email) = :value"
@@ -216,6 +212,10 @@ module EffectiveDeviseUser
         .where(conditions)
         .where(query, value: primary_or_alternate_email.strip.downcase)
         .first
+    end
+
+    def has_alternate_email?
+      'alternate_email'.in? column_names
     end
 
   end
