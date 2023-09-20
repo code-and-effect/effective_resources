@@ -197,31 +197,33 @@ module EffectiveDeviseUser
     # https://github.com/heartcombo/devise/blob/f6e73e5b5c8f519f4be29ac9069c6ed8a2343ce4/lib/devise/models/database_authenticatable.rb#L216
     def find_for_database_authentication(warden_conditions)
       conditions = warden_conditions.dup.presence || {}
-      primary_or_alternate_email = conditions[:email]
-      conditions.delete(:email)
 
-      raise "Expected an email #{has_alternate_email? ? 'or alternate email' : ''} but got [#{primary_or_alternate_email}] instead" if primary_or_alternate_email.blank?
+      email = conditions.delete(:email).to_s.strip.downcase
+      raise "Expected an email condition but got #{conditions} instead" unless email.present?
 
-      query = if has_alternate_email?
-                "lower(email) = :value OR lower(alternate_email) = :value"
-              else
-                "lower(email) = :value"
-              end
-
-      all
-        .where(conditions)
-        .where(query, value: primary_or_alternate_email.strip.downcase)
-        .first
+      if has_alternate_email?
+        where(conditions).where('email = :email OR alternate_email = :email', email: email).first
+      else
+        where(conditions).where(email: email).first
+      end
     end
 
     def has_alternate_email?
-      'alternate_email'.in? column_names
+      column_names.include?('alternate_email')
     end
 
+    def find_by_any_email(value)
+      email = value.to_s.strip.downcase
+
+      if has_alternate_email?
+        where(email: email).or(where(alternate_email: email)).first
+      else
+        where(email: email).first
+      end
+    end
   end
 
   # EffectiveDeviseUser Instance Methods
-
   def alternate_email=(value)
     super(value.to_s.strip.downcase.presence)
   end
