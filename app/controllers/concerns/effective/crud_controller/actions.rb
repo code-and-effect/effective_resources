@@ -242,7 +242,7 @@ module Effective
           successes = resources.select do |resource|
             begin
               resource.public_send("#{action}!") if EffectiveResources.authorized?(self, action, resource)
-            rescue => e
+            rescue Exception => e
               false
             end
           end.length

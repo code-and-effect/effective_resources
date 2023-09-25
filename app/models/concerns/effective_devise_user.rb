@@ -224,6 +224,12 @@ module EffectiveDeviseUser
   end
 
   # EffectiveDeviseUser Instance Methods
+
+  # The user's to_s when in an email
+  def email_to_s
+    to_s
+  end
+
   def alternate_email=(value)
     super(value.to_s.strip.downcase.presence)
   end
