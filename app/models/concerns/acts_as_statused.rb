@@ -96,7 +96,7 @@ module ActsAsStatused
           id = status_steps[sym_by_id]
           klass = status_steps[sym_by_type]
 
-          klass.constantize.find(id) if id.present? && klass.present?
+          klass.constantize.find_by_id(id) if id.present? && klass.present?
         end
       end
 
