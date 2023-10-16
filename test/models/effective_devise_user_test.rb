@@ -34,4 +34,12 @@ class EffectiveDeviseUserTest < ActiveSupport::TestCase
     assert user.errors.added?(:alternate_email, 'has already been taken')
   end
 
+  test 'email and alternate_email must be different' do
+    user = User.new(first_name: "A", last_name: "User", email: "one@example.com",  alternate_email: "one@example.com")
+    refute user.valid?
+
+    user.assign_attributes(alternate_email: 'two@example.com')
+    assert user.valid?
+  end
+
 end

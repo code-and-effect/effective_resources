@@ -48,12 +48,17 @@ module EffectiveDeviseUser
     # Devise invitable ignores model validations, so we manually check for duplicate email addresses.
     before_save(if: -> { new_record? && try(:invitation_sent_at).present? }) do
       if email.blank?
-        self.errors.add(:email, "can't be blank")
+        errors.add(:email, "can't be blank")
         raise("email can't be blank")
       end
 
-      if self.class.where(email: email.downcase.strip).exists?
-        self.errors.add(:email, 'has already been taken')
+      if self.class.where(email: value).present?
+        errors.add(:email, 'has already been taken')
+        raise("email has already been taken")
+      end
+
+      if respond_to?(:alternate_email) && self.class.where(alternate_email: value).present?
+        errors.add(:email, 'has already been taken')
         raise("email has already been taken")
       end
     end
@@ -63,25 +68,29 @@ module EffectiveDeviseUser
       assign_attributes(provider: nil, access_token: nil, refresh_token: nil, token_expires_at: nil)
     end
 
+    validate(if: -> { email.present? && try(:alternate_email).present? }) do
+      errors.add(:alternate_email, 'cannot be the same as email') if email.strip.downcase == alternate_email.strip.downcase
+    end
+
     # Uniqueness validation of emails and alternate emails across all users
     validate(if: -> { respond_to?(:alternate_email) }) do
-      records = self.class.where.not(id: self.id) # exclude self
-      email_duplicates = records.where("lower(email) = :email OR lower(alternate_email) = :email", email: email.to_s.strip.downcase)
-      alternate_email_duplicates = records.where("lower(email) = :alternate_email OR lower(alternate_email) = :alternate_email", alternate_email: alternate_email.to_s.strip.downcase)
+      records = self.class.where.not(id: id)
 
-      # Check if a uniqueness validation was already performed before triggering the exists query
-      if !self.errors.added?(:email, 'has already been taken') && email_duplicates.exists?
-        self.errors.add(:email, 'has already been taken')
+      # Validate email uniqueness
+      if (value = email.to_s.strip.downcase).present? && !errors.added?(:email, 'has already been taken')
+        existing = records.where("email = :value OR alternate_email = :value", value: value)
+        errors.add(:email, 'has already been taken') if existing.present?
       end
 
-      # Check if the alternate email is set before triggering the exists query
-      if try(:alternate_email).present? && alternate_email_duplicates.exists?
-        self.errors.add(:alternate_email, 'has already been taken')
+      # Validate alternate_email uniqueness
+      if (value = alternate_email.to_s.strip.downcase).present?
+        existing = records.where("email = :value OR alternate_email = :value", value: value)
+        errors.add(:alternate_email, 'has already been taken') if existing.present?
       end
     end
 
     with_options(if: -> { respond_to?(:alternate_email) }) do
-      validates :alternate_email, email: true, allow_blank: true
+      validates :alternate_email, email: true
     end
 
   end
