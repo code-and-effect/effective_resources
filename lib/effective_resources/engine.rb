@@ -6,13 +6,11 @@ module EffectiveResources
 
     config.autoload_paths += Dir[
       "#{config.root}/jobs/",
-      "#{config.root}/lib/validators/",
       "#{config.root}/app/controllers/concerns/"
     ]
 
     config.eager_load_paths += Dir[
       "#{config.root}/jobs/",
-      "#{config.root}/lib/validators/",
       "#{config.root}/app/controllers/concerns/"
     ]
 
