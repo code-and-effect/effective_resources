@@ -52,6 +52,8 @@ module EffectiveDeviseUser
         raise("email can't be blank")
       end
 
+      value = email.strip.downcase
+
       if self.class.where(email: value).present?
         errors.add(:email, 'has already been taken')
         raise("email has already been taken")
