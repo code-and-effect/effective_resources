@@ -4,24 +4,12 @@
   = form.check_box :email_form_skip, label: 'Do not send email'
 
 = form.hide_if :email_form_skip, true do
-  - if email_to.present? && form.respond_to?(:static_field)
-    = form.static_field :email_form_to, label: 'To', value: (email_to.respond_to?(:email) ? email_to.email : email_to)
+  - if email_to.present?
+    = form.static_field :email_form_to, label: 'To', value: (email_to.try(:email) || email_to)
 
-  - if form.object.errors.present?
-    = form.text_field :email_form_from, label: 'From'
-    = form.text_field :email_form_subject, label: 'Subject'
-    = form.text_area :email_form_body, label: 'Body', rows: 10
-
-  - elsif email_template.present?
-    -# email_template is an Effective::EmailTemplate
-    = form.text_field :email_form_from, label: 'From', value: email_template.from
-    = form.text_field :email_form_subject, label: 'Subject', value: email_template.subject
-    = form.text_area :email_form_body, label: 'Body', value: email_template.body, rows: 10
-
-  - else
-    = form.text_field :email_form_from, label: 'From', value: (email_defaults[:from] || '')
-    = form.text_field :email_form_subject, label: 'Subject', value: (email_defaults[:subject] || '')
-    = form.text_area :email_form_body, label: 'Body', rows: 10, value: (email_defaults[:body] || '')
+  = form.select :email_form_from, EffectiveResources.mailer_froms, label: 'From'
+  = form.text_field :email_form_subject, label: 'Subject'
+  = form.text_area :email_form_body, label: 'Body', rows: 10
 
   - if email_variables.present?
     %p The available variables are:
@@ -30,4 +18,4 @@
       - email_variables.each do |variable|
         %li {{ #{variable} }}
 
-    %small.text-muted Only a developer can add additional variables
+    %small.text-muted Please contact us to add additional variables

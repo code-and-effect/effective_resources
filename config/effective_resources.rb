@@ -49,6 +49,10 @@ EffectiveResources.setup do |config|
   # Default From
   config.mailer_sender = '"Info" <info@example.com>'
 
+  # Default Froms radios collection
+  # Used for effective gems email collection. Leave blank to fallback to just the mailer_sender
+  config.mailer_froms = ['"Info" <info@example.com>', '"Admin" <admin@example.com>']
+
   # Send Admin correspondence To
   config.mailer_admin = '"Admin" <admin@example.com>'
 end

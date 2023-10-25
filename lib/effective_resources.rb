@@ -10,7 +10,7 @@ module EffectiveResources
   def self.config_keys
     [
       :authorization_method, :default_submits,
-      :parent_mailer, :deliver_method, :mailer_layout, :mailer_sender, :mailer_admin, :mailer_subject
+      :parent_mailer, :deliver_method, :mailer_layout, :mailer_sender, :mailer_froms, :mailer_admin, :mailer_subject
     ]
   end
 
@@ -60,12 +60,16 @@ module EffectiveResources
     config[:mailer_subject] || MAILER_SUBJECT_PROC
   end
 
+  def self.mailer_admin
+    config[:mailer_admin] || raise('effective resources mailer_admin missing. Add it to config/initializers/effective_resources.rb')
+  end
+
   def self.mailer_sender
     config[:mailer_sender] || raise('effective resources mailer_sender missing. Add it to config/initializers/effective_resources.rb')
   end
 
-  def self.mailer_admin
-    config[:mailer_admin] || raise('effective resources mailer_admin missing. Add it to config/initializers/effective_resources.rb')
+  def self.mailer_froms
+    config[:mailer_froms].presence || [mailer_sender]
   end
 
   # Utilities

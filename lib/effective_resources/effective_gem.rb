@@ -7,7 +7,7 @@ module EffectiveGem
 
   EXCLUDED_GETTERS = [
     :config, :setup, :send_email, :parent_mailer_class,
-    :deliver_method, :mailer_layout, :mailer_sender, :mailer_admin, :mailer_subject
+    :deliver_method, :mailer_layout, :mailer_sender, :mailer_froms, :mailer_admin, :mailer_subject
   ]
 
   included do
@@ -68,6 +68,10 @@ module EffectiveGem
 
     def mailer_sender
       config[:mailer_sender].presence || EffectiveResources.mailer_sender
+    end
+
+    def mailer_froms
+      config[:mailer_froms].presence || EffectiveResources.mailer_froms
     end
 
     def mailer_admin
