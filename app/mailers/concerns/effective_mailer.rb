@@ -27,7 +27,17 @@ module EffectiveMailer
   end
 
   def headers_for(resource, opts = {})
-    (resource.respond_to?(:log_changes_datatable) ? opts.merge(log: resource) : opts)
+    headers = opts
+
+    if resource.respond_to?(:log_changes_datatable)
+      headers[:log] = resource
+    end
+
+    if (opts[:subject] || opts['subject']).present?
+      headers[:custom_subject] = true
+    end
+
+    headers
   end
 
   private
