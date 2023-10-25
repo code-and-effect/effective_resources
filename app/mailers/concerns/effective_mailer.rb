@@ -14,8 +14,10 @@ module EffectiveMailer
     mailer_settings.mailer_admin
   end
 
-  def subject_for(action, subject, resource, opts = {})
+  def subject_for(action, default, resource, opts = {})
     mailer_subject = mailer_settings.mailer_subject
+
+    subject = opts[:subject] || opts['subject'] || default
 
     if mailer_subject.respond_to?(:call)
       subject = self.instance_exec(action, subject, resource, opts, &mailer_subject)
