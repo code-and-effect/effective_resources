@@ -8,16 +8,8 @@ module EffectiveMailer
     layout -> { mailer_settings.mailer_layout }
   end
 
-  protected
-
-  def mailer_admin
-    mailer_settings.mailer_admin
-  end
-
-  def subject_for(action, default, resource, opts = {})
+  def subject_for(action, subject, resource, opts = {})
     mailer_subject = mailer_settings.mailer_subject
-
-    subject = opts[:subject] || opts['subject'] || default
 
     if mailer_subject.respond_to?(:call)
       subject = self.instance_exec(action, subject, resource, opts, &mailer_subject)
@@ -26,18 +18,12 @@ module EffectiveMailer
     subject
   end
 
+  def mailer_admin
+    mailer_settings.mailer_admin
+  end
+
   def headers_for(resource, opts = {})
-    headers = opts
-
-    if resource.respond_to?(:log_changes_datatable)
-      headers[:log] = resource
-    end
-
-    if (opts[:subject] || opts['subject']).present?
-      headers[:custom_subject] = true
-    end
-
-    headers
+    resource.respond_to?(:log_changes_datatable) ? opts.merge(log: resource) : opts
   end
 
   private
