@@ -72,6 +72,11 @@ module EffectiveResources
     config[:mailer_froms].presence || [mailer_sender]
   end
 
+  # This is used by the effective_email_templates form
+  def self.mailer_subject_prefix_hint
+    instance_exec(:mailer_subject_blank_prefix, nil, nil, nil, &mailer_subject) if mailer_subject.respond_to?(:call)
+  end
+
   # Utilities
 
   # This looks up the best class give the name

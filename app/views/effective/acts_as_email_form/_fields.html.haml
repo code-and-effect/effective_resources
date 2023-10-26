@@ -7,9 +7,23 @@
   - if email_to.present?
     = form.static_field :email_form_to, label: 'To', value: (email_to.try(:email) || email_to)
 
-  = form.select :email_form_from, EffectiveResources.mailer_froms, label: 'From'
-  = form.text_field :email_form_subject, label: 'Subject'
-  = form.text_area :email_form_body, label: 'Body', rows: 10
+  - if form.object.errors.present?
+    = form.select :email_form_from, mailer_froms_collection(), label: 'From'
+    = form.text_field :email_form_subject, label: 'Subject'
+    = form.text_area :email_form_body, label: 'Body', rows: 10
+
+  - elsif email_template.present?
+    -# email_template is an Effective::EmailTemplate
+    - from_value = email_template.from || EffectiveResources.mailer_froms.first
+    = form.select :email_form_from, mailer_froms_collection(), label: 'From', value: from_value
+    = form.text_field :email_form_subject, label: 'Subject', value: email_template.subject
+    = form.text_area :email_form_body, label: 'Body', value: email_template.body, rows: 10
+
+  - else
+    - from_value = email_defaults[:from] || EffectiveResources.mailer_froms.first
+    = form.select :email_form_from, mailer_froms_collection(), label: 'From', value: from_value
+    = form.text_field :email_form_subject, label: 'Subject', value: (email_defaults[:subject] || '')
+    = form.text_area :email_form_body, label: 'Body', rows: 10, value: (email_defaults[:body] || '')
 
   - if email_variables.present?
     %p The available variables are:

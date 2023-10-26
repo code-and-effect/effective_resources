@@ -43,9 +43,9 @@ module ActsAsEmailForm
       end
     end
 
-    if defined?(EffectiveEmailTemplates)
-      validates :email_form_subject, liquid: true, if: -> { email_form_effective_email_templates? }
-      validates :email_form_body, liquid: true, if: -> { email_form_effective_email_templates? }
+    with_options(if: -> { defined?(EffectiveEmailTemplates) }) do
+      validates :email_form_subject, liquid: true
+      validates :email_form_body, liquid: true
     end
 
     def email_form_params
@@ -54,10 +54,6 @@ module ActsAsEmailForm
 
     def email_form_skip?
       EffectiveResources.truthy?(email_form_skip)
-    end
-
-    def email_form_effective_email_templates?
-      !!defined?(EffectiveEmailTemplates)
     end
 
     # Only considered when not using an effective email template
