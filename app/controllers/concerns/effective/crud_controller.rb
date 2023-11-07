@@ -82,7 +82,8 @@ module Effective
     private
 
     def resource_scope
-      effective_resource.relation
+      relation = effective_resource.relation
+      relation.try(:deep) || relation
     end
 
     def resource_name # 'thing'
