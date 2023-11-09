@@ -6,7 +6,11 @@ module EffectiveActsAsEmailFormHelper
     raise('expected a form') unless form.respond_to?(:object)
 
     resource = form.object
-    raise('expected an acts_as_email_form resource') unless resource.class.respond_to?(:acts_as_email_form?)
+
+    # Intended for acts_as_email_form but sometimes we use a duck typed object to save these fields as well
+    unless resource.class.respond_to?(:acts_as_email_form?) || resource.respond_to?("email_form_action=")
+      raise('expected an acts_as_email_form resource or one that responds to email_form_action') 
+    end
 
     # Load the template.
     email_template = if action.present? && defined?(EffectiveEmailTemplates)
