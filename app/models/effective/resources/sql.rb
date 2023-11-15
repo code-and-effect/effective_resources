@@ -22,11 +22,6 @@ module Effective
         klass.unscoped.table
       end
 
-      def max_id
-        return 999999 unless klass.respond_to?(:unscoped)
-        @max_id ||= klass.unscoped.maximum(klass.primary_key).to_i
-      end
-
       def sql_column(name)
         column = column(name)
         return nil unless table && column
