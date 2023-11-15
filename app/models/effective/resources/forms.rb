@@ -83,13 +83,14 @@ module Effective
           scope.datatables_scope
         elsif scope.respond_to?(:datatables_filter)
           scope.datatables_filter
+        elsif scope.respond_to?(:shallow)
+          scope.shallow
         elsif scope.respond_to?(:sorted)
           scope.sorted
         else
           scope
         end
 
-        scope = scope.deep if scope.respond_to?(:deep)
         scope = scope.unarchived if scope.respond_to?(:unarchived)
 
         # Now that we have the scope figured out let's pull the limit number of records into an Array
