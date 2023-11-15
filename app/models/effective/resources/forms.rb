@@ -66,29 +66,41 @@ module Effective
         end
       end
 
-      def search_form_field_collection(association = nil, max_id = 1000)
+      # Load the limit records + 1. If there are all there, return as: :string
+      # Otherwise return an Array of the processed results ready for a select field
+      # Only hit the database once
+      def search_form_field_collection(association = nil, limit: 100)
         res = (association.nil? ? self : Effective::Resource.new(association))
 
-        if res.max_id > max_id
-          { as: :string }
+        # Return string if this isnt a relational thing
+        klass = res.klass
+        return { as: :string } unless klass.respond_to?(:unscoped)
+
+        # Default scope
+        scope = res.klass.unscoped
+
+        scope = if scope.respond_to?(:datatables_scope)
+          scope.datatables_scope
+        elsif scope.respond_to?(:datatables_filter)
+          scope.datatables_filter
+        elsif scope.respond_to?(:sorted)
+          scope.sorted
         else
-          if res.klass.unscoped.respond_to?(:datatables_scope)
-            { collection: res.klass.datatables_scope.map { |obj| [obj.to_s, obj.id] } }
-          elsif res.klass.unscoped.respond_to?(:datatables_filter)
-            collection = res.klass.datatables_filter
-
-            if collection.kind_of?(Array)
-              { collection: collection }
-            else
-              { collection: collection.map { |obj| [obj.to_s, obj.id] } }
-            end
-
-          elsif res.klass.unscoped.respond_to?(:sorted)
-            { collection: res.klass.sorted.map { |obj| [obj.to_s, obj.id] } }
-          else
-            { collection: res.klass.all.map { |obj| [obj.to_s, obj.id] }.sort { |x, y| x[0] <=> y[0] } }
-          end
+          scope
         end
+
+        scope = scope.deep if scope.respond_to?(:deep)
+        scope = scope.unarchived if scope.respond_to?(:unarchived)
+
+        # Now that we have the scope figured out let's pull the limit number of records into an Array
+        # If there are more than the limit, return as: :string
+        resources = scope.limit(limit).to_a
+        return { as: :string } unless resources.length < limit
+
+        # Otherwise there are less than the limit, so we can use a collection select
+        {
+          collection: resources.map { |obj| [obj.to_s, obj.id] }
+        }
       end
 
     end
