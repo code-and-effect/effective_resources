@@ -74,12 +74,20 @@ module ActsAsPurchasableWizard
     # From Billing Step
     order.billing_address = owner.billing_address if owner.try(:billing_address).present?
 
-    # This will update all order items to match the prices from their
+    # This will update all order items to match the prices from their purchasable
     order.try(:update_purchasable_attributes)
+
+    # Hook to extend for coupon fees
+    order = before_submit_order_save(order)
+    raise('before_submit_order_save must return an Effective::Order') unless order.kind_of?(Effective::Order)
 
     # Important to add/remove anything
     order.save!
 
+    order
+  end
+
+  def before_submit_order_save(order)
     order
   end
 
