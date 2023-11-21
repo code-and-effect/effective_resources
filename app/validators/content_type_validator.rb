@@ -42,7 +42,9 @@ class ContentTypeValidator < ActiveModel::EachValidator
     end
     allowed_types = allowed_types.flatten.map(&:to_sym).uniq
 
-    unless value.filename.extension.to_sym.in?(allowed_types)
+    # Make sure all attachments have this extension
+    Array(value).each do |attachment|
+      next if allowed_types.include?(attachment.filename.extension.to_sym)
       record.errors.add(attribute, message)
     end
 
