@@ -134,6 +134,7 @@ module Effective
         belong_tos_names_attributes
           .merge(klass_attributes(sort: true))
           .merge(effective_addresses_attributes)
+          .merge(active_storage_attributes.transform_values { |thing| [:active_storage] })
       end
 
       private
