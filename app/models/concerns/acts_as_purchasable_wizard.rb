@@ -77,6 +77,9 @@ module ActsAsPurchasableWizard
     # This will update all order items to match the prices from their purchasable
     order.try(:update_purchasable_attributes)
 
+    # Handle effective_memberships coupon fees price reduction
+    reduce_order_item_coupon_fee_price(order)
+
     # Hook to extend for coupon fees
     order = before_submit_order_save(order)
     raise('before_submit_order_save must return an Effective::Order') unless order.kind_of?(Effective::Order)
@@ -88,6 +91,32 @@ module ActsAsPurchasableWizard
   end
 
   def before_submit_order_save(order)
+    order
+  end
+
+  # This is used by effective_memberships and effective_events
+  # Which both add coupon_fees to their submit_fees
+  def reduce_order_item_coupon_fee_price(order)
+    # This only applies to orders with coupon fees
+    order_items = order.order_items.select { |oi| oi.purchasable.try(:coupon_fee?) }
+    return order unless order_items.present?
+    raise('multiple coupon fees not supported') if order_items.length > 1
+
+    # Get the coupon fee
+    order_item = order_items.first
+    coupon_fee = order_item.purchasable
+    raise('expected order item for coupon fee to be a negative price') unless coupon_fee.price.to_i < 0
+
+    # Calculate price
+    subtotal = order.order_items.reject { |oi| oi.purchasable.try(:coupon_fee?) }.sum(&:subtotal)
+
+    price = 0 if subtotal <= 0
+    price ||= [coupon_fee.price, (0 - subtotal)].max
+
+    # Assign the price to this order item. Underlying fee price stays the same.
+    order_item.assign_attributes(price: price)
+
+    # Return the order
     order
   end
 
