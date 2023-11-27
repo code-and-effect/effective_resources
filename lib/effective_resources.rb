@@ -16,6 +16,11 @@ module EffectiveResources
 
   include EffectiveGem
 
+  def self.rails_71?
+    rails_version = Gem.loaded_specs['rails'].version.to_s
+    Gem::Version.new(rails_version) >= Gem::Version.new('7.1')
+  end
+
   def self.authorized?(controller, action, resource)
     @exceptions ||= [Effective::AccessDenied, (CanCan::AccessDenied if defined?(CanCan)), (Pundit::NotAuthorizedError if defined?(Pundit))].compact
 
