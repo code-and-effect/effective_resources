@@ -28,7 +28,7 @@ module EffectiveGem
   module ClassMethods
     def config(namespace = nil)
       namespace ||= Tenant.current if defined?(Tenant)
-      @config.dig(namespace || :effective)
+      (@config.dig(namespace) if namespace) || @config.dig(:effective)
     end
 
     def setup(namespace = nil, &block)

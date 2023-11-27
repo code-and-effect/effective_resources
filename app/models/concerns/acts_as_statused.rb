@@ -34,7 +34,7 @@ module ActsAsStatused
       status_steps           :text, permitted: false
     end
 
-    serialize :status_steps, Hash
+    serialize :wizard_steps, type: Hash, coder: YAML
 
     const_set(:STATUSES, acts_as_statused_options[:statuses])
 
