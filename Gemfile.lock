@@ -105,7 +105,7 @@ GEM
     date (3.3.4)
     drb (2.2.0)
       ruby2_keywords
-    effective_bootstrap (1.17.4)
+    effective_bootstrap (1.17.5)
       bootstrap (< 5)
       coffee-rails
       effective_resources
@@ -114,6 +114,7 @@ GEM
       jquery-rails
       rails (>= 4.0.0)
       sassc
+      sprockets-rails
     effective_datatables (4.20.5)
       coffee-rails
       effective_bootstrap
