@@ -41,7 +41,7 @@ module ActsAsTokened
 
   # Instance Methods
   def to_param
-    token
+    token if persisted?
   end
 
   def to_global_id(**params)
