@@ -57,6 +57,8 @@ module ActsAsWizard
 
     if EffectiveResources.serialize_with_coder?
       serialize :wizard_steps, type: Hash, coder: YAML
+    else
+      serialize :wizard_steps, Hash
     end
 
     before_save(if: -> { current_step.present? }) do

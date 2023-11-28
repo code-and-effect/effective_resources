@@ -36,6 +36,8 @@ module ActsAsStatused
 
     if EffectiveResources.serialize_with_coder?
       serialize :status_steps, type: Hash, coder: YAML
+    else
+      serialize :status_steps, Hash
     end
 
     const_set(:STATUSES, acts_as_statused_options[:statuses])
