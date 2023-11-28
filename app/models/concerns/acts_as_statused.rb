@@ -35,7 +35,7 @@ module ActsAsStatused
     end
 
     if EffectiveResources.serialize_with_coder?
-      serialize :status_steps, type: Hash, coder: YAML
+      serialize :status_steps, type: Hash, coder: YAML, default: Hash.new
     else
       serialize :status_steps, Hash
     end

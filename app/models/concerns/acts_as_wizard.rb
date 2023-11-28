@@ -56,7 +56,7 @@ module ActsAsWizard
     end
 
     if EffectiveResources.serialize_with_coder?
-      serialize :wizard_steps, type: Hash, coder: YAML
+      serialize :wizard_steps, type: Hash, coder: YAML, default: Hash.new
     else
       serialize :wizard_steps, Hash
     end
