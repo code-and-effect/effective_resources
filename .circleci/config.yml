@@ -7,7 +7,7 @@ orbs:
 
 container: &container
   docker:
-    - image: cimg/ruby:3.1.2-browsers # images: https://hub.docker.com/r/circleci/ruby/tags
+    - image: cimg/ruby:3.2.2-browsers # images: https://hub.docker.com/r/circleci/ruby/tags
       environment:
         RAILS_ENV: test
     - image: cimg/postgres:15.1
