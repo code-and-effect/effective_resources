@@ -55,7 +55,9 @@ module ActsAsWizard
       wizard_steps           :text, permitted: false
     end
 
-    serialize :wizard_steps, type: Hash, coder: YAML
+    if EffectiveResources.serialize_with_coder?
+      serialize :wizard_steps, type: Hash, coder: YAML
+    end
 
     before_save(if: -> { current_step.present? }) do
       wizard_steps[current_step.to_sym] ||= Time.zone.now

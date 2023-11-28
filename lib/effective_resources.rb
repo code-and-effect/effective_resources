@@ -16,9 +16,9 @@ module EffectiveResources
 
   include EffectiveGem
 
-  def self.rails_71?
-    rails_version = Gem.loaded_specs['rails'].version.to_s
-    Gem::Version.new(rails_version) >= Gem::Version.new('7.1')
+  # We use the newer syntax for serialize calls in rails 7+
+  def self.serialize_with_coder?
+    Gem::Version.new(Gem.loaded_specs['rails'].version.to_s) >= Gem::Version.new('7')
   end
 
   def self.authorized?(controller, action, resource)
