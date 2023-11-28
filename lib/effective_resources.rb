@@ -16,6 +16,11 @@ module EffectiveResources
 
   include EffectiveGem
 
+  # We use the newer syntax for serialize calls in rails 7+
+  def self.serialize_with_coder?
+    Gem::Version.new(Gem.loaded_specs['rails'].version.to_s) >= Gem::Version.new('7')
+  end
+
   def self.authorized?(controller, action, resource)
     @exceptions ||= [Effective::AccessDenied, (CanCan::AccessDenied if defined?(CanCan)), (Pundit::NotAuthorizedError if defined?(Pundit))].compact
 
@@ -120,7 +125,7 @@ module EffectiveResources
     end
   end
 
-  def self.advance_date(date, business_days: 1, holidays: [:ca, :observed])
+  def self.advance_date(date, business_days: 1, holidays: [:us, :observed])
     raise('business_days must be an integer <= 365') unless business_days.kind_of?(Integer) && business_days <= 365
 
     business_days.times do
@@ -133,7 +138,7 @@ module EffectiveResources
     date
   end
 
-  def self.business_day?(date, holidays: [:ca, :observed])
+  def self.business_day?(date, holidays: [:us, :observed])
     require 'holidays' unless defined?(Holidays)
     date.wday != 0 && date.wday != 6 && Holidays.on(date, *holidays).blank?
   end

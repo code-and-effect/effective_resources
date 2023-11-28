@@ -16,7 +16,8 @@ Gem::Specification.new do |s|
 
   s.files = Dir['{app,config,db,lib}/**/*'] + ['MIT-LICENSE', 'README.md']
 
-  s.add_dependency 'rails', '>= 4.0.0'
+  s.add_dependency 'rails'
+  s.add_dependency "sprockets-rails"
 
   s.add_development_dependency "sqlite3"
   s.add_development_dependency "effective_bootstrap"
@@ -25,6 +26,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency "pry-byebug"
   s.add_development_dependency "wicked"
   s.add_development_dependency "holidays"
-  s.add_development_dependency "psych", '< 4'
+  s.add_development_dependency "psych"
   s.add_development_dependency "net-smtp"
 end
