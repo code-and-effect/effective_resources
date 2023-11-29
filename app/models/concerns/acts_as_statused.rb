@@ -35,7 +35,7 @@ module ActsAsStatused
     end
 
     if EffectiveResources.serialize_with_coder?
-      serialize :status_steps, type: Hash, coder: YAML, default: Hash.new
+      serialize :status_steps, type: Hash, coder: YAML
     else
       serialize :status_steps, Hash
     end
@@ -163,6 +163,10 @@ module ActsAsStatused
     # Sort of matches acts_as_wizard
     def status_keys
       self.class.const_get(:STATUSES)
+    end
+
+    def status_steps
+      Hash(self[:status_steps])
     end
 
     def all_statuses
