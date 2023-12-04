@@ -7,6 +7,8 @@ require 'effective_resources/effective_gem'
 module EffectiveResources
   MAILER_SUBJECT_PROC = Proc.new { |action, subject, resource, opts = {}| subject }
 
+  mattr_accessor :use_jit_preloader
+
   def self.config_keys
     [
       :authorization_method, :default_submits,
