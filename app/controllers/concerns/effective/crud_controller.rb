@@ -85,7 +85,7 @@ module Effective
       relation = effective_resource.relation
 
       # Apply jit_preloader if present
-      if defined?(JitPreloader) && EffectiveResources.use_jit_preloader
+      if defined?(JitPreloader) && EffectiveResources.use_jit_preloader && relation.respond_to?(:includes_values)
         relation.includes_values = [] # Removes any previously defined .includes()
         relation.jit_preload
       else
