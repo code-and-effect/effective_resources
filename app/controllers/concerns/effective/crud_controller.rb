@@ -84,13 +84,19 @@ module Effective
     def resource_scope
       relation = effective_resource.relation
 
+      # This was explicitly set in the controller using resource_scope -> dsl
+      return relation if respond_to?(:resource_scope_relation)
+
+      # Otherwise, apply .jit_preload or .deep automatically
+
       # Apply jit_preloader if present
       if defined?(JitPreloader) && EffectiveResources.use_jit_preloader && relation.respond_to?(:includes_values)
         relation.includes_values = [] # Removes any previously defined .includes()
-        relation.jit_preload
-      else
-        (relation.try(:deep) || relation)
+        return relation.jit_preload
       end
+
+      # Try .deep or return original relation
+      (relation.try(:deep) || relation)
     end
 
     def resource_name # 'thing'
