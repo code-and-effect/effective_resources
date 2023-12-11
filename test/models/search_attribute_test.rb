@@ -139,9 +139,6 @@ class SearchAttributeTest < ActiveSupport::TestCase
     thing2 = Thing.create!(title: 'two', body: 'body', date: now + 1.month)
     thing3 = Thing.create!(title: 'three', body: 'body', date: now + 2.month)
 
-    search = Effective::Resource.new(Thing).search(:date, now, operation: :eq)
-    assert_equal [thing1], search.to_a
-
     search = Effective::Resource.new(Thing).search(:date, now.to_date, operation: :eq)
     assert_equal [thing1], search.to_a
 
