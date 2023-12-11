@@ -68,7 +68,9 @@ module Effective
     end
 
     def build_wizard_resource
-      resource_scope.new
+      resource = resource_scope.new
+      resource.strict_loading!(false) if resource.respond_to?(:strict_loading!)
+      resource
     end
 
     def resource_wizard_step_title(resource, step)
