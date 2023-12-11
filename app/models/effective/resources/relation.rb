@@ -318,7 +318,11 @@ module Effective
                 relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
               end
             elsif value.respond_to?(:strftime) && operation == :eq
-              relation.where(attribute.matches(value))
+              if as == :date
+                relation.where("#{sql_column} = ?", value)
+              else
+                relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", value.beginning_of_day, value.end_of_day)
+              end
             end
 
           when :effective_obfuscation
