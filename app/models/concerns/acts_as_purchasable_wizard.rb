@@ -125,7 +125,10 @@ module ActsAsPurchasableWizard
     return false if was_submitted?
 
     fees = find_or_build_submit_fees()
-    raise('already has purchased submit fees') if fees.any?(&:purchased?)
+    raise('already has purchased submit fees') if Array(fees).any?(&:purchased?)
+
+    coupon_fees = find_or_build_coupon_fees(fees)
+    raise('already has purchased coupon fees') if Array(coupon_fees).any?(&:purchased?)
 
     order = find_or_build_submit_order()
     raise('expected an Effective::Order') unless order.kind_of?(Effective::Order)
@@ -133,6 +136,21 @@ module ActsAsPurchasableWizard
     raise('unable to proceed with a voided submit order') if order.try(:voided?)
 
     true
+  end
+
+  def find_or_build_coupon_fees(purchasables)
+    existing = purchasables.select { |purchasable| purchasable.try(:coupon_fee?) }
+    return existing if existing.present?
+
+    price = purchasables.map { |purchasable| purchasable.price || 0 }.sum
+    return [] unless price > 0
+
+    apply_outstanding_coupon_fees()
+  end
+
+  def apply_outstanding_coupon_fees
+    # Nothing to do.
+    # effective_events, effective_memberships override this method and opt-in to this behaviour
   end
 
   # Owner clicks on the Billing step. Next step is Checkout
