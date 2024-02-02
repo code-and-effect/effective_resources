@@ -127,9 +127,6 @@ module ActsAsPurchasableWizard
     fees = find_or_build_submit_fees()
     raise('already has purchased submit fees') if Array(fees).any?(&:purchased?)
 
-    coupon_fees = find_or_build_coupon_fees(fees)
-    raise('already has purchased coupon fees') if Array(coupon_fees).any?(&:purchased?)
-
     order = find_or_build_submit_order()
     raise('expected an Effective::Order') unless order.kind_of?(Effective::Order)
     raise('already has purchased submit order') if order.purchased?
@@ -138,19 +135,20 @@ module ActsAsPurchasableWizard
     true
   end
 
-  def find_or_build_coupon_fees(purchasables)
-    existing = purchasables.select { |purchasable| purchasable.try(:coupon_fee?) }
-    return existing if existing.present?
+  # Called by effective_memberships and effective_events
+  def with_outstanding_coupon_fees(purchasables)
+    return purchasables unless owner.respond_to?(:outstanding_coupon_fees) # effective_memberships_owner
+    raise('expected has_many fees') unless respond_to?(:fees)
 
-    price = purchasables.map { |purchasable| purchasable.price || 0 }.sum
-    return [] unless price > 0
+    price = purchasables.reject { |p| p.try(:coupon_fee?) }.map { |p| p.price || 0 }.sum
 
-    apply_outstanding_coupon_fees()
-  end
+    if price > 0
+      Array(owner.outstanding_coupon_fees).each { |fee| fees << fee unless fees.include?(fee) }
+    else
+      Array(owner.outstanding_coupon_fees).each { |fee| fees.delete(fee) if fees.include?(fee) }
+    end
 
-  def apply_outstanding_coupon_fees
-    # Nothing to do.
-    # effective_events, effective_memberships override this method and opt-in to this behaviour
+    (purchasables + fees).uniq
   end
 
   # Owner clicks on the Billing step. Next step is Checkout
