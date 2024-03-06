@@ -72,10 +72,22 @@ module Effective
       def referer_redirect_path
         url = request.referer.to_s
 
-        return if (resource && resource.respond_to?(:destroyed?) && resource.destroyed? && url.include?("/#{resource.to_param}"))
-        return if url.include?('duplicate_id=')
-        return unless (Rails.application.routes.recognize_path(URI(url).path) rescue false)
+        # Referer may not always be present
+        return if url.blank?
 
+        # Don't redirect back to this resource's show or edit page
+        if resource.try(:destroyed?)
+          to_param = (resource.to_param || resource.try(:token) || resource.try(:slug) || resource.id) # to_param is nil sometimes
+          return if to_param.present? && url.include?("/#{to_param}")
+        end
+
+        # Don't redirect back if we're on duplicate action
+        return if url.include?('duplicate_id=')
+
+        # Don't redirect unless we recognize the url
+        return unless (Rails.application.routes.recognize_path(url) rescue false) || (Rails.application.routes.recognize_path(URI(url).path) rescue false)
+
+        # Redirect to this recognized url
         url
       end
 
