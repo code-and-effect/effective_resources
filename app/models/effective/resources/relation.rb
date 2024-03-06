@@ -394,6 +394,7 @@ module Effective
         end
 
         return relation.none() if columns.blank?
+
         search_columns_by_ilike_term(relation, value, columns: columns, fuzzy: fuzzy)
       end
 
@@ -404,42 +405,33 @@ module Effective
 
         value = value.to_s
 
-        raise('unsupported OR and AND syntax') if value.include?(' OR ') && value.include?(' AND ')
-        raise('expected columns') unless columns.present?
-
-        terms = []
-        join = ''
-
-        if value.include?(' OR ')
-          terms = value.split(' OR ')
-          join = ' OR '
+        # Process search terms
+        terms = if value.include?(' OR ')
+          value.split(' OR ')
         elsif value.include?(' AND ')
-          terms = value.split(' AND ')
-          join = ' AND '
+          value.split(' AND ')
         else
-          terms = value.split(' ')
-          join = ' AND '
+          value.split(' ')
         end
 
         terms = (terms - [nil, '', ' ']).map(&:strip)
-        columns = Array(columns)
+
+        # Searching these columns with this behaviour
         fuzzy = true if fuzzy.nil?
+        joiner = value.include?(' OR ') ? :or : :and
 
-        terms = terms.inject({}) do |hash, term|
-          hash["term_#{hash.length}".to_sym] = (fuzzy ? "%#{term}%" : term); hash
-        end
+        # Each term must match some column. Depending on the joiner, each term must match some column
+        terms.map do |term|
+          Array(columns).map do |name| 
+            column = (name.to_s.include?('.') ? name : sql_column(name))
 
-        # Do any of these columns contain all the terms?
-        conditions = columns.map do |name|
-          column = (name.to_s.include?('.') ? name : sql_column(name))
-          raise("expected an sql column for #{name}") if column.blank?
-
-          keys = terms.keys.map { |key| (fuzzy ? "#{column} #{ilike} :#{key}" : "#{column} = :#{key}") }
-          '(' + keys.join(' AND ') + ')'
-        end.join(' OR ')
-
-        # Do the search
-       collection.where(conditions, terms)
+            if fuzzy
+              collection.where("#{column} #{ilike} ?", "%#{term}%")
+            else
+              collection.where("#{column} = ?", term)
+            end
+          end.inject(:or)
+        end.inject(joiner)
       end
 
       def order_by_associated_conditions(association, sort: nil, direction: :asc, limit: nil)

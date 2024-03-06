@@ -70,4 +70,49 @@ class SearchAssociatedTest < ActiveSupport::TestCase
     assert_equal [user2], search.to_a
   end
 
+  test 'search any' do
+    user1 = User.create!(first_name: 'First', last_name: 'Boy')
+    user2 = User.create!(first_name: 'Second', last_name: 'Girl')
+    user3 = User.create!(first_name: 'First', last_name: 'Human')
+
+    search = Effective::Resource.new(User).search_any('Boy')
+    assert_equal [user1], search.to_a
+
+    search = Effective::Resource.new(User).search_any('First Boy')
+    assert_equal [user1], search.to_a
+
+    search = Effective::Resource.new(User).search_any('Second')
+    assert_equal [user2], search.to_a
+
+    search = Effective::Resource.new(User).search_any('Girl')
+    assert_equal [user2], search.to_a
+
+    search = Effective::Resource.new(User).search_any('Second Girl')
+    assert_equal [user2], search.to_a
+
+    search = Effective::Resource.new(User).search_any('Second')
+    assert_equal [user2], search.to_a
+
+    search = Effective::Resource.new(User).search_any('First Human')
+    assert_equal [user3], search.to_a
+
+    search = Effective::Resource.new(User).search_any('First')
+    assert_equal [user1, user3], search.to_a
+
+    search = Effective::Resource.new(User).search_any('First AND Boy')
+    assert_equal [user1], search.to_a
+
+    search = Effective::Resource.new(User).search_any('First OR Boy')
+    assert_equal [user1, user3], search.to_a
+
+    search = Effective::Resource.new(User).search_any('First AND Human')
+    assert_equal [user3], search.to_a
+
+    search = Effective::Resource.new(User).search_any('First OR Human')
+    assert_equal [user1, user3], search.to_a
+
+    search = Effective::Resource.new(User).search_any('First OR Second OR Human')
+    assert_equal [user1, user2, user3], search.to_a
+  end
+
 end
