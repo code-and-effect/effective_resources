@@ -78,7 +78,9 @@ module EffectiveResourcesHelper
 
     # Assign actions
     # We filter out any actions passed to us that aren't supported
-    actions = if atts.key?(:actions)
+    actions = if atts.key?(:actions) && atts[:actions] == false
+      {}
+    elsif atts.key?(:actions)
       {}.tap do |actions|
         atts[:actions].each do |commit, opts|
           actions[commit] = opts if (effective_resource.actions.include?(opts[:action]) || opts[:path]).present?
