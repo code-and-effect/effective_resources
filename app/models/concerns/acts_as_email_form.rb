@@ -24,13 +24,15 @@ module ActsAsEmailForm
     attr_accessor :email_form_subject
     attr_accessor :email_form_body
 
-    effective_resource do
-      email_form_action      :string, permitted: true
-      email_form_skip        :boolean, permitted: true
+    if respond_to?(:effective_resource)
+      effective_resource do
+        email_form_action      :string, permitted: true
+        email_form_skip        :boolean, permitted: true
 
-      email_form_from        :string, permitted: true
-      email_form_subject     :string, permitted: true
-      email_form_body        :text, permitted: true
+        email_form_from        :string, permitted: true
+        email_form_subject     :string, permitted: true
+        email_form_body        :text, permitted: true
+      end
     end
 
     with_options(if: -> { email_form_action.present? && !email_form_skip? }) do
