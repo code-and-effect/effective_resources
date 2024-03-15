@@ -2,5 +2,7 @@
   - action = opts.delete(:action)
   = link_to(label, (effective_resource.action_path(action, resource) || '#'), opts)
 
-= instance_exec(resource, &format_block) if local_assigns[:format_block]
-= yield if block_given?
+- if local_assigns[:format_block] && local_assigns[:datatable]
+  = instance_exec(resource, datatable, &format_block)
+
+= yield(resource) if block_given?
