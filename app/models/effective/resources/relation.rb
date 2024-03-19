@@ -299,7 +299,7 @@ module Effective
               .where(ActiveStorage::Blob.arel_table[:filename].matches("%#{term}%"))
 
           when :date, :datetime
-            if value.kind_of?(String)
+            if value.kind_of?(String) && term.respond_to?(:strftime)
               end_at = (
                 case (value.to_s.scan(/(\d+)/).flatten).length
                 when 1 ; term.end_of_year     # Year
@@ -323,8 +323,9 @@ module Effective
               else
                 relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", value.beginning_of_day, value.end_of_day)
               end
+            elsif term.respond_to?(:strftime) == false
+              relation.none # It's an invalid entered date 
             end
-
           when :effective_obfuscation
             term = Attribute.new(as, klass: (associated(name).try(:klass) || klass)).parse(value, name: name)
             relation.where(attribute.eq((value == term ? 0 : term)))

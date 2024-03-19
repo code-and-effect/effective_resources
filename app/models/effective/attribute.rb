@@ -83,7 +83,7 @@ module Effective
           date = if digits.first.length == 4  # 2017-01-10
             (Time.zone.local(*digits) rescue nil)
           else # 01/10/2016
-            year = digits.find { |d| d.length == 4}
+            year = digits.find { |d| d.length == 4 }
             digits = [year] + (digits - [year])
             (Time.zone.local(*digits) rescue nil)
           end
