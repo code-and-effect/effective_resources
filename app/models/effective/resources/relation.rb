@@ -323,7 +323,7 @@ module Effective
               else
                 relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", value.beginning_of_day, value.end_of_day)
               end
-            elsif term.respond_to?(:strftime) == false
+            elsif term.respond_to?(:strftime) == false && operation.to_s.include?('days_ago') == false
               relation.none # It's an invalid entered date 
             end
           when :effective_obfuscation
