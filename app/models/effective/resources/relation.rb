@@ -339,9 +339,13 @@ module Effective
             relation.with_role(term)
 
           when :time
-            timed = relation.where("EXTRACT(hour from #{sql_column}) = ?", term.utc.hour)
-            timed = timed.where("EXTRACT(minute from #{sql_column}) = ?", term.utc.min) if term.min > 0
-            timed
+            if term.respond_to?(:strftime)
+              timed = relation.where("EXTRACT(hour from #{sql_column}) = ?", term.utc.hour)
+              timed = timed.where("EXTRACT(minute from #{sql_column}) = ?", term.utc.min) if term.min > 0
+              timed
+            else
+              relation.none # It's an invalid entered date 
+            end
         end
 
         return searched if searched
