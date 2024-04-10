@@ -47,6 +47,7 @@ module Effective
         when :text        ; :string
         when :time        ; :time
         when :uuid        ; :uuid
+        when :url         ; :url
         when FalseClass   ; :boolean
         when (defined?(Integer) ? Integer : Fixnum) ; :integer
         when Float        ; :decimal
@@ -127,6 +128,15 @@ module Effective
         value.kind_of?(Integer) ? value : (value.to_s.gsub(/[^0-9|\-|\.]/, '').to_f * 100.0).round
       when :string
         value.to_s
+      when :url
+        return nil unless value.kind_of?(String)
+
+        if value.downcase.start_with?('http://', 'https://')
+          value
+        elsif value.include?('.')
+          "https://#{value}"
+        end
+
       when :email
         return nil unless value.kind_of?(String)
 
