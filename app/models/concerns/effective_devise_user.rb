@@ -262,9 +262,9 @@ module EffectiveDeviseUser
     (respond_to?(:archived?) && archived?) ? :archived : super
   end
 
-  # Any password will work in development or mode
+  # Any password will work in development mode
   def valid_password?(password)
-    Rails.env.development? || Rails.env.staging? || super
+    Rails.env.development? || super
   end
 
   # Send devise & devise_invitable emails via active job
