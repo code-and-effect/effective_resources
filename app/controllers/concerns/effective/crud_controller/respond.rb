@@ -60,35 +60,49 @@ module Effective
         flash.delete(:success)
         flash.now[:danger] ||= resource_flash(:danger, resource, action)
 
-        respond_to do |format|
-          case action_name.to_sym
-          when :create
-            format.html { render :new }
-          when :update
-            format.html { render :edit }
-          when :destroy
+        if specific_redirect_error_path?(action)
+          respond_to do |format| 
             format.html do
               redirect_flash
-              redirect_to(resource_redirect_path(resource, action))
+              redirect_to(resource_redirect_error_path(resource, action))
             end
-          else
-            if template_present?(action)
-              format.html { render(action, locals: { action: action }) }
-            elsif request.referer.to_s.end_with?('/edit')
-              format.html { render :edit }
-            elsif request.referer.to_s.end_with?('/new')
+
+            format.js do
+              view = template_present?(action) ? action : :member_action
+              render(view, locals: { action: action }) # action.js.erb
+            end
+          end
+        else
+          respond_to do |format| # Default
+            case action_name.to_sym
+            when :create
               format.html { render :new }
-            else
+            when :update
+              format.html { render :edit }
+            when :destroy
               format.html do
                 redirect_flash
                 redirect_to(resource_redirect_path(resource, action))
               end
+            else
+              if template_present?(action)
+                format.html { render(action, locals: { action: action }) }
+              elsif request.referer.to_s.end_with?('/edit')
+                format.html { render :edit }
+              elsif request.referer.to_s.end_with?('/new')
+                format.html { render :new }
+              else
+                format.html do
+                  redirect_flash
+                  redirect_to(resource_redirect_path(resource, action))
+                end
+              end
             end
-          end
 
-          format.js do
-            view = template_present?(action) ? action : :member_action
-            render(view, locals: { action: action }) # action.js.erb
+            format.js do
+              view = template_present?(action) ? action : :member_action
+              render(view, locals: { action: action }) # action.js.erb
+            end
           end
         end
       end
