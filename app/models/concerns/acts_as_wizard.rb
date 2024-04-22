@@ -166,6 +166,10 @@ module ActsAsWizard
       has_completed_step?(required_steps.last)
     end
 
+    def start_step_requires_authenticated_user?
+      true
+    end
+
     def reset_all_wizard_steps!
       update!(wizard_steps: {})
     end
