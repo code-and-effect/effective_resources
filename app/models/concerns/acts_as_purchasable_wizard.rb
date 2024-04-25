@@ -47,10 +47,27 @@ module ActsAsPurchasableWizard
     submit_fees
   end
 
-  def find_or_build_submit_order
-    order = submit_order || orders.build(user: owner) # This is polymorphic user, might be an organization
-    order = orders.build(user: owner) if order.declined? # Make a new order, if the previous one was declined
+  def build_effective_order
+    if EffectiveOrders.organization_enabled? && respond_to?(:organization) # New style
+      orders.build(organization: organization)
+    else
+      orders.build(user: owner) # This is polymorphic user, might be an organization. Old style.
+    end
+  end
 
+  def find_or_build_submit_order
+    order = submit_order || build_effective_order()
+    order = build_effective_order() if order.declined? # Make a new order, if the previous one was declined
+
+    # Update the order with the current owner
+    if EffectiveOrders.organization_enabled? && respond_to?(:organization)
+      order.organization = organization
+    else
+      # A membership could go from individual to organization
+      order.user = owner 
+    end
+
+    # Consider fees
     fees = submit_fees().reject { |fee| fee.marked_for_destruction? }
 
     # Make sure all Fees are valid
@@ -58,14 +75,12 @@ module ActsAsPurchasableWizard
       raise("expected a valid fee but #{fee.id} had errors #{fee.errors.inspect}") unless fee.valid?
     end
 
-    # A membership could go from individual to organization
-    order.user = owner
-
     # Adds fees, but does not overwrite any existing price.
     fees.each do |fee|
       order.add(fee) unless order.purchasables.include?(fee)
     end
 
+    # Remove any order items that no longer have fees for them
     order.order_items.each do |order_item|
       fee = fees.find { |fee| fee == order_item.purchasable }
       order.remove(order_item) unless fee.present?
