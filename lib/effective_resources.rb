@@ -225,4 +225,12 @@ module EffectiveResources
     et(resource, attribute).pluralize.downcase
   end
 
+  def self.cache_key(*keys)
+    if defined?(Tenant)
+      [Tenant.current] + Array(keys).flatten
+    else
+      keys.flatten
+    end
+  end
+
 end
