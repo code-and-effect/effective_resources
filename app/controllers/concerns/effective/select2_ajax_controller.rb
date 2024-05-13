@@ -2,11 +2,11 @@ module Effective
   module Select2AjaxController
     extend ActiveSupport::Concern
 
-    def respond_with_select2_ajax(collection, skip_search: false, &block)
+    def respond_with_select2_ajax(collection, skip_search: false, skip_authorize: false, &block)
       raise('collection should be an ActiveRecord::Relation') unless collection.kind_of?(ActiveRecord::Relation)
 
       # Authorize
-      EffectiveResources.authorize!(self, :index, collection.klass)
+      EffectiveResources.authorize!(self, :index, collection.klass) unless skip_authorize
 
       # Scope
       if collection.respond_to?(:select2_ajax)
@@ -46,6 +46,16 @@ module Effective
         format.js do
           render json: { results: results, pagination: { more: more } }
         end
+      end
+    end
+
+    private
+
+    def to_select2(resource)
+      if resource.try(:email).present?
+        "<span>#{resource}</span> <small>#{resource.email}</small>"
+      else
+        "<span>#{resource}</span>"
       end
     end
 

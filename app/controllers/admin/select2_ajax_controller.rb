@@ -37,17 +37,5 @@ module Admin
         { id: organization.to_param, text: organization.try(:to_select2) || to_select2(organization) }
       end
     end
-
-    private
-
-    def to_select2(resource)
-      if resource.try(:email).present?
-        "<span>#{resource}</span> <small>#{resource.email}</small>"
-      else
-        "<span>#{resource}</span>"
-      end
-    end
-
   end
-
 end
