@@ -26,6 +26,13 @@ module ActsAsPurchasableWizard
       self.errors.add(:base, "must have an email") unless owner.email.present?
     end
 
+    after_defer do |_|
+      raise('expected submit_order to be deferred') unless submit_order&.deferred?
+      before_submit_deferred!
+      submit_deferred!
+      after_submit_deferred!
+    end
+
     after_purchase do |_|
       raise('expected submit_order to be purchased') unless submit_order&.purchased?
       before_submit_purchased!
@@ -180,9 +187,34 @@ module ActsAsPurchasableWizard
     end
   end
 
-  # Called automatically via after_purchase hook above
-  def submit_purchased!
+  # The historic way of handling a deferred order checkout is to return to the :checkout step and not call wizard submit!
+  # With effective_events date delayed payments, we do call wizard submit! and proceed to the :submitted step.
+
+  # False by default - do not call submit
+  def submit_wizard_on_deferred_order?
+    false
+  end
+
+  # Called automatically via after_defer hook above
+  def submit_deferred!
+    return unless submit_wizard_on_deferred_order?
     return false if was_submitted?
+
+    wizard_steps[:checkout] = Time.zone.now
+    submit!
+  end
+
+  # A hook to extend
+  def before_submit_deferred!
+  end
+
+  def after_submit_deferred!
+  end
+
+  # Called automatically via after_purchase hook above
+  # If previously submitted, possibly with deferred order, just save so any before_save or validate can run.
+  def submit_purchased!
+    return save! if was_submitted?
 
     wizard_steps[:checkout] = Time.zone.now
     submit!
@@ -198,7 +230,12 @@ module ActsAsPurchasableWizard
   # Draft -> Submitted requirements
   def submit!
     raise('already submitted') if was_submitted?
-    raise('expected a purchased order') unless submit_order&.purchased?
+
+    if submit_wizard_on_deferred_order?
+      raise('expected a purchased or deferred order') unless (submit_order&.purchased? || submit_order&.deferred?)
+    else
+      raise('expected a purchased order') unless submit_order&.purchased?
+    end
 
     wizard_steps[:checkout] ||= Time.zone.now
     wizard_steps[:submitted] = Time.zone.now

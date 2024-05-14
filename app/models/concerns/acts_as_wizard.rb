@@ -113,7 +113,7 @@ module ActsAsWizard
 
     # For use in the summary partials. Does not include summary.
     def render_steps
-      blacklist = [:start, :billing, :checkout, :submit, :submitted, :summary]
+      blacklist = [:start, :billing, :checkout, :submit, :submitted, :complete, :completed, :summary]
       ((required_steps | completed_steps) - blacklist).select { |step| has_completed_step?(step) }
     end
 
