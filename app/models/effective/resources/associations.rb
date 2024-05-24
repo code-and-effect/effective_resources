@@ -3,6 +3,8 @@
 module Effective
   module Resources
     module Associations
+      INVALID_SCOPE_NAMES = ['delete_all', 'destroy_all', 'update_all', 'update_counters', 'load', 'reload', 'reset', 'to_a', 'to_sql', 'explain', 'inspect']
+
       def macros
         [:belongs_to, :belongs_to_polymorphic, :has_many, :has_and_belongs_to_many, :has_one]
       end
@@ -147,17 +149,23 @@ module Effective
       end
 
       def scope?(name)
+        return false unless name.present?
+
+        name = name.to_s
         return false unless klass.respond_to?(name)
+
+        return false if INVALID_SCOPE_NAMES.include?(name)
+        return false if name.include?('?') || name.include?('!') || name.include?('=')
 
         is_scope = false
 
         EffectiveResources.transaction(klass) do
           begin
-            relation = klass.public_send(name).kind_of?(ActiveRecord::Relation)
+            is_scope = klass.public_send(name).kind_of?(ActiveRecord::Relation)
           rescue => e
           end
 
-          raise ActiveRecord::Rollback
+          raise ActiveRecord::Rollback unless is_scope
         end
 
         is_scope

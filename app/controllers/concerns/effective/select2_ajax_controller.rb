@@ -2,7 +2,7 @@ module Effective
   module Select2AjaxController
     extend ActiveSupport::Concern
 
-    def respond_with_select2_ajax(collection, skip_search: false, skip_authorize: false, &block)
+    def respond_with_select2_ajax(collection, skip_search: false, skip_authorize: false, skip_scope: false, &block)
       raise('collection should be an ActiveRecord::Relation') unless collection.kind_of?(ActiveRecord::Relation)
 
       # Authorize
@@ -13,6 +13,11 @@ module Effective
         collection = collection.select2_ajax
       elsif collection.respond_to?(:sorted)
         collection = collection.sorted
+      end
+
+      if (scope = params[:scope]).present? && !skip_scope
+        raise("invalid scope #{scope}") unless Effective::Resource.new(collection.klass).scope?(scope)
+        collection = collection.send(scope)
       end
 
       # Search

@@ -8,12 +8,6 @@ module Admin
     def users
       collection = current_user.class.all
 
-      if collection.respond_to?(:to_select2)
-        collection = collection.to_select2
-      elsif collection.respond_to?(:sorted)
-        collection = collection.sorted
-      end
-
       respond_with_select2_ajax(collection) do |user|
         { id: user.to_param, text: user.try(:to_select2) || to_select2(user) }
       end
@@ -26,12 +20,6 @@ module Admin
       raise('an EffectiveMemberships.Organization is required') unless klass.try(:effective_memberships_organization?)
 
       collection = klass.all
-
-      if collection.respond_to?(:to_select2)
-        collection = collection.to_select2
-      elsif collection.respond_to?(:sorted)
-        collection = collection.sorted
-      end
 
       respond_with_select2_ajax(collection) do |organization|
         { id: organization.to_param, text: organization.try(:to_select2) || to_select2(organization) }
