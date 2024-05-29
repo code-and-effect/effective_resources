@@ -102,6 +102,9 @@ module ActsAsPurchasableWizard
     # Handle effective_memberships coupon fees price reduction
     reduce_order_item_coupon_fee_price(order)
 
+    # Handle effective_events date delayed payments
+    assign_order_delayed_payment_attributes(order)
+
     # Hook to extend for coupon fees
     order = before_submit_order_save(order)
     raise('before_submit_order_save must return an Effective::Order') unless order.kind_of?(Effective::Order)
@@ -113,6 +116,26 @@ module ActsAsPurchasableWizard
   end
 
   def before_submit_order_save(order)
+    order
+  end
+
+  # Override this in your wizard to enable the delayed payments
+  def delayed_payment_attributes
+    { delayed_payment: nil, delayed_payment_date: nil }
+  end
+
+  # This is used by effective_events and deluxe_delayed effective_orders provider
+  def assign_order_delayed_payment_attributes(order)
+    return unless order.respond_to?(:delayed_payment)
+
+    atts = delayed_payment_attributes()
+    return unless atts.present?
+
+    unless atts.kind_of?(Hash) && atts.key?(:delayed_payment) && atts.key?(:delayed_payment_date)
+      raise('expected delayed payment attributes') 
+    end
+
+    order.assign_attributes(atts)
     order
   end
 
