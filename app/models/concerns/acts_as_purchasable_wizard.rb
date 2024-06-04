@@ -165,9 +165,14 @@ module ActsAsPurchasableWizard
     order
   end
 
+  def update_submit_fees_and_order!
+    build_submit_fees_and_order(force: true) 
+    save!
+  end
+
   # Should be indempotent.
-  def build_submit_fees_and_order
-    return false if was_submitted?
+  def build_submit_fees_and_order(force: false)
+    return false if was_submitted? && !force
 
     fees = find_or_build_submit_fees()
     raise('already has purchased submit fees') if Array(fees).any?(&:purchased?)

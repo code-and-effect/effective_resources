@@ -38,7 +38,7 @@ module EffectiveResourcesWizardHelper
     if (current || disabled)
       content_tag(:a, label, class: klass)
     else
-      link_to(label, path || wizard_path(nav_step), class: klass)
+      link_to(label, path || wizard_path(nav_step), class: klass, 'data-turbolinks': false)
     end
   end
 
