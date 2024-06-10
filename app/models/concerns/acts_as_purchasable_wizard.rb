@@ -96,7 +96,7 @@ module ActsAsPurchasableWizard
     # From Billing Step
     order.billing_address = owner.billing_address if owner.try(:billing_address).present?
 
-    # This will update all order items to match the prices from their purchasable
+    # This will assign all order items to match the prices from their purchasable
     order.try(:update_purchasable_attributes)
 
     # Handle effective_memberships coupon fees price reduction
