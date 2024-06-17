@@ -46,23 +46,27 @@ module EffectiveDeviseUser
     end
 
     # Devise invitable ignores model validations, so we manually check for duplicate email addresses.
-    before_save(if: -> { new_record? && try(:invitation_sent_at).present? }) do
-      if email.blank?
-        errors.add(:email, "can't be blank")
-        raise("email can't be blank")
+    def invite!
+      if new_record?
+        value = email.to_s.strip.downcase
+
+        if value.blank?
+          errors.add(:email, "can't be blank")
+          return false
+        end
+
+        if self.class.where(email: value).present?
+          errors.add(:email, 'has already been taken')
+          return false
+        end
+
+        if respond_to?(:alternate_email) && self.class.where(alternate_email: value).present?
+          errors.add(:email, 'has already been taken')
+          return false
+        end
       end
 
-      value = email.strip.downcase
-
-      if self.class.where(email: value).present?
-        errors.add(:email, 'has already been taken')
-        raise("email has already been taken")
-      end
-
-      if respond_to?(:alternate_email) && self.class.where(alternate_email: value).present?
-        errors.add(:email, 'has already been taken')
-        raise("email has already been taken")
-      end
+      super
     end
 
     # Clear the provider if an oauth signed in user resets password
