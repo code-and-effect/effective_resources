@@ -45,29 +45,6 @@ module EffectiveDeviseUser
       avatar_url              :string
     end
 
-    # Devise invitable ignores model validations, so we manually check for duplicate email addresses.
-    def invite!
-      if new_record?
-        value = email.to_s.strip.downcase
-
-        if value.blank?
-          errors.add(:email, "can't be blank")
-          return false
-        end
-
-        if self.class.where(email: value).present?
-          errors.add(:email, 'has already been taken')
-          return false
-        end
-
-        if respond_to?(:alternate_email) && self.class.where(alternate_email: value).present?
-          errors.add(:email, 'has already been taken')
-          return false
-        end
-      end
-
-      super
-    end
 
     # Clear the provider if an oauth signed in user resets password
     before_save(if: -> { persisted? && encrypted_password_changed? }) do
@@ -249,6 +226,30 @@ module EffectiveDeviseUser
     super(value.to_s.strip.downcase.presence)
   end
 
+  # Devise invitable ignores model validations, so we manually check for duplicate email addresses.
+  def invite!(invited_by = nil, options = {})
+    if new_record?
+      value = email.to_s.strip.downcase
+
+      if value.blank?
+        errors.add(:email, "can't be blank")
+        return false
+      end
+
+      if self.class.where(email: value).present?
+        errors.add(:email, 'has already been taken')
+        return false
+      end
+
+      if respond_to?(:alternate_email) && self.class.where(alternate_email: value).present?
+        errors.add(:email, 'has already been taken')
+        return false
+      end
+    end
+
+    super
+  end
+
   def reinvite!
     invite!
   end
@@ -260,6 +261,13 @@ module EffectiveDeviseUser
   # Allow users to sign in even if they have a pending invitation
   def block_from_invitation?
     false
+  end
+
+  # This allows the Sign Up form to work for existing users with a pending invitation
+  # It assigns the attributes from the sign_up_params, saves the user, accepts the invitation
+  # Note that this action skips the invitation_token validation and is therefore insecure.
+  def allow_sign_up_from_invitation?
+    true
   end
 
   def inactive_message
