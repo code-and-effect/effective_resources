@@ -15,7 +15,7 @@
   - if email_content_type == 'text/html'
     = form.article_editor :email_form_body, label: 'Body', mode: :email, value: (email_body unless errors)
   - else
-    = form.text_field :email_form_body, label: 'Body', value: (email_body unless errors)
+    = form.text_area :email_form_body, label: 'Body', rows: 10, value: (email_body unless errors)
 
   - if email_variables.present?
     %p The available variables are:
