@@ -4,26 +4,18 @@
   = form.check_box :email_form_skip, label: 'Do not send email'
 
 = form.hide_if :email_form_skip, true do
+  - errors = form.object.errors.present?
+
   - if email_to.present?
     = form.static_field :email_form_to, label: 'To', value: (email_to.try(:email) || email_to)
 
-  - if form.object.errors.present?
-    = form.select :email_form_from, mailer_froms_collection(), label: 'From'
-    = form.text_field :email_form_subject, label: 'Subject'
-    = form.text_area :email_form_body, label: 'Body', rows: 10
+  = form.select :email_form_from, mailer_froms_collection(), label: 'From', value: (email_from unless errors)
+  = form.text_field :email_form_subject, label: 'Subject', value: (email_subject unless errors)
 
-  - elsif email_template.present?
-    -# email_template is an Effective::EmailTemplate
-    - from_value = email_template.from || EffectiveResources.mailer_froms.first
-    = form.select :email_form_from, mailer_froms_collection(), label: 'From', value: from_value
-    = form.text_field :email_form_subject, label: 'Subject', value: email_template.subject
-    = form.text_area :email_form_body, label: 'Body', value: email_template.body, rows: 10
-
+  - if email_content_type == 'text/html'
+    = form.article_editor :email_form_body, label: 'Body', mode: :email, value: (email_body unless errors)
   - else
-    - from_value = email_defaults[:from] || EffectiveResources.mailer_froms.first
-    = form.select :email_form_from, mailer_froms_collection(), label: 'From', value: from_value
-    = form.text_field :email_form_subject, label: 'Subject', value: (email_defaults[:subject] || '')
-    = form.text_area :email_form_body, label: 'Body', rows: 10, value: (email_defaults[:body] || '')
+    = form.text_field :email_form_body, label: 'Body', value: (email_body unless errors)
 
   - if email_variables.present?
     %p The available variables are:
