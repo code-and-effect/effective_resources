@@ -41,7 +41,7 @@ module ActsAsEmailForm
       validates :email_form_body, presence: true
 
       validate(unless: -> { email_form_from.blank? }) do
-        self.errors.add(:email_form_from, 'must be a valid email address') unless email_form_from.include?('@')
+        errors.add(:email_form_from, 'must be a valid email address') unless email_form_from.include?('@')
       end
     end
 
@@ -60,7 +60,7 @@ module ActsAsEmailForm
 
     # Only considered when not using an effective email template
     def email_form_defaults(action)
-      { from: nil, subject: nil, body: nil }
+      { from: nil, subject: nil, body: nil, content_type: 'text/plain' }
     end
 
   end

@@ -20,12 +20,20 @@ module EffectiveActsAsEmailFormHelper
     # These defaults are only used when there is no email_template
     email_defaults = form.object.email_form_defaults(action) unless email_template.present?
 
+    from = email_template&.from || email_defaults[:from] || EffectiveResources.mailer_froms.first
+    subject = email_template&.subject || email_defaults[:subject] || ''
+    body = email_template&.body || email_defaults[:body] || ''
+    content_type = email_template&.content_type || email_defaults[:content_type] || ''
+
     locals = {
       form: form,
       email_to: to,
+      email_from: from,
+      email_subject: subject,
+      email_body: body,
+      email_content_type: content_type,
       email_skip: skip,
       email_action: (action || true),
-      email_defaults: email_defaults,
       email_template: email_template,
       email_variables: variables
     }
