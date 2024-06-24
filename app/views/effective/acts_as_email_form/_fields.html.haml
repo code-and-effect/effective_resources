@@ -4,24 +4,35 @@
   = form.check_box :email_form_skip, label: 'Do not send email'
 
 = form.hide_if :email_form_skip, true do
-  - errors = form.object.errors.present?
-
   - if email_to.present?
     = form.static_field :email_form_to, label: 'To', value: (email_to.try(:email) || email_to)
 
-  = form.select :email_form_from, mailer_froms_collection(), label: 'From', value: (email_from unless errors)
-  = form.text_field :email_form_subject, label: 'Subject', value: (email_subject unless errors)
+  - # With errors
+  - if form.object.errors.present?
+    = form.select :email_form_from, mailer_froms_collection(), label: 'From'
+    = form.text_field :email_form_subject, label: 'Subject'
 
-  - if email_content_type == 'text/html'
-    = form.article_editor :email_form_body, label: 'Body', mode: :email, value: (email_body unless errors)
-  - else
-    = form.text_area :email_form_body, label: 'Body', rows: 10, value: (email_body unless errors)
+    - if email_content_type == 'text/html'
+      = form.article_editor :email_form_body, label: 'Body', mode: :email
+    - else
+      = form.text_area :email_form_body, label: 'Body', rows: 10
+  
+  - # With no errors
+  - if form.object.errors.blank?
+    = form.select :email_form_from, mailer_froms_collection(), label: 'From', value: email_from
+    = form.text_field :email_form_subject, label: 'Subject', value: email_subject
+
+    - if email_content_type == 'text/html'
+      = form.article_editor :email_form_body, label: 'Body', mode: :email, value: email_body
+    - else
+      = form.text_area :email_form_body, label: 'Body', rows: 10, value: email_body
 
   - if email_variables.present?
-    %p The available variables are:
+    = card do
+      %p The available variables are:
 
-    %ul
-      - email_variables.each do |variable|
-        %li {{ #{variable} }}
+      %ul
+        - email_variables.each do |variable|
+          %li {{ #{variable} }}
 
-    %small.text-muted Please contact us to add additional variables
+      %small.text-muted Please contact us to add additional variables

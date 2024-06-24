@@ -69,7 +69,7 @@ module Effective
 
     def build_wizard_resource
       resource = resource_scope.new
-      resource.strict_loading!(false) if resource.respond_to?(:strict_loading!)
+      (resource.strict_loading!(false) rescue false) if resource.respond_to?(:strict_loading!)
       resource
     end
 
