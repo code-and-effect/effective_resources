@@ -49,24 +49,24 @@ module ActsAsEmailForm
       validates :email_form_subject, liquid: true
       validates :email_form_body, liquid: true
     end
-
-    def email_form_params
-      { from: email_form_from, subject: email_form_subject, body: email_form_body }.compact
-    end
-
-    def email_form_skip?
-      EffectiveResources.truthy?(email_form_skip)
-    end
-
-    # Only considered when not using an effective email template
-    def email_form_defaults(action)
-      { from: nil, subject: nil, body: nil, content_type: 'text/plain' }
-    end
-
   end
 
   module ClassMethods
     def acts_as_email_form?; true; end
+  end
+
+  # Instance methods
+  def email_form_params
+    { from: email_form_from, subject: email_form_subject, body: email_form_body }.compact
+  end
+
+  def email_form_skip?
+    EffectiveResources.truthy?(email_form_skip)
+  end
+
+  # Only considered when not using an effective email template
+  def email_form_defaults(action)
+    { from: nil, subject: nil, body: nil, content_type: 'text/plain' }
   end
 
 end

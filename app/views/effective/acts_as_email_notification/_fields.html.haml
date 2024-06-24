@@ -1,0 +1,53 @@
+- if email_template.present?
+  %p The following #{link_to(email_template, effective_email_templates.edit_admin_email_template_path(email_template), target: '_blank')} email will be sent:
+
+= form.hidden_field :content_type, value: email_content_type
+
+- uid = effective_bootstrap_unique_id
+- expanded = form.object.cc.present? || form.object.bcc.present?
+
+- if form.object.new_record? && form.object.errors.blank?
+  .row
+    .col-md-10
+      = form.select :from, mailer_froms_collection(), label: 'From', value: email_from
+    .col-md-2.my-4
+      %a{href: "#acts-as-email-notification-collapse-#{uid}", 'data-toggle': 'collapse', role: 'button', 'aria-expanded': expanded, 'aria-controls': "acts-as-email-notification-collapse-#{uid}"} more...
+
+  .collapse{id: "acts-as-email-notification-collapse-#{uid}", class: ('show' if expanded)}
+    = form.text_field :cc, label: 'CC', value: email_cc
+    = form.text_field :bcc, label: 'BCC', value: email_bcc
+
+  = form.text_field :subject, label: 'Subject', value: email_subject
+
+  - if email_content_type == 'text/html'
+    = form.article_editor :body, label: 'Body', mode: :email, value: email_body
+  - else
+    = form.text_area :body, label: 'Body', rows: 10, value: email_body
+
+- else
+  .row
+    .col-md-10
+      = form.select :from, mailer_froms_collection(), label: 'From'
+    .col-md-2.my-4
+      %a{href: "#acts-as-email-notification-collapse-#{uid}", 'data-toggle': 'collapse', role: 'button', 'aria-expanded': expanded, 'aria-controls': "acts-as-email-notification-collapse-#{uid}"} more...
+
+  .collapse{id: "acts-as-email-notification-collapse-#{uid}", class: ('show' if expanded)}
+    = form.text_field :cc, label: 'CC'
+    = form.text_field :bcc, label: 'BCC'
+
+  = form.text_field :subject, label: 'Subject'
+
+  - if email_content_type == 'text/html'
+    = form.article_editor :body, label: 'Body', mode: :email
+  - else
+    = form.text_area :body, label: 'Body', rows: 10
+
+- if email_variables.present?
+  = card do
+    %p The available variables are:
+
+    %ul
+      - email_variables.each do |variable|
+        %li {{ #{variable} }}
+
+    %small.text-muted Please contact us to add additional variables

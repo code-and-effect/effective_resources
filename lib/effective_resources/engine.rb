@@ -24,6 +24,7 @@ module EffectiveResources
       app.config.to_prepare do
         ActiveRecord::Base.extend(ActsAsArchived::Base)
         ActiveRecord::Base.extend(ActsAsEmailForm::Base)
+        ActiveRecord::Base.extend(ActsAsEmailNotification::Base)
         ActiveRecord::Base.extend(ActsAsTokened::Base)
         ActiveRecord::Base.extend(ActsAsSlugged::Base)
         ActiveRecord::Base.extend(ActsAsStatused::Base)
