@@ -103,6 +103,10 @@ module Effective
       effective_resource.name
     end
 
+    def effective_resource_name # effective_notification
+      effective_resource.resource_name
+    end
+
     def resource_name_id
       (effective_resource.name + '_id').to_sym
     end

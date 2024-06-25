@@ -48,10 +48,31 @@ module ActsAsEmailNotification
     validate(if: -> { email_notification_plain? && body.present? }) do
       errors.add(:body, 'unexpected html tags found in body') if email_notification_body_html?
     end
+
+    validate(if: -> { email_notification_subject_template.present? }) do
+      if(invalid = email_notification_subject_variables - email_template_variables).present?
+        errors.add(:subject, "Invalid variable: #{invalid.to_sentence}")
+      end
+    end
+
+    validate(if: -> { email_notification_body_template.present? }) do
+      if(invalid = email_notification_body_variables - email_template_variables).present?
+        errors.add(:body, "Invalid variable: #{invalid.to_sentence}")
+      end
+    end
   end
 
   module ClassMethods
     def acts_as_email_notification?; true; end
+  end
+
+  # To be overrided
+  def email_template
+    raise('to be implemented')
+  end
+
+  def email_template_variables
+    raise('to be implemented')
   end
 
   def email_notification_params
@@ -74,9 +95,30 @@ module ActsAsEmailNotification
     body.present? && !(body.include?('</p>') || body.include?('</div>'))
   end
 
-  # To be overrided
-  def email_template
-    nil
+  def email_notification_body_template
+    Liquid::Template.parse(body) rescue nil
+  end
+
+  def email_notification_subject_template
+    Liquid::Template.parse(subject) rescue nil
+  end
+
+  def email_notification_body_variables
+    template = email_notification_body_template()
+    return unless template.present?
+
+    Liquid::ParseTreeVisitor.for(template.root).add_callback_for(Liquid::VariableLookup) do |node|
+      [node.name, *node.lookups].join('.')
+    end.visit.flatten.uniq.compact
+  end
+
+  def email_notification_subject_variables
+    template = email_notification_subject_template()
+    return unless template.present?
+
+    Liquid::ParseTreeVisitor.for(template.root).add_callback_for(Liquid::VariableLookup) do |node|
+      [node.name, *node.lookups].join('.')
+    end.visit.flatten.uniq.compact
   end
 
 end

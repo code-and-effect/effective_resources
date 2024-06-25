@@ -83,5 +83,20 @@ module EffectiveResourcesEmailHelper
     render(partial: (partial || 'effective/acts_as_email_notification/fields'), locals: locals)
   end
 
+  def email_message_html?(message)
+    message.parts.find { |part| part.content_type.start_with?('text/html') }.present?
+  end
+
+  def email_message_plain?(message)
+    message.parts.find { |part| part.content_type.start_with?('text/html') }.blank?
+  end
+
+  def email_message_body(message)
+    html_body = message.parts.find { |part| part.content_type.start_with?('text/html') }.try(:body).to_s
+    plain_body = message.parts.find { |part| part.content_type.start_with?('text/plain') }.try(:body).to_s
+    message_body = message.body.to_s
+
+    html_body.presence || plain_body.presence || message_body.presence
+  end
 
 end

@@ -5,6 +5,7 @@
 
 - uid = effective_bootstrap_unique_id
 - expanded = form.object.cc.present? || form.object.bcc.present?
+- mailer_subject_prefix_hint = EffectiveResources.mailer_subject_prefix_hint.to_s.strip.presence
 
 - if form.object.new_record? && form.object.errors.blank?
   .row
@@ -17,7 +18,7 @@
     = form.text_field :cc, label: 'CC', value: email_cc
     = form.text_field :bcc, label: 'BCC', value: email_bcc
 
-  = form.text_field :subject, label: 'Subject', value: email_subject
+  = form.text_field :subject, value: email_subject, hint: (mailer_subject_prefix_hint ? "The subject of your email. It will be automatically prefixed with: #{mailer_subject_prefix_hint}" : 'The subject of your email')
 
   - if email_content_type == 'text/html'
     = form.article_editor :body, label: 'Body', mode: :email, value: email_body
@@ -35,7 +36,7 @@
     = form.text_field :cc, label: 'CC'
     = form.text_field :bcc, label: 'BCC'
 
-  = form.text_field :subject, label: 'Subject'
+  = form.text_field :subject, hint: (mailer_subject_prefix_hint ? "The subject of your email. It will be automatically prefixed with: #{mailer_subject_prefix_hint}" : 'The subject of your email')
 
   - if email_content_type == 'text/html'
     = form.article_editor :body, label: 'Body', mode: :email
@@ -44,10 +45,9 @@
 
 - if email_variables.present?
   = card do
-    %p The available variables are:
+    %p You can use the following variables in the subject and body:
 
     %ul
       - email_variables.each do |variable|
         %li {{ #{variable} }}
 
-    %small.text-muted Please contact us to add additional variables

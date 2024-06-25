@@ -28,6 +28,10 @@ module Effective
           params[resource_name].to_unsafe_h
         end
 
+        to_assign ||= if params[effective_resource_name].present? && params[effective_resource_name].respond_to?(:to_unsafe_h)
+          params[effective_resource_name].to_unsafe_h
+        end
+
         to_assign ||= if params.present?
           params.to_unsafe_h.except(:controller, :action, :id, :duplicate_id)
         end
