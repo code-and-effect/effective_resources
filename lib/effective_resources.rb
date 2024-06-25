@@ -60,7 +60,7 @@ module EffectiveResources
   end
 
   def self.mailer_layout
-    config[:mailer_layout] || 'effective_mailer_layout'
+    config[:mailer_layout] || 'mailer'
   end
 
   def self.mailer_subject
