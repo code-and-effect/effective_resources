@@ -109,7 +109,6 @@ module Effective
           format.html { }
           format.js { render('show', formats: :js) }
         end
-
       end
 
       def edit
@@ -126,7 +125,6 @@ module Effective
           format.html { }
           format.js { render('edit', formats: :js) }
         end
-
       end
 
       def update

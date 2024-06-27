@@ -14,6 +14,11 @@ module Effective
     included do
       define_callbacks :resource_render, :resource_before_save, :resource_after_save, :resource_after_commit, :resource_error
       layout -> { resource_layout }
+
+      # For effective_logging acts_as_trackable
+      after_action(only: [:show], if: -> { resource.present? && resource.class.try(:acts_as_trackable?) }) do
+        resource.track!(user: try(:current_user), details: request.params)
+      end
     end
 
     module ClassMethods
