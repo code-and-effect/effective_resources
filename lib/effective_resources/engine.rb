@@ -29,6 +29,7 @@ module EffectiveResources
         ActiveRecord::Base.extend(ActsAsSlugged::Base)
         ActiveRecord::Base.extend(ActsAsStatused::Base)
         ActiveRecord::Base.extend(ActsAsPaginable::Base)
+        ActiveRecord::Base.extend(ActsAsPublished::Base)
         ActiveRecord::Base.extend(ActsAsWizard::Base)
         ActiveRecord::Base.extend(ActsAsPurchasableWizard::Base)
 
