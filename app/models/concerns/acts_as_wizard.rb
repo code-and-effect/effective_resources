@@ -82,6 +82,11 @@ module ActsAsWizard
       wizard_step_keys
     end
 
+    # :submitted
+    def last_wizard_step
+      all_steps.last
+    end
+
     def completed_steps
       wizard_steps.keys
     end
