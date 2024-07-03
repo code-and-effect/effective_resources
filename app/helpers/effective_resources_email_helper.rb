@@ -11,7 +11,7 @@ module EffectiveResourcesEmailHelper
   end
 
   # acts_as_email_form
-  def email_form_fields(form, action = nil, skip: true, to: nil, variables: nil, partial: nil)
+  def email_form_fields(form, action = nil, skip: true, skip_link: nil, to: nil, variables: nil, partial: nil)
     raise('expected a form') unless form.respond_to?(:object)
 
     resource = form.object
@@ -26,7 +26,11 @@ module EffectiveResourcesEmailHelper
       action.kind_of?(Effective::EmailTemplate) ? action : Effective::EmailTemplate.where(template_name: action).first!
     end
 
+    # Display link to the admin email template
+    skip_link = !request.path.start_with?('/admin/') if skip_link.nil?
+
     # These defaults are only used when there is no email_template
+    # This can't happen right now.
     email_defaults = form.object.email_form_defaults(action) unless email_template.present?
 
     from = email_template&.from || email_defaults[:from] || EffectiveResources.mailer_froms.first
@@ -44,7 +48,8 @@ module EffectiveResourcesEmailHelper
       email_skip: skip,
       email_action: (action || true),
       email_template: email_template,
-      email_variables: variables
+      email_variables: variables,
+      email_skip_link: skip_link
     }
 
     render(partial: (partial || 'effective/acts_as_email_form/fields'), locals: locals)

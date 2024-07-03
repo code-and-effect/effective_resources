@@ -1,5 +1,8 @@
 = form.hidden_field :email_form_action, value: email_action
 
+- if email_template.present? && !email_skip_link
+  %p The following #{link_to(email_template, effective_email_templates.edit_admin_email_template_path(email_template), target: '_blank')} email will be sent:
+
 - if email_skip
   = form.check_box :email_form_skip, label: 'Do not send email'
 
