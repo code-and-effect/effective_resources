@@ -64,6 +64,7 @@ module Effective
       else
         "<span>#{resource}</span>"
       end
+    end
 
     def to_select2(resource)
       if resource.try(:email).present?
