@@ -291,4 +291,8 @@ module EffectiveDeviseUser
     devise_mailer.send(notification, self, *args).deliver_now
   end
 
+  def to_select2_search_columns
+    [:email, :public_email, :first_name, :last_name, :name]
+  end
+
 end
