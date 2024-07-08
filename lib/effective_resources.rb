@@ -127,6 +127,10 @@ module EffectiveResources
     end
   end
 
+  def self.falsey?(value)
+    !truthy?(value)
+  end
+
   def self.advance_date(date, business_days: 1, holidays: [:us, :observed])
     raise('business_days must be an integer <= 365') unless business_days.kind_of?(Integer) && business_days <= 365
 
