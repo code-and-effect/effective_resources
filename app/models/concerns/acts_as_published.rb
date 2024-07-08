@@ -22,8 +22,12 @@ module ActsAsPublished
   included do
     attr_writer :save_as_draft
 
-    before_validation do
-      assign_attributes(published_start_at: nil, published_end_at: nil) if EffectiveResources.truthy?(@save_as_draft)
+    before_validation(if: -> { EffectiveResources.falsey?(@save_as_draft) && @save_as_draft.present? }) do
+      self.published_start_at ||= Time.zone.now
+    end
+
+    before_validation(if: -> { EffectiveResources.truthy?(@save_as_draft) }) do
+      assign_attributes(published_start_at: nil, published_end_at: nil)
     end
 
     validate(if: -> { published_start_at.present? && published_end_at.present? }) do
