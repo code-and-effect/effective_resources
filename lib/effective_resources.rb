@@ -237,4 +237,18 @@ module EffectiveResources
     end
   end
 
+  def self.masked_email(resource)
+    public_email = resource.try(:public_email)
+    return public_email if public_email.present?
+
+    email = resource.email
+    return email if email.blank?
+
+    local, domain = email.split('@')
+    masked_local = local[0..1] + '*' * (local.length - 2)
+    masked_domain = domain.split('.').first[0..1] + '*' * (domain.split('.').first.length - 2) + '.' + domain.split('.').last
+
+    "#{masked_local}@#{masked_domain}"
+  end
+
 end
