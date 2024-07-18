@@ -80,17 +80,19 @@ module Effective
         raise('expected an ActiveSupport::OrderedOptions') unless value.kind_of?(ActiveSupport::OrderedOptions)
         parse_ordered_options(value)
       when :date, :datetime
-        if (digits = value.to_s.scan(/(\d+)/).flatten).present?
-          date = if digits.first.length == 4  # 2017-01-10
+        date = Time.zone.parse(value) if value.to_s.include?('T')
+
+        date ||= if (digits = value.to_s.scan(/(\d+)/).flatten).present?
+          if digits.first.length == 4  # 2017-01-10
             (Time.zone.local(*digits) rescue nil)
           else # 01/10/2016
             year = digits.find { |d| d.length == 4 }
             digits = [year] + (digits - [year])
             (Time.zone.local(*digits) rescue nil)
           end
-
-          name.to_s.start_with?('end_') ? date.end_of_day : date
         end
+
+        date.present? && name.to_s.start_with?('end_') ? date.end_of_day : date
       when :time
         if (digits = value.to_s.scan(/(\d+)/).flatten).present?
           now = Time.zone.now
