@@ -27,7 +27,7 @@ module Effective
           return value unless value.include?(key) # missing translation
         end
 
-        "Really #{human_action_name(action)} @resource?"
+        "Are you sure you want to #{human_action_name(action).downcase}?"
       end
 
       def human_name
