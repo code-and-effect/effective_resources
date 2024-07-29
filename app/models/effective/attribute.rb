@@ -80,7 +80,7 @@ module Effective
         raise('expected an ActiveSupport::OrderedOptions') unless value.kind_of?(ActiveSupport::OrderedOptions)
         parse_ordered_options(value)
       when :date, :datetime
-        date = Time.zone.parse(value) if value.to_s.include?('T')
+        date = Time.zone.parse(value) if value.kind_of?(String) && value.include?('T')
 
         date ||= if (digits = value.to_s.scan(/(\d+)/).flatten).present?
           if digits.first.length == 4  # 2017-01-10
