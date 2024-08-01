@@ -278,7 +278,7 @@ module EffectiveResourcesHelper
     raise("expected a title for step #{step}") unless title.present?
 
     link = if edit_effective_wizard? && resource.is_a?(controller.resource_klass) && resource.can_visit_step?(step)
-      link_to('Edit', wizard_path(step), title: "Edit #{title}")
+      link_to('Edit', wizard_path(step), title: "Edit #{title}", class: 'btn btn-secondary')
     end
 
     content_tag(:div, class: 'card mb-4') do
@@ -330,6 +330,16 @@ module EffectiveResourcesHelper
   def acts_as_published_fields(form)
     raise('expected an acts_as_published form object') unless form.object.class.try(:acts_as_published?)
     render('effective/acts_as_published/fields', form: form)
+  end
+
+  def acts_as_slugged_fields(form, url: nil)
+    raise('expected an acts_as_slugged form object') unless form.object.class.try(:acts_as_slugged?)
+
+    current_url = if url.present?
+      'Currently accessible via ' + link_to(url.gsub(form.object.slug, '<strong>' + form.object.slug + '</strong>').html_safe, url, target: :_blank)
+    end
+
+    render('effective/acts_as_slugged/fields', form: form, current_url: current_url)
   end
 
 end
