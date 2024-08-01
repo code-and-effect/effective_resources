@@ -1,0 +1,9 @@
+-# acts_as_published
+= form.hide_if(:save_as_draft, true) do
+  .row
+    .col-md-6
+      = form.datetime_field :published_start_at, label: 'Published start', hint: 'Will appear on the website after this date and time. Leave blank to publish immediately.'
+    .col-md-6
+      = form.datetime_field :published_end_at, label: 'Published end', hint: 'Will not appear on the website after this date and time. Leave blank for no end date.', date_linked: false
+
+= form.check_box :save_as_draft, label: "Save as a draft. It will not appear on the website and can only be accessed by admin users."

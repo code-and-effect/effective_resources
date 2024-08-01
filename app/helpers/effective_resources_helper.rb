@@ -327,4 +327,9 @@ module EffectiveResourcesHelper
     EffectiveResources.masked_email(resource)
   end
 
+  def acts_as_published_fields(form)
+    raise('expected an acts_as_published form object') unless form.object.class.try(:acts_as_published?)
+    render('effective/acts_as_published/fields', form: form)
+  end
+
 end
