@@ -12,7 +12,7 @@
     .col-md-10
       = form.select :from, mailer_froms_collection(), label: 'From', value: email_from
     .col-md-2.my-4
-      %a{href: "#acts-as-email-notification-collapse-#{uid}", 'data-toggle': 'collapse', role: 'button', 'aria-expanded': expanded, 'aria-controls': "acts-as-email-notification-collapse-#{uid}"} more...
+      %a{href: "#acts-as-email-notification-collapse-#{uid}", 'data-toggle': 'collapse', role: 'button', 'aria-expanded': expanded, 'aria-controls': "acts-as-email-notification-collapse-#{uid}"} Add CC or BCC
 
   .collapse{id: "acts-as-email-notification-collapse-#{uid}", class: ('show' if expanded)}
     = form.text_field :cc, label: 'CC', value: email_cc
@@ -30,7 +30,7 @@
     .col-md-10
       = form.select :from, mailer_froms_collection(), label: 'From'
     .col-md-2.my-4
-      %a{href: "#acts-as-email-notification-collapse-#{uid}", 'data-toggle': 'collapse', role: 'button', 'aria-expanded': expanded, 'aria-controls': "acts-as-email-notification-collapse-#{uid}"} more...
+      %a{href: "#acts-as-email-notification-collapse-#{uid}", 'data-toggle': 'collapse', role: 'button', 'aria-expanded': expanded, 'aria-controls': "acts-as-email-notification-collapse-#{uid}"} Add CC or BCC
 
   .collapse{id: "acts-as-email-notification-collapse-#{uid}", class: ('show' if expanded)}
     = form.text_field :cc, label: 'CC'
