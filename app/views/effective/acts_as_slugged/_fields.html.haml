@@ -1,0 +1,3 @@
+- if form.object.persisted? || form.object.errors.include?(:slug)
+  - hint = "The slug controls the internet address for this item. Be careful, changing the slug will break links that other websites may have to the old address."
+  = form.text_field :slug, hint: [hint, current_url].compact.join("<br>")

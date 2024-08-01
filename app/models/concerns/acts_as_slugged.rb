@@ -26,6 +26,8 @@ module ActsAsSlugged
   end
 
   module ClassMethods
+    def acts_as_slugged?; true; end
+
     def relation
       super.tap { |relation| relation.extend(FinderMethods) }
     end
