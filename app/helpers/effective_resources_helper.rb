@@ -278,7 +278,7 @@ module EffectiveResourcesHelper
     raise("expected a title for step #{step}") unless title.present?
 
     link = if edit_effective_wizard? && resource.is_a?(controller.resource_klass) && resource.can_visit_step?(step)
-      link_to('Edit', wizard_path(step), title: "Edit #{title}", class: 'btn btn-secondary')
+      link_to('Edit', wizard_path(step), title: "Edit #{title}", class: 'btn btn-secondary mb-2')
     end
 
     content_tag(:div, class: 'card mb-4') do
