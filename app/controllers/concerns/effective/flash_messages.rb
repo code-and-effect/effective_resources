@@ -56,7 +56,7 @@ module Effective
 
       messages << e.message if messages.blank? && e && e.respond_to?(:message)
 
-      messages.to_sentence.presence
+      messages.uniq.to_sentence.presence
     end
 
     def action_verb(action)
