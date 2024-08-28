@@ -157,6 +157,18 @@ module ActsAsWizard
       all_steps.first(index)
     end
 
+    def all_steps_after(step)
+      index = all_steps.index(step)
+      raise("unexpected step #{step}") unless index.present?
+
+      all_steps[(index + 1)..-1]
+    end
+
+    def reset_all_wizard_steps_after(step)
+      all_steps_after(step).each { |step| wizard_steps.delete(step) }
+      wizard_steps
+    end
+
     def previous_step(step)
       index = required_steps.index(step)
       required_steps[index-1] unless index == 0 || index.nil?

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    effective_resources (2.25.9)
+    effective_resources (2.25.12)
       rails
       sprockets-rails
 
