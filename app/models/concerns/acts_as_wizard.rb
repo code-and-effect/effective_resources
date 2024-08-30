@@ -123,6 +123,10 @@ module ActsAsWizard
     end
 
     def wizard_step_title(step)
+      default_wizard_step_title(step)
+    end
+
+    def default_wizard_step_title(step)
       self.class.const_get(:WIZARD_STEPS).fetch(step)
     end
 
