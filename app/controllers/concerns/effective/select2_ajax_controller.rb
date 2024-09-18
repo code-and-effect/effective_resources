@@ -56,16 +56,6 @@ module Effective
 
     private
 
-    def to_masked_select2(resource)
-      if resource.respond_to?(:public_email)
-        "<span>#{resource}</span> <small>#{view_context.masked_email(resource)}</small>"
-      elsif resource.try(:email).present?
-        "<span>#{resource}</span> <small>#{resource.email}</small>"
-      else
-        "<span>#{resource}</span>"
-      end
-    end
-
     def to_select2(resource)
       if resource.try(:email).present?
         "<span>#{resource}</span> <small>#{resource.email}</small>"

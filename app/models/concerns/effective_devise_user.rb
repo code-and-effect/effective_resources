@@ -295,4 +295,8 @@ module EffectiveDeviseUser
     [:email, :public_email, :first_name, :last_name, :name]
   end
 
+  def to_select2
+    "<span>#{email_to_s}</span> <small>#{email}</small>"
+  end
+
 end
