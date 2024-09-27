@@ -22,7 +22,7 @@ module ActsAsPublished
   included do
     attr_writer :save_as_draft
 
-    before_validation(if: -> { EffectiveResources.falsey?(@save_as_draft) && @save_as_draft.present? }) do
+    before_validation(if: -> { EffectiveResources.falsey?(@save_as_draft) && (@save_as_draft.present? || new_record?) }) do
       self.published_start_at ||= Time.zone.now
     end
 
