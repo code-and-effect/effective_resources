@@ -292,11 +292,10 @@ module EffectiveDeviseUser
   end
 
   def to_select2_search_columns
-    [:email, :public_email, :first_name, :last_name, :name]
+    [:email, :public_email, :alternate_email, :first_name, :last_name, :name]
   end
 
   def to_select2
-    "<span>#{email_to_s}</span> <small>#{email}</small>"
+    "<span>#{email_to_s}</span> <small>&lt;#{try(:public_email) || email}&gt;</small>"
   end
-
 end

@@ -3,12 +3,10 @@ Rails.application.routes.draw do
 end
 
 EffectiveResources::Engine.routes.draw do
-
-  namespace :admin do
-    resources :select2_ajax, only: [] do
-      get :users, on: :collection
-      get :organizations, on: :collection
+  namespace :effective do
+    resources :ajax, only: [] do
+      get :users, on: :collection, as: :users
+      get :organizations, on: :collection, as: :organizations
     end
   end
-
 end

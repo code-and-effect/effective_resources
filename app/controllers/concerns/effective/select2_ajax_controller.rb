@@ -42,7 +42,7 @@ module Effective
           raise('expected a Hash with id and text params') unless option.kind_of?(Hash) && option[:id] && option[:text]
           option
         else
-          { id: resource.to_param, text: resource.try(:to_select2) || resource.to_s }
+          { id: resource.to_param, text: to_select2(resource) }
         end
       end
 
@@ -56,12 +56,13 @@ module Effective
 
     private
 
-    def to_select2(resource)
-      if resource.try(:email).present?
-        "<span>#{resource}</span> <small>#{resource.email}</small>"
-      else
-        "<span>#{resource}</span>"
-      end
+    def to_select2(resource, with_organizations = false)
+      organizations = Array(resource.try(:organizations)).join(', ') if with_organizations
+
+      [
+        (resource.try(:to_select2) || "<span>#{resource.to_s}</span>"),
+        ("<small>#{organizations}</small>" if organizations.present?)
+      ].compact.join(' ')
     end
 
   end

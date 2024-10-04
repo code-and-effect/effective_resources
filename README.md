@@ -374,21 +374,20 @@ This gem provides an admin endpoint for select2 AJAX to fetch users.
 To use this endpoint please add
 
 ```
-can :admin, :effective_resources
+can :users, :ajax
 ```
 
 And then create a select field like this:
 
 ```
-  = f.select :user_id, current_user.class.all,
-    ajax_url: effective_resources.users_admin_select2_ajax_index_path
+= f.select :user_id, current_user.class.all, ajax_url: effective_resources.users_effective_ajax_index_path
 ```
 
-To format the results, add a method to your User class. It can return html.
+To format the results, add a method to your User class. Should return HTML with a span tag
 
 ```
 def to_select2
-  "<span>#{user.first_name} #{user.last_name}</span> <small>#{user.email}</small>"
+  "<span>#{first_name} #{last_name}</span> <small>&lt;#{try(:public_email) || email}&gt;</small>"
 end
 ```
 
