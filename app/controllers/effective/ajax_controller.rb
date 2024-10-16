@@ -12,6 +12,11 @@ module Effective
       collection = current_user.class.all
       collection = collection.includes(:organizations) if with_organizations
 
+      # Display only related organization users
+      if with_organizations && params[:related]
+        collection = collection.where(id: current_user.organizations.flat_map(&:users))
+      end
+
       respond_with_select2_ajax(collection, skip_authorize: true) do |user|
         data = { first_name: user.first_name, last_name: user.last_name, email: user.email }
 
