@@ -133,7 +133,7 @@ module Effective
               resource = Effective::Resource.new(klass_name)
               next unless resource.klass.present?
 
-              associated = associated.or(relation.where(foreign_id => resource.search_any(value), foreign_type => klass_name))
+              associated = associated.or(relation.where(foreign_id => value_ids, foreign_type => klass_name))
             end
 
             case operation
