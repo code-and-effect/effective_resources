@@ -127,13 +127,15 @@ module Effective
           else # Maybe from a string field
             associated = relation.none
 
+            value_ids_integer_array = (value_ids.kind_of?(Array) && value_ids.length > 0 && value_ids.all? { |value| (value.to_i rescue nil).to_s == value })
+
             relation.unscoped.distinct(foreign_type).pluck(foreign_type).each do |klass_name|
               next if klass_name.nil?
 
               resource = Effective::Resource.new(klass_name)
               next unless resource.klass.present?
 
-              associated = associated.or(relation.where(foreign_id => value_ids, foreign_type => klass_name))
+              associated = associated.or(relation.where(foreign_id => (value_ids_integer_array ? value_ids : resource.search_any(value)), foreign_type => klass_name))
             end
 
             case operation
