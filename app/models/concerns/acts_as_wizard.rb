@@ -127,7 +127,7 @@ module ActsAsWizard
     end
 
     def default_wizard_step_title(step)
-      self.class.const_get(:WIZARD_STEPS).fetch(step)
+      self.class.const_get(:WIZARD_STEPS)[step] || step.to_s.titleize
     end
 
     def first_completed_step
