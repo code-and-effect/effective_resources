@@ -65,6 +65,7 @@ module ActsAsPurchasableWizard
   def find_or_build_submit_order
     order = submit_order || build_effective_order()
     order = build_effective_order() if order.declined? # Make a new order, if the previous one was declined
+    order = build_effective_order() if order.voided? # Make a new order, if the previous one was voided
 
     # Update the order with the current owner
     if EffectiveOrders.organization_enabled? && respond_to?(:organization)
