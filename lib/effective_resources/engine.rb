@@ -23,6 +23,7 @@ module EffectiveResources
     initializer 'effective_resources.active_record' do |app|
       app.config.to_prepare do
         ActiveRecord::Base.extend(ActsAsArchived::Base)
+        ActiveRecord::Base.extend(ActsAsJobStatus::Base)
         ActiveRecord::Base.extend(ActsAsEmailForm::Base)
         ActiveRecord::Base.extend(ActsAsEmailNotification::Base)
         ActiveRecord::Base.extend(ActsAsTokened::Base)

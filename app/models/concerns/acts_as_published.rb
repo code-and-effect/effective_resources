@@ -23,7 +23,7 @@ module ActsAsPublished
     attr_writer :save_as_draft
 
     before_validation(if: -> { EffectiveResources.falsey?(@save_as_draft) && (@save_as_draft.present? || new_record?) }) do
-      self.published_start_at ||= Time.zone.now
+      self.published_start_at ||= Time.zone.now.beginning_of_day
     end
 
     before_validation(if: -> { EffectiveResources.truthy?(@save_as_draft) }) do
@@ -48,6 +48,24 @@ module ActsAsPublished
   end
 
   # Instance Methods
+  def publish!
+    now = Time.zone.now
+
+    if published_start_at.blank? || published_start_at > now
+      assign_attributes(published_start_at: now.beginning_of_day) 
+    end
+
+    if published_end_at.present? && (published_end_at <= now || published_end_at <= published_start_at)
+      assign_attributes(published_end_at: nil)
+    end
+
+    save!
+  end
+
+  def draft!
+    update!(published_start_at: nil, published_end_at: nil)
+  end
+
   def published?
     return false if published_start_at.blank? || published_start_at > Time.zone.now
     return false if published_end_at.present? && published_end_at <= Time.zone.now

@@ -1,0 +1,48 @@
+- if [nil, 'enqueued', 'running'].include?(resource.job_status)
+  %p The background job is running. Please wait.
+
+  %p.text-center
+    = icon('spinner')
+
+  - if resource.job_status_display_item_counts?
+    - completed = resource.job_status_completed_items_count
+    - total = resource.job_status_total_items_count
+    - percent = ((completed * 100).to_f / [total, 1].max).round(0)
+
+    .progress
+      .progress-bar{role: 'progressbar', 'aria-valuenow': completed, 'aria-valuemin': 0, 'aria-valuemax': total, style: "width: #{percent}%"}
+
+    %p.text-center
+      Completed #{completed} out of #{pluralize(total, 'item')} so far
+
+  :javascript
+    setTimeout(function() { window.location.reload(true) }, 5000);
+
+  %p.text-center
+    = link_to 'Refresh', wizard_path(step), class: 'btn btn-secondary'
+
+  %p.text-center
+    %small
+      %em This page will auto refresh every 5 seconds.
+
+- if resource.job_status_error?
+  %p The following error was encountered when running the background job:
+
+  .alert.alert-danger.my-4
+    = resource.job_error.html_safe
+
+  %p Please fix any error, then try again.
+
+  %p.text-center
+    = link_to 'Try Again', wizard_path(resource.previous_step(step)), class: 'btn btn-secondary'
+
+- if resource.job_status_completed?
+  %p.text-center
+    = icon('check')
+
+  %p.text-center
+    Job complete!
+
+    - if resource.job_status_display_item_counts?
+      = pluralize(resource.job_status_completed_items_count, 'item')
+      have been completed.
