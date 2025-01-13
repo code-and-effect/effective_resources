@@ -1,5 +1,7 @@
 class Thing < ApplicationRecord
 
+  acts_as_published
+
   effective_resource do
     title       :string
     body        :text
@@ -10,6 +12,9 @@ class Thing < ApplicationRecord
     price       :integer
     decimal     :decimal
     boolean     :boolean
+
+    published_start_at  :datetime 
+    published_end_at    :datetime
 
     timestamps
   end

@@ -12,6 +12,9 @@ class CreateThings < ActiveRecord::Migration[6.0]
 
       t.text :body
 
+      t.datetime :published_start_at
+      t.datetime :published_end_at
+
       t.timestamps
     end
   end
