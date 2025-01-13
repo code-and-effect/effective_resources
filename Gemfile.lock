@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    effective_resources (2.26.2)
+    effective_resources (2.26.5)
       rails
       sprockets-rails
 
@@ -122,6 +122,9 @@ GEM
       effective_resources
       rails (>= 3.2.0)
       sassc
+    effective_developer (0.8.5)
+      effective_resources
+      rails (>= 3.2.0)
     erubi (1.12.0)
     execjs (2.9.1)
     ffi (1.16.3)
@@ -263,6 +266,7 @@ PLATFORMS
 DEPENDENCIES
   effective_bootstrap
   effective_datatables
+  effective_developer
   effective_resources!
   haml
   holidays
