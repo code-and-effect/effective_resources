@@ -1,6 +1,7 @@
 class Thing < ApplicationRecord
 
   acts_as_published
+  acts_as_job_status
 
   effective_resource do
     title       :string
@@ -41,6 +42,33 @@ class Thing < ApplicationRecord
   def create_valid_resource_and_return_false!
     Thong.create!(title: 'Title', body: 'Body')
     false
+  end
+
+  def success!
+    # Calls success_job!
+    perform_with_job_status! { ThingSuccessJob.perform_later(id) }
+  end
+
+  def success_job!
+    update!(title: 'Job Success')
+  end
+
+  def error!
+    # Calls error_job!
+    perform_with_job_status! { ThingErrorJob.perform_later(id) }
+  end
+
+  def error_job!
+    update!(title: nil, body: nil)
+  end
+
+  def fail!
+    # Calls fail_job!
+    perform_with_job_status! { ThingFailJob.perform_later(id) }
+  end
+
+  def fail_job!
+    raise('failed')
   end
 
 end

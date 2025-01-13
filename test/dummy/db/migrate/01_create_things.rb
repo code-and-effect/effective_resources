@@ -15,6 +15,11 @@ class CreateThings < ActiveRecord::Migration[6.0]
       t.datetime :published_start_at
       t.datetime :published_end_at
 
+      t.string :job_status
+      t.datetime :job_started_at
+      t.datetime :job_ended_at
+      t.text :job_error
+
       t.timestamps
     end
   end

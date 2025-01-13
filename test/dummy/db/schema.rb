@@ -47,6 +47,10 @@ ActiveRecord::Schema[7.1].define(version: 5) do
     t.text "body"
     t.datetime "published_start_at", precision: nil
     t.datetime "published_end_at", precision: nil
+    t.string "job_status"
+    t.datetime "job_started_at", precision: nil
+    t.datetime "job_ended_at", precision: nil
+    t.text "job_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

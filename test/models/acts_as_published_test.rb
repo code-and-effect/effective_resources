@@ -3,6 +3,8 @@ require 'test_helper'
 class ActsAsPublishedTest < ActiveSupport::TestCase
   test 'acts as published' do
     thing = Thing.new(title: 'New Thing', body: 'body')
+    assert thing.class.acts_as_published?
+
     assert thing.draft?
     assert thing.published_start_at.blank?
     assert thing.published_end_at.blank?

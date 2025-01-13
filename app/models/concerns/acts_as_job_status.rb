@@ -99,7 +99,10 @@ module ActsAsJobStatus
     if job_status == :error
       EffectiveLogger.error(exception.message, associated: self) if defined?(EffectiveLogger)
       ExceptionNotifier.notify_exception(exception, data: { id: id, class_name: self.class.name }) if defined?(ExceptionNotifier)
-      raise(exception) unless Rails.env.production?
+    end
+
+    if job_status == :error && !ENV['TESTING_ACTS_AS_JOB_STATUS']
+      raise(exception) unless Rails.env.production? || Rails.env.staging?
     end
 
     true
