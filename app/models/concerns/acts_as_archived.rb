@@ -52,6 +52,7 @@ module ActsAsArchived
     def acts_as_archived(klass)
       raise "klass does not implement acts_as_archived" unless klass.respond_to?(:acts_as_archived?)
 
+      can([:bulk_archive, :bulk_unarchive], klass)
       can(:archive, klass) { |obj| !obj.archived? }
       can(:unarchive, klass) { |obj| obj.archived? }
     end
@@ -62,6 +63,8 @@ module ActsAsArchived
       concern :acts_as_archived do
         post :archive, on: :member
         post :unarchive, on: :member
+        post :bulk_archive, on: :collection
+        post :bulk_unarchive, on: :collection
       end
     end
   end
