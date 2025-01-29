@@ -120,10 +120,13 @@ module EffectiveResources
   end
 
   def self.truthy?(value)
+    return true if value.kind_of?(String) && ['yes', 'true'].include?(value.downcase)
+    return false if value.kind_of?(String) && ['no', 'false'].include?(value.downcase)
+
     if defined?(::ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES)  # Rails <5
       ::ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES.include?(value)
     else
-      ::ActiveRecord::Type::Boolean.new.cast(value)
+      ::ActiveRecord::Type::Boolean.new.cast(value) || value.to_s.downcase == 'yes'
     end
   end
 
