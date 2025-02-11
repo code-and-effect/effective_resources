@@ -301,6 +301,8 @@ module Effective
               .where(ActiveStorage::Blob.arel_table[:filename].matches("%#{term}%"))
 
           when :date, :datetime
+            attribute_type = relation.columns_hash[name.to_s]&.type # Returns :date, :datetime, etc
+
             if value.kind_of?(String) && term.respond_to?(:strftime)
               end_at = (
                 case (value.to_s.scan(/(\d+)/).flatten).length
@@ -314,16 +316,16 @@ module Effective
                 end
               )
 
-              if as == :date
-                relation.where("#{sql_column} >= ? AND #{sql_column} < ?", term.to_date, (end_at + 1.day).to_date)
-              else
+              if as == :datetime || attribute_type == :datetime
                 relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", term, end_at)
+              else
+                relation.where("#{sql_column} >= ? AND #{sql_column} < ?", term.to_date, (end_at + 1.day).to_date)
               end
             elsif value.respond_to?(:strftime) && operation == :eq
-              if as == :date
-                relation.where("#{sql_column} = ?", value)
-              else
+              if as == :datetime || attribute_type == :datetime
                 relation.where("#{sql_column} >= ? AND #{sql_column} <= ?", value.beginning_of_day, value.end_of_day)
+              else
+                relation.where("#{sql_column} = ?", value)
               end
             elsif term.respond_to?(:strftime) == false && operation.to_s.include?('days_ago') == false
               relation.none # It's an invalid entered date 
