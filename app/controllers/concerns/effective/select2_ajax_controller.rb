@@ -2,8 +2,12 @@ module Effective
   module Select2AjaxController
     extend ActiveSupport::Concern
 
-    def respond_with_select2_ajax(collection, skip_search: false, skip_authorize: false, skip_scope: false, &block)
-      raise('collection should be an ActiveRecord::Relation') unless collection.kind_of?(ActiveRecord::Relation)
+    def respond_with_select2_ajax_array(collection, skip_search: true, skip_authorize: true, skip_scope: true, skip_paginate: true, skip_relation: true, &block)
+      respond_with_select2_ajax(collection, skip_search: skip_search, skip_authorize: skip_authorize, skip_scope: skip_scope, skip_paginate: skip_paginate, skip_relation: skip_relation, &block)
+    end
+
+    def respond_with_select2_ajax(collection, skip_search: false, skip_authorize: false, skip_scope: false, skip_paginate: false, skip_relation: false, &block)
+      raise('collection should be an ActiveRecord::Relation or Array') unless collection.kind_of?(ActiveRecord::Relation) || skip_relation
 
       # Authorize
       EffectiveResources.authorize!(self, :index, collection.klass) unless skip_authorize
@@ -27,13 +31,15 @@ module Effective
       end
 
       # Paginate
-      per_page = 50
-      page = (params[:page] || 1).to_i
-      last = (collection.reselect(:id).count.to_f / per_page).ceil
-      more = page < last
-
-      offset = [(page - 1), 0].max * per_page
-      collection = collection.limit(per_page).offset(offset)
+      if !skip_paginate
+        per_page = 50
+        page = (params[:page] || 1).to_i
+        last = (collection.reselect(:id).count.to_f / per_page).ceil
+        more = page < last
+  
+        offset = [(page - 1), 0].max * per_page
+        collection = collection.limit(per_page).offset(offset)
+      end
 
       # Results
       results = collection.map do |resource|
