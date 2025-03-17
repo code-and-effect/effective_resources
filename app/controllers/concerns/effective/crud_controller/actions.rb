@@ -102,7 +102,7 @@ module Effective
         self.resource ||= resource_scope.find(params[:id])
 
         EffectiveResources.authorize!(self, :show, resource)
-        @page_title ||= resource.to_s
+        @page_title ||= view_context.strip_tags(resource.to_s)
 
         run_callbacks(:resource_render)
 
@@ -118,7 +118,7 @@ module Effective
         self.resource ||= resource_scope.find(params[:id])
 
         EffectiveResources.authorize!(self, :edit, resource)
-        @page_title ||= "Edit #{resource}"
+        @page_title ||= "Edit " + view_context.strip_tags(resource.to_s)
 
         run_callbacks(:resource_render)
 
@@ -135,7 +135,7 @@ module Effective
         action = (commit_action[:action] == :save ? :update : commit_action[:action])
 
         EffectiveResources.authorize!(self, action, resource)
-        @page_title ||= "Edit #{resource}"
+        @page_title ||= "Edit " + view_context.strip_tags(resource.to_s)
 
         if respond_to?(:current_user) && resource.respond_to?(:current_user=)
           resource.current_user ||= current_user
@@ -165,7 +165,7 @@ module Effective
         action = :destroy
 
         EffectiveResources.authorize!(self, action, resource)
-        @page_title ||= "Destroy #{resource}"
+        @page_title ||= "Destroy " + view_context.strip_tags(resource.to_s)
 
         if save_resource(resource, action)
           respond_with_success(resource, action)
@@ -180,7 +180,7 @@ module Effective
         self.resource ||= resource_scope.find(params[:id])
 
         EffectiveResources.authorize!(self, action, resource)
-        @page_title ||= "#{action.to_s.titleize} #{resource}"
+        @page_title ||= action.to_s.titleize + " " + view_context.strip_tags(resource.to_s)
 
         if request.get?
           run_callbacks(:resource_render)
