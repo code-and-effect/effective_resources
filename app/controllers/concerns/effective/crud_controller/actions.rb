@@ -6,7 +6,7 @@ module Effective
         Rails.logger.info 'Processed by Effective::CrudController#index'
 
         EffectiveResources.authorize!(self, :index, resource_klass)
-        @page_title ||= resource_human_plural_name
+        @page_title ||= resource_human_plural_name.to_s.html_safe
 
         self.resources ||= resource_scope.all if resource_scope.respond_to?(:all)
         @datatable = resource_datatable()
@@ -60,7 +60,7 @@ module Effective
         end
 
         EffectiveResources.authorize!(self, :new, resource)
-        @page_title ||= "New #{resource_human_name}"
+        @page_title ||= "New #{resource_human_name}".html_safe
 
         run_callbacks(:resource_render)
 
@@ -87,7 +87,7 @@ module Effective
         resource.assign_attributes(send(resource_params_method_name))
 
         EffectiveResources.authorize!(self, action, resource)
-        @page_title ||= "New #{resource_human_name}"
+        @page_title ||= "New #{resource_human_name}".html_safe
 
         if save_resource(resource, action)
           respond_with_success(resource, action)
@@ -102,7 +102,7 @@ module Effective
         self.resource ||= resource_scope.find(params[:id])
 
         EffectiveResources.authorize!(self, :show, resource)
-        @page_title ||= resource.to_s
+        @page_title ||= resource.to_s.html_safe
 
         run_callbacks(:resource_render)
 
@@ -118,7 +118,7 @@ module Effective
         self.resource ||= resource_scope.find(params[:id])
 
         EffectiveResources.authorize!(self, :edit, resource)
-        @page_title ||= "Edit #{resource}"
+        @page_title ||= "Edit #{resource}".html_safe
 
         run_callbacks(:resource_render)
 
@@ -135,7 +135,7 @@ module Effective
         action = (commit_action[:action] == :save ? :update : commit_action[:action])
 
         EffectiveResources.authorize!(self, action, resource)
-        @page_title ||= "Edit #{resource}"
+        @page_title ||= "Edit #{resource}".html_safe
 
         if respond_to?(:current_user) && resource.respond_to?(:current_user=)
           resource.current_user ||= current_user
@@ -165,7 +165,7 @@ module Effective
         action = :destroy
 
         EffectiveResources.authorize!(self, action, resource)
-        @page_title ||= "Destroy #{resource}"
+        @page_title ||= "Destroy #{resource}".html_safe
 
         if save_resource(resource, action)
           respond_with_success(resource, action)
@@ -180,7 +180,7 @@ module Effective
         self.resource ||= resource_scope.find(params[:id])
 
         EffectiveResources.authorize!(self, action, resource)
-        @page_title ||= "#{action.to_s.titleize} #{resource}"
+        @page_title ||= "#{action.to_s.titleize} #{resource}".html_safe
 
         if request.get?
           run_callbacks(:resource_render)
@@ -224,7 +224,7 @@ module Effective
         self.resources ||= resource_scope.all
 
         EffectiveResources.authorize!(self, action, resource_klass)
-        @page_title ||= "#{action.to_s.titleize} #{resource_human_name}"
+        @page_title ||= "#{action.to_s.titleize} #{resource_human_name}".html_safe
 
         if request.get?
           @datatable = resource_datatable()
