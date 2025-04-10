@@ -52,6 +52,8 @@ module EffectiveResourcesPrivateHelper
       opts[:class] ||= (
         if opts['data-method'].to_s == 'delete'
           'btn btn-danger'
+        elsif opts[:action] == :new
+          'btn btn-success'
         elsif h.length == 0
           'btn btn-primary'
         elsif defined?(EffectiveBootstrap)
@@ -68,7 +70,7 @@ module EffectiveResourcesPrivateHelper
         when :show then "#{resource_to_s}"
         when :destroy then "#{et("effective_resources.actions.destroy")} #{resource_to_s}"
         when :index then "#{et("effective_resources.actions.index")} #{ets(resource)}"
-        else "#{opts[:action].to_s.titleize} #{resource_to_s}"
+        else "#{opts[:action].to_s.titleize} #{et(resource)}"
       end
 
       h[commit] = opts
