@@ -96,7 +96,11 @@ module Effective
         # Now that we have the scope figured out let's pull the limit number of records into an Array
         # If there are more than the limit, return as: :string
         resources = scope.limit(limit).to_a
-        return { as: :string } unless resources.length < limit
+
+        if resources.length >= limit
+          Rails.logger.info "SEARCH TOOL: limit reached for #{association || res}"
+          return { as: :string }
+        end
 
         # Otherwise there are less than the limit, so we can use a collection select
         {
