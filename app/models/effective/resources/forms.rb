@@ -98,7 +98,7 @@ module Effective
         resources = scope.limit(limit).to_a
 
         if resources.length >= limit
-          Rails.logger.info "SEARCH TOOL: limit reached for #{association || res}"
+          Rails.logger.error "\e[31mSEARCH TOOL: limit query reached for #{association || res}"
           return { as: :string }
         end
 
