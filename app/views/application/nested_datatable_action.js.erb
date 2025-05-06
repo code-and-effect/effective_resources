@@ -1,0 +1,5 @@
+<% if local_assigns[:html_template].present? %>
+  EffectiveForm.remote_form_payload = "<%= j(render(template: local_assigns[:html_template], formats: :html)) %>";
+<% else %>
+  EffectiveForm.remote_form_payload = "<%= j(render_datatable(@datatable, nested: true)) %>";
+<% end %>

@@ -255,5 +255,30 @@ module Effective
       end
     end
 
+    def nested_datatable_action(action = nil)
+      Rails.logger.info "Processed by Effective::CrudController#nested_datatable_action"
+
+      raise('expected a GET request') unless request.get?
+      raise('expected @datatable to be present') if @datatable.nil?
+
+      action ||= action_name
+
+      EffectiveResources.authorize!(self, :index, @datatable)
+      @page_title ||= @datatable.datatable_name
+
+      respond_to do |format|
+        format.html do
+          html_template = action if template_present?(action, format: :html)
+          render(html_template || 'index')
+        end
+
+        format.js do
+          html_template = [controller_path, action].join('/') if template_present?(action, format: :html)
+          template = template_present?(action) ? action : 'nested_datatable_action'
+
+          render(template, formats: :js, locals: { action: action, html_template: html_template })
+        end
+      end
+    end
   end
 end
