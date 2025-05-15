@@ -81,7 +81,7 @@ module Effective
         end
 
         if respond_to?(:current_user) && resource.respond_to?(:created_by=)
-          resource.created_by ||= current_user
+          resource.created_by ||= (impersonation_user || current_user)
         end
 
         resource.assign_attributes(send(resource_params_method_name))
@@ -142,7 +142,7 @@ module Effective
         end
 
         if respond_to?(:current_user) && resource.respond_to?(:updated_by=)
-          resource.updated_by ||= current_user
+          resource.updated_by ||= (impersonation_user || current_user)
         end
 
         resource.assign_attributes(send(resource_params_method_name))

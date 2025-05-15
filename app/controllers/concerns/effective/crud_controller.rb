@@ -10,6 +10,7 @@ module Effective
     include Effective::CrudController::Respond
     include Effective::CrudController::Save
     include Effective::CrudController::Submits
+    include Effective::CrudController::Users
 
     included do
       define_callbacks :resource_render, :resource_before_save, :resource_after_save, :resource_after_commit, :resource_error
