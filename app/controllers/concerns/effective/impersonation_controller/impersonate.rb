@@ -1,6 +1,11 @@
 module Effective
   module ImpersonationController
     module Impersonate
+      extend ActiveSupport::Concern
+
+      included do
+        before_action :delete_blank_password_params, only: [:update]
+      end
 
       def impersonate
         @user = current_user.class.find(params[:id])
@@ -22,6 +27,15 @@ module Effective
 
       def after_impersonate_path_for(user)
         try(:dashboard_path) || try(:root_path) || '/'
+      end
+
+      private
+
+      def delete_blank_password_params
+        if params[:user] && params[:user][:password].blank?
+          params[:user].delete(:password)
+          params[:user].delete(:password_confirmation)
+        end
       end
 
     end
