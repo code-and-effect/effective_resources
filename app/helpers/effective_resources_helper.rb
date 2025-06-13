@@ -267,6 +267,10 @@ module EffectiveResourcesHelper
     controller.class.try(:effective_wizard_controller?) && defined?(resource) && resource.draft?
   end
 
+  def admin_namespace?
+    controller.request.path.start_with?('/admin/')
+  end
+
   def wizard_card(resource, &block)
     raise('expected a block') unless block_given?
     raise('expected an acts_as_wizard resource') unless resource.class.respond_to?(:acts_as_wizard?)
