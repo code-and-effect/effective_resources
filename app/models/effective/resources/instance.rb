@@ -103,6 +103,7 @@ module Effective
         changes = instance.previous_changes.symbolize_keys.delete_if do |attribute, (before, after)|
           begin
             (before.kind_of?(ActiveSupport::TimeWithZone) && after.kind_of?(ActiveSupport::TimeWithZone) && before.to_i == after.to_i) ||
+            (before.kind_of?(Hash) && after.kind_of?(Hash) && before == after) ||
             (before == nil && after == false) || (before == nil && after == ''.freeze)
           rescue => e
             true
