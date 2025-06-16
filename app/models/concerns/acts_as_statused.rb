@@ -45,22 +45,22 @@ module ActsAsStatused
     before_validation do
       self.status ||= all_statuses.first
 
-      # Set an existing belongs_to automatically
-      if respond_to?("#{status}_by") && send("#{status}_by").blank?
-        self.send("#{status}_by=", current_user)
-      end
-
       # Set an existing timestamp automatically
       if respond_to?("#{status}_at") && send("#{status}_at").blank?
         self.send("#{status}_at=", Time.zone.now)
       end
 
-      if current_user.present?
-        self.status_steps["#{status}_by_id".to_sym] ||= current_user.id
-        self.status_steps["#{status}_by_type".to_sym] ||= current_user.class.name
+      self.status_steps["#{status}_at".to_sym] ||= Time.zone.now
+    end
+
+    before_validation(if: -> { status_changed? && current_user.present? }) do
+      # Set an existing belongs_to automatically
+      if respond_to?("#{status}_by") && send("#{status}_by").blank?
+        self.send("#{status}_by=", current_user)
       end
 
-      self.status_steps["#{status}_at".to_sym] ||= Time.zone.now
+      self.status_steps["#{status}_by_id".to_sym] ||= current_user.id
+      self.status_steps["#{status}_by_type".to_sym] ||= current_user.class.name
     end
 
     validates :status, presence: true, inclusion: { in: const_get(:STATUSES).map(&:to_s) }
