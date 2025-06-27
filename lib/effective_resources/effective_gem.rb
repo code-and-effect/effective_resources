@@ -52,6 +52,14 @@ module EffectiveGem
       true
     end
 
+    def class_name(name, key)
+      raise('expected a class name with a ::') unless name.to_s.include?('::')
+      raise('expected key to be a symbol') unless key.kind_of?(Symbol)
+
+      namespace = name.to_s.split('::').first.underscore.to_sym
+      config(namespace)[(key.to_s.singularize + '_class_name').to_sym] || "Effective::#{key.to_s.singularize.classify}"
+    end
+
     # Mailer Settings
     # These methods are intended to flow through to the default EffectiveResources settings
     def parent_mailer_class
