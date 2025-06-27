@@ -53,10 +53,10 @@ module EffectiveGem
     end
 
     def class_name(name, key)
-      raise('expected a class name with a ::') unless name.to_s.include?('::')
+      raise('expected name to be a string') unless name.kind_of?(String)
       raise('expected key to be a symbol') unless key.kind_of?(Symbol)
 
-      namespace = name.to_s.split('::').first.underscore.to_sym
+      namespace = name.split('::').first.underscore.to_sym if name.include?('::')
       config(namespace)[(key.to_s.singularize + '_class_name').to_sym] || "Effective::#{key.to_s.singularize.classify}"
     end
 
