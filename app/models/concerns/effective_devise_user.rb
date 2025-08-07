@@ -298,4 +298,15 @@ module EffectiveDeviseUser
   def to_select2
     "<span>#{email_to_s}</span> <small>&lt;#{try(:public_email) || email}&gt;</small>"
   end
+
+  # You cannot delete a user if they have any memberships, applicants, orders, or event registrations
+  def destroyable?
+    return false if respond_to?(:archived?) && !archived?
+    return false if self.class.respond_to?(:effective_memberships_owner?) && (membership.present? || membership_histories.present?)
+    return false if self.class.respond_to?(:effective_memberships_user?) && (applicants.present? || fee_payments.present?)
+    return false if Effective::Order.where(user: self).present?
+    return false if Effective::EventRegistrant.where(owner: self).or(Effective::EventRegistrant.where(user: self)).present?
+    true
+  end
+
 end
