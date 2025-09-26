@@ -102,7 +102,11 @@ module Effective
               elsif part == :format
                 # Nothing
               elsif target.respond_to?(part)
-                h[part] = target.public_send(part)
+                obj = if part.to_s.ends_with?('_id') && target.respond_to?(part.to_s.chomp('_id'))
+                  target.try("#{part.to_s.chomp('_id')}")
+                end
+
+                h[part] = obj.try(:to_param) || target.public_send(part)
               end
             end
           elsif target.respond_to?(:to_param) || target.respond_to?(:id)
