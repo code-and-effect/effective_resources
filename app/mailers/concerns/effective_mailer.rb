@@ -26,6 +26,14 @@ module EffectiveMailer
     resource.respond_to?(:log_changes_datatable) ? opts.merge(log: resource) : opts
   end
 
+  def link_to(label, url = nil, opts = {})
+    if label.present? && url.present?
+      view_context.link_to(label, url, opts).html_safe
+    else
+      view_context.link_to(label, label, opts).html_safe
+    end
+  end
+
   private
 
   # This returns the top level gem, EffectiveOrders or EffectiveResources
