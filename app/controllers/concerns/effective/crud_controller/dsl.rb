@@ -36,7 +36,7 @@ module Effective
       # submit :save, 'Save', success: -> { "#{resource} was saved okay!" }
       def submit(action, label, args = {})
         instance_exec do
-          before_action { _insert_submit(action, label, args) }
+          prepend_before_action { _insert_submit(action, label, args) }
         end
       end
 
@@ -49,7 +49,7 @@ module Effective
       # button :decline, false
       def button(action, label = nil, args = {})
         instance_exec do
-          before_action { _insert_button(action, label, args) }
+          prepend_before_action { _insert_button(action, label, args) }
         end
       end
 
@@ -57,7 +57,7 @@ module Effective
       # submit and buttons options will be merged ontop of these
       def on(action, args = {})
         instance_exec do
-          before_action { _insert_on(action, args) }
+          prepend_before_action { _insert_on(action, args) }
         end
       end
 

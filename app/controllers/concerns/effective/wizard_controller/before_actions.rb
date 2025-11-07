@@ -29,7 +29,8 @@ module Effective
       # before_action :authorize_resource, only: [:show, :update]
       # Authorize the resource
       def authorize_resource
-        EffectiveResources.authorize!(self, action_name.to_sym, resource)
+        action = (commit_action[:action] == :save ? action_name : commit_action[:action]).to_sym
+        EffectiveResources.authorize!(self, action, resource)
       end
 
       # before_action :assign_required_steps, only: [:show, :update]
