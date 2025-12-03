@@ -22,8 +22,20 @@ module Effective
       # name: sort by this column, or this relation
       # sort: when a symbol or boolean, this is the relation's column to sort by
 
-      def order(name, direction = :asc, as: nil, sort: nil, sql_column: nil, limit: nil, reorder: false)
+      # There is a sort by array (ids) syntax:
+      # This will sort the base collection.id array by the given direction
+      #
+      # Effective::Resource.new(collection).order(direction) do
+      #   collection.sort { |a, b| a.membership&.category.to_s <=> b.membership&.category.to_s }
+      # end
+
+      def order(name = nil, direction = :asc, as: nil, sort: nil, sql_column: nil, limit: nil, reorder: false, &block)
         raise 'expected relation to be present' unless relation
+
+        if block_given? && (name == :asc || name == :desc)
+          direction = name
+          name = :id
+        end
 
         sql_column ||= sql_column(name)
         sql_type = (as || sql_type(name))
@@ -31,6 +43,11 @@ module Effective
         association = associated(name)
         sql_direction = sql_direction(direction)
         @relation = relation.reorder(nil) if reorder
+
+        if block_given?
+          ids = block.call().map { |resource| resource.try(:id) || resource }
+          return relation.order(order_by_array_position((direction == :asc) ? ids : ids.reverse, sql_column))
+        end
 
         case sql_type
         when :belongs_to
