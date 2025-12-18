@@ -120,6 +120,8 @@ module EffectiveResources
   end
 
   def self.truthy?(value)
+    return true if (value == true || value == 'true')
+
     return true if value.kind_of?(String) && ['yes', 'true'].include?(value.downcase)
     return false if value.kind_of?(String) && ['no', 'false'].include?(value.downcase)
 
@@ -131,6 +133,7 @@ module EffectiveResources
   end
 
   def self.falsey?(value)
+    return true if (value == false || value == 'false')
     !truthy?(value)
   end
 
