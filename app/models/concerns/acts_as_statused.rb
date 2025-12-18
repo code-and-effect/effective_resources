@@ -165,10 +165,6 @@ module ActsAsStatused
       self.class.const_get(:STATUSES)
     end
 
-    def status_steps
-      Hash(self[:status_steps])
-    end
-
     def all_statuses
       status_keys
     end
