@@ -18,7 +18,12 @@ module Effective
 
         # Reset impersonation
         session[:impersonation_user_id] = nil
+        session[:impersonation_user_class_name] = nil
         session[:impersonation_original_path] = nil
+
+        if defined?(EffectiveLogger)
+          EffectiveLogger.info "Ended impersonation of #{current_user}", user: @user, associated: current_user
+        end
 
         expire_data_after_sign_in!
         warden.session_serializer.store(@user, Devise::Mapping.find_scope!(@user))

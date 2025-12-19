@@ -13,8 +13,13 @@ module Effective
 
         authorize! :impersonate, @user
 
+        if defined?(EffectiveLogger)
+          EffectiveLogger.info "Started impersonation of #{@user}", user: current_user, associated: @user
+        end
+
         # Impersonate
         session[:impersonation_user_id] = current_user.id
+        session[:impersonation_user_class_name] = current_user.class.name
         session[:impersonation_original_path] = request.referer.presence || '/admin/users'
 
         expire_data_after_sign_in!
