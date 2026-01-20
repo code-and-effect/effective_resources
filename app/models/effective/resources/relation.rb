@@ -402,8 +402,10 @@ module Effective
         raise 'expected relation to be present' unless relation
 
         # Assume this is a set of IDs
-        if value.kind_of?(Integer) || value.kind_of?(Array) || (value.to_i.to_s == value)
-          return relation.where(klass.primary_key => value)
+        if columns.blank? || columns.include?(klass.primary_key) || columns.include?(klass.primary_key.to_sym)
+          if (value.kind_of?(Integer) || value.kind_of?(Array) || (value.to_i.to_s == value))
+            return relation.where(klass.primary_key => value)
+          end
         end
 
         # If the user specifies columns. Filter out invalid ones for this klass
