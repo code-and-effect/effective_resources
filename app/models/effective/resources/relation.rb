@@ -401,6 +401,8 @@ module Effective
       def search_any(value, columns: nil, fuzzy: nil)
         raise 'expected relation to be present' unless relation
 
+        columns = Array(columns).presence
+
         # Assume this is a set of IDs
         if columns.blank? || columns.include?(klass.primary_key) || columns.include?(klass.primary_key.to_sym)
           if (value.kind_of?(Integer) || value.kind_of?(Array) || (value.to_i.to_s == value))
@@ -410,7 +412,7 @@ module Effective
 
         # If the user specifies columns. Filter out invalid ones for this klass
         if columns.present?
-          columns = Array(columns).map(&:to_s) - [nil, '']
+          columns = columns.map(&:to_s) - [nil, '']
           columns = (columns & search_columns)
         end
 
