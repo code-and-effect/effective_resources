@@ -84,6 +84,14 @@ module Effective
           resource.created_by ||= (impersonation_user || current_user)
         end
 
+        if respond_to?(:current_user) && resource.respond_to?(:updated_by=)
+          resource.updated_by ||= (impersonation_user || current_user)
+        end
+
+        if resource.respond_to?(:current_path=)
+          resource.current_path ||= resource_path
+        end
+
         resource.assign_attributes(send(resource_params_method_name))
 
         EffectiveResources.authorize!(self, action, resource)
@@ -145,6 +153,10 @@ module Effective
           resource.updated_by ||= (impersonation_user || current_user)
         end
 
+        if resource.respond_to?(:current_path=)
+          resource.current_path ||= resource_path
+        end
+
         resource.assign_attributes(send(resource_params_method_name))
 
         if save_resource(resource, action)
@@ -200,6 +212,22 @@ module Effective
 
         to_assign = (send(resource_params_method_name) rescue {})
         resource.assign_attributes(to_assign) if to_assign.present? && to_assign.permitted?
+
+        if respond_to?(:current_user) && resource.respond_to?(:current_user=)
+          resource.current_user ||= current_user
+        end
+
+        if respond_to?(:current_user) && resource.respond_to?(:updated_by=)
+          resource.updated_by ||= (impersonation_user || current_user)
+        end
+
+        if respond_to?(:current_user) && resource.try(:new_record?) && resource.respond_to?(:created_by=)
+          resource.created_by ||= (impersonation_user || current_user)
+        end
+
+        if resource.respond_to?(:current_path=)
+          resource.current_path ||= resource_path
+        end
 
         if save_resource(resource, action)
           respond_with_success(resource, action)

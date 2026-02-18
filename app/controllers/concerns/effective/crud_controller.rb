@@ -150,6 +150,12 @@ module Effective
       datatable
     end
 
+    def resource_path
+      parts = controller_path.to_s.split('/')
+      parts.shift if defined?(Tenant) && parts.first == Tenant.current.to_s
+      parts.length > 1 ? parts.first.to_sym : nil
+    end
+
     def resource_layout
       namespace = controller_path.include?('admin/') ? 'admin' : 'application'
 
