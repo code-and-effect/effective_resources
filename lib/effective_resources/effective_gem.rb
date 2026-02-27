@@ -101,11 +101,11 @@ module EffectiveGem
 
         if associated.kind_of?(ActiveRecord::Base)
           EffectiveLogger.error(e.message, associated: associated, details: { email: email }) if defined?(EffectiveLogger)
-          ExceptionNotifier.notify_exception(e, data: { email: email, associated_id: associated.id, associated_type: associated.class.name }) if defined?(ExceptionNotifier)
+          EffectiveResources.send_error(e, email: email, associated_id: associated.id, associated_type: associated.class.name)
         else
           args_to_s = args.to_s.gsub('<', '').gsub('>', '')
           EffectiveLogger.error(e.message, details: { email: email, args: args_to_s }) if defined?(EffectiveLogger)
-          ExceptionNotifier.notify_exception(e, data: { email: email, args: args_to_s }) if defined?(ExceptionNotifier)
+          EffectiveResources.send_error(e, email: email, details: args_to_s)
         end
 
         raise(e) unless Rails.env.production? || Rails.env.staging?

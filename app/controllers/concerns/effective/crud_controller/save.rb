@@ -77,7 +77,7 @@ module Effective
 
       def notify_exception(exception, resource, action)
         if defined?(ExceptionNotifier)
-          ExceptionNotifier.notify_exception(exception, env: request.env, data: { resource: resource, action: action })
+          EffectiveResources.send_error(exception, resource: resource, action: action)
         else
           raise(exception)
         end
