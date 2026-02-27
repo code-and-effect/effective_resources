@@ -76,11 +76,7 @@ module Effective
       end
 
       def notify_exception(exception, resource, action)
-        if defined?(ExceptionNotifier)
-          EffectiveResources.send_error(exception, resource: resource, action: action)
-        else
-          raise(exception)
-        end
+        EffectiveResources.send_error(exception, resource: resource, action: action)
       end
 
       def resource_flash(status, resource, action, e: nil)
