@@ -98,7 +98,7 @@ module ActsAsJobStatus
 
     if job_status == :error
       EffectiveLogger.error(exception.message, associated: self) if defined?(EffectiveLogger)
-      ExceptionNotifier.notify_exception(exception, data: { id: id, class_name: self.class.name }) if defined?(ExceptionNotifier)
+      EffectiveResources.send_error(exception, id: id, class_name: self.class.name)
     end
 
     if job_status == :error && !ENV['TESTING_ACTS_AS_JOB_STATUS']

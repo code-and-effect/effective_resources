@@ -235,6 +235,25 @@ module EffectiveResources
     et(resource, attribute).pluralize.downcase
   end
 
+  def self.send_error(exception, **tags)
+    if defined?(Tenant)
+      tags = { tenant: Tenant.current || 'none' }.merge(tags)
+    end
+
+    tags = tags.transform_values(&:to_s)
+
+    if defined?(ExceptionNotifier)
+      ExceptionNotifier.notify_exception(exception, data: tags) 
+    end
+
+    if defined?(Appsignal)
+      Appsignal.send_error(exception) do
+        Appsignal.add_tags(tags)
+        Appsignal.add_custom_data(tags)
+      end
+    end
+  end
+
   def self.cache_key(*keys)
     if defined?(Tenant)
       [Tenant.current] + Array(keys).flatten
