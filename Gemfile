@@ -1,6 +1,4 @@
-source 'http://rubygems.org'
-ruby '3.2.2'
-
-gem 'sprockets-rails'
+source 'https://rubygems.org'
+ruby '3.3.1'
 
 gemspec

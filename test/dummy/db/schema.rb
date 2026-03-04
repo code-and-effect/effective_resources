@@ -10,62 +10,61 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 5) do
+ActiveRecord::Schema[8.1].define(version: 5) do
   create_table "advanced_orders", force: :cascade do |t|
+    t.string "title"
     t.integer "user_id"
     t.string "user_type"
-    t.string "title"
   end
 
   create_table "posts", force: :cascade do |t|
-    t.integer "submitted_by_id"
-    t.string "title"
+    t.datetime "approved_at", precision: nil
     t.string "status"
     t.text "status_steps"
     t.datetime "submitted_at", precision: nil
-    t.datetime "approved_at", precision: nil
+    t.integer "submitted_by_id"
+    t.string "title"
   end
 
   create_table "simple_orders", force: :cascade do |t|
-    t.integer "user_id"
     t.string "title"
+    t.integer "user_id"
   end
 
   create_table "thangs", force: :cascade do |t|
-    t.string "title"
     t.text "body"
+    t.string "title"
   end
 
   create_table "things", force: :cascade do |t|
-    t.string "title"
+    t.text "body"
+    t.boolean "boolean"
+    t.datetime "created_at", null: false
     t.date "date"
     t.datetime "datetime", precision: nil
-    t.integer "integer"
-    t.integer "price"
     t.decimal "decimal"
-    t.boolean "boolean"
-    t.text "body"
-    t.datetime "published_start_at", precision: nil
-    t.datetime "published_end_at", precision: nil
-    t.string "job_status"
-    t.datetime "job_started_at", precision: nil
+    t.integer "integer"
     t.datetime "job_ended_at", precision: nil
     t.text "job_error"
-    t.datetime "created_at", null: false
+    t.datetime "job_started_at", precision: nil
+    t.string "job_status"
+    t.integer "price"
+    t.datetime "published_end_at", precision: nil
+    t.datetime "published_start_at", precision: nil
+    t.string "title"
     t.datetime "updated_at", null: false
   end
 
   create_table "thongs", force: :cascade do |t|
-    t.string "title"
     t.text "body"
+    t.string "title"
     t.text "wizard_steps"
   end
 
   create_table "users", force: :cascade do |t|
+    t.string "alternate_email"
+    t.string "email"
     t.string "first_name"
     t.string "last_name"
-    t.string "email"
-    t.string "alternate_email"
   end
-
 end
