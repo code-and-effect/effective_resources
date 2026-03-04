@@ -1,6 +1,14 @@
 require 'test_helper'
 
 class ActsAsJobStatusTest < ActiveJob::TestCase
+  setup do
+    ActiveJob::Base.queue_adapter = :test
+  end
+
+  teardown do
+    ActiveJob::Base.queue_adapter = :inline
+  end
+
   test 'acts as job status success' do
     thing = Thing.new(title: 'New Thing', body: 'body')
     assert thing.class.acts_as_job_status?
