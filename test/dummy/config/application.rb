@@ -6,6 +6,7 @@ require 'sprockets/rails'
 Bundler.require(*Rails.groups)
 
 require 'haml'
+require 'wicked'
 require 'pry-byebug'
 require "effective_resources"
 require "effective_datatables"
