@@ -176,7 +176,41 @@ module ActsAsPurchasableWizard
     return false if was_submitted? && !force
 
     fees = find_or_build_submit_fees()
-    raise('already has purchased submit fees') if Array(fees).any?(&:purchased?)
+
+    purchased_fees = Array(fees).select(&:purchased?)
+    unpurchased_fees = Array(fees).reject(&:purchased?)
+
+    if purchased_fees.present? && submit_order&.purchased?
+      order = submit_order
+
+      # Safety check: all purchased fees should belong to this order
+      mismatched_fees = purchased_fees.reject { |fee| fee.purchased_order_id == order.id }
+      if mismatched_fees.present?
+        raise("purchased fee(s) #{mismatched_fees.map(&:id).join(', ')} do not belong to order ##{order.id}")
+      end
+
+      # Safety check: all purchased fees should exist as order item purchasables
+      order_purchasables = order.purchasables
+      missing_fees = purchased_fees.reject { |fee| order_purchasables.include?(fee) }
+      if missing_fees.present?
+        raise("purchased fee(s) #{missing_fees.map(&:id).join(', ')} not found in order ##{order.id} items")
+      end
+
+      # The purchase went through but submit! never completed (failed after_purchase callback).
+      # Remove any unpurchased fees so they can be paid in a future FeePayment, then auto-complete.
+      if unpurchased_fees.present?
+        unpurchased_fees.each { |fee| fee.update!(parent: nil) }
+        EffectiveLogger.info("Auto-completing #{self.class.name} ##{id} - removed #{unpurchased_fees.length} unpurchased fee(s) added after payment", associated: self) if defined?(EffectiveLogger)
+      end
+
+      EffectiveLogger.info("Auto-completing #{self.class.name} ##{id} - fees purchased but not submitted", associated: self) if defined?(EffectiveLogger)
+      submit_purchased! unless was_submitted?
+      return false
+    end
+
+    if purchased_fees.present?
+      raise('already has purchased submit fees')
+    end
 
     order = find_or_build_submit_order()
     raise('expected an Effective::Order') unless order.kind_of?(Effective::Order)
