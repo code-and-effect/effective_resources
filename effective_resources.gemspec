@@ -27,6 +27,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency "pry-byebug"
   s.add_development_dependency "wicked"
   s.add_development_dependency "holidays"
-  s.add_development_dependency "psych"
   s.add_development_dependency "net-smtp"
 end
