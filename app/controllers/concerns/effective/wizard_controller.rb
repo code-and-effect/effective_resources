@@ -40,6 +40,8 @@ module Effective
         before_action :ready_checkout
       end
 
+      rate_limit to: 5, within: 1.hour, by: -> { current_user&.id }, only: [:show, :update], if: -> { step&.to_sym == :checkout }
+
       helper_method :resource
       helper_method :resource_wizard_step_title
 
