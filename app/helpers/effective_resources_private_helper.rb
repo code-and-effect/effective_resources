@@ -51,13 +51,13 @@ module EffectiveResourcesPrivateHelper
       # Assign class
       opts[:class] ||= (
         if opts['data-method'].to_s == 'delete'
-          EffectiveResources.default_delete_action_button_class || 'btn btn-danger'
+          EffectiveResources.delete_action_button_class || 'btn btn-danger'
         elsif opts[:action] == :new
-          EffectiveResources.default_new_action_button_class || 'btn btn-success'
+          EffectiveResources.new_action_button_class || 'btn btn-success'
         elsif h.length == 0
-          EffectiveResources.default_action_button_class || 'btn btn-primary'
+          EffectiveResources.action_button_class || 'btn btn-primary'
         elsif defined?(EffectiveBootstrap)
-          EffectiveResources.default_button_class || 'btn btn-secondary'
+          EffectiveResources.button_class || 'btn btn-secondary'
         else
           'btn btn-default'
         end
