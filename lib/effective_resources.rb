@@ -12,7 +12,8 @@ module EffectiveResources
   def self.config_keys
     [
       :authorization_method, :default_submits,
-      :parent_mailer, :deliver_method, :mailer_layout, :mailer_sender, :mailer_froms, :mailer_admin, :mailer_subject
+      :parent_mailer, :deliver_method, :mailer_layout, :mailer_sender, :mailer_froms, :mailer_admin, :mailer_subject,
+      :default_delete_action_button_class, :default_new_action_button_class, :default_action_button_class, :default_button_class
     ]
   end
 
