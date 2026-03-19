@@ -40,7 +40,9 @@ module Effective
         before_action :ready_checkout
       end
 
-      rate_limit to: 10, within: 1.hour, by: -> { current_user&.id }, only: :show, if: -> { step&.to_sym == :checkout }
+      unless Rails.env.development?
+        rate_limit to: 10, within: 1.hour, by: -> { current_user&.id }, only: :show, if: -> { step&.to_sym == :checkout }
+      end
 
       helper_method :resource
       helper_method :resource_wizard_step_title

@@ -119,6 +119,11 @@ module Effective
         # Generate the path
         path = (routes[action].format(formattable || EMPTY_HASH) rescue nil)
 
+        # Append default format from route (e.g., defaults: { format: :csv })
+        if path.present? && (default_format = routes[action].defaults[:format]).present?
+          path = "#{path}.#{default_format}"
+        end
+
         if path.present? && opts.present?
           uri = URI.parse(path)
           uri.query = URI.encode_www_form(opts)
