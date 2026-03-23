@@ -55,6 +55,10 @@ module EffectiveDeviseUser
       errors.add(:alternate_email, 'cannot be the same as email') if email.strip.downcase == alternate_email.strip.downcase
     end
 
+    validate(if: -> { first_name.present? && last_name.present? }) do
+      errors.add(:last_name, "can't match first name") if first_name == last_name
+    end
+
     # Uniqueness validation of emails and alternate emails across all users
     validate(if: -> { respond_to?(:alternate_email) }) do
       records = self.class.where.not(id: id)
@@ -72,10 +76,8 @@ module EffectiveDeviseUser
       end
     end
 
-    with_options(if: -> { respond_to?(:alternate_email) }) do
-      validates :alternate_email, email: true
-    end
-
+    validates :alternate_email, email: true, if: -> { respond_to?(:alternate_email) }
+    validates :public_email, email: true, if: -> { respond_to?(:public_email) }
   end
 
   module ClassMethods
@@ -220,6 +222,10 @@ module EffectiveDeviseUser
   # The user's to_s when in an email
   def email_to_s
     to_s
+  end
+
+  def full_name
+    [first_name.presence, last_name.presence].compact.join(' ')
   end
 
   def alternate_email=(value)
