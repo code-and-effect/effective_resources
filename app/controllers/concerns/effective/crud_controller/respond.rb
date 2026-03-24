@@ -4,7 +4,7 @@ module Effective
   module CrudController
     module Respond
       def respond_with_success(resource, action)
-        return if (response.body.respond_to?(:length) && response.body.length > 0)
+        return if performed?
 
         if specific_redirect_path?(action)
           respond_to do |format|
@@ -55,7 +55,7 @@ module Effective
       end
 
       def respond_with_error(resource, action)
-        return if response.body.present?
+        return if performed?
 
         flash.delete(:success)
         flash.now[:danger] ||= resource_flash(:danger, resource, action)
