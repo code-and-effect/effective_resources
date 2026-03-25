@@ -227,8 +227,8 @@ module EffectiveResourcesHelper
   end
 
   # Tableize attributes
-  # This is used by effective_orders, effective_logging, effective_trash and effective_mergery
-  def tableize_hash(obj, table: 'table', th: true, sub_table: 'table', sub_th: true, flatten: true)
+  # This is used by effective_logging, effective_trash, and effective_mergery
+  def tableize_hash(obj, table: 'table table-sm table-striped', th: true, sub_table: 'table', sub_th: true, flatten: true)
     case obj
     when Hash
       if flatten && obj[:attributes].kind_of?(Hash)
