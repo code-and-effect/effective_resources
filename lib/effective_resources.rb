@@ -213,7 +213,7 @@ module EffectiveResources
       resource.datatable_name
     elsif resource.respond_to?(:model_name) == false # Just a string. Fees will do this
       value = I18n.t(resource)
-      raise StandardError.new("Missing translation: #{resource}") if value.include?(resource)
+      raise StandardError.new("Missing translation: #{resource}") if value.include?("Missing translation:")
       value
     elsif attribute.blank?
       resource.model_name.human
