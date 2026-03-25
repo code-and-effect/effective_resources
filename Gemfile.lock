@@ -1,8 +1,8 @@
 PATH
   remote: .
   specs:
-    effective_resources (2.35.1)
-      rails
+    effective_resources (2.36.3)
+      rails (>= 7.2.0)
       sprockets-rails
 
 GEM
@@ -324,7 +324,6 @@ DEPENDENCIES
   holidays
   net-smtp
   pry-byebug
-  psych
   sqlite3
   wicked
 
