@@ -219,6 +219,13 @@ module ActsAsWizard
       end
     end
 
+    def render_partial_path
+      raise("expected render_path to be set") unless render_path.present?
+      raise("expected render_step to be set") unless render_step.present?
+
+      "#{render_path}/#{render_step}"
+    end
+
     private
 
     def can_revisit_completed_steps(step)
