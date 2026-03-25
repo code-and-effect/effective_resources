@@ -1,0 +1,15 @@
+- prefix = controller_path
+- locals = { resource: resource, Effective::Resource.new(resource).name.to_sym => resource }
+
+= render "#{prefix}/layout" do
+  = render_if_exists("#{prefix}/content", locals)
+
+  = card do
+    = render_if_exists("#{prefix}/#{step}_requirements", locals)
+
+    = effective_form_with(model: resource, url: wizard_path(step), method: :put) do |f|
+      = f.hidden_field :id
+
+      = render("#{prefix}/#{step}_fields", f: f)
+
+      = f.submit 'Save and Continue', left: true

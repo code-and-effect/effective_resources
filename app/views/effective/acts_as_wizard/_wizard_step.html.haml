@@ -1,11 +1,3 @@
 = wizard_card(resource) do
   - partial = "#{resource.render_path}/#{resource.render_step}_fields"
-
-  - if render_partial_exists?(partial)
-    = effective_table_with(resource) { |f| render(partial, f: f) }
-
-  - elsif Rails.env.development? || Rails.env.test?
-    - names = partial.split('/')
-    - name = names[0...-1].join('/') + '/_' + names.last + '.html.haml'
-
-    %div.alert.alert-warning Unable to find partial: #{name}
+  = effective_table_with(resource) { |f| render(partial, f: f) }

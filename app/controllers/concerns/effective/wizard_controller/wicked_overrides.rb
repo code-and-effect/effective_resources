@@ -18,6 +18,17 @@ module Effective
         effective_resource.url_helpers.url_for(merged_url_options)
       end
 
+      # Override from wicked to support a fallback wizard step template
+      def render_step(the_step, options = {}, params = {})
+        if the_step.nil? || the_step.to_s == Wicked::FINISH_STEP
+          redirect_to_finish_wizard(options, params)
+        elsif lookup_context.exists?(the_step.to_s, lookup_context.prefixes)
+          render(the_step, options)
+        else
+          render('effective/acts_as_wizard/wizard_step', options)
+        end
+      end
+
     end
   end
 end
