@@ -250,9 +250,11 @@ module ActsAsPurchasableWizard
   end
 
   # A hook to extend
+  # These are not for use when extending a fee payment
   def before_submit_purchased!
   end
 
+  # These are not for use when extending a fee payment
   def after_submit_purchased!
   end
 
@@ -269,6 +271,14 @@ module ActsAsPurchasableWizard
     wizard_steps[:checkout] ||= Time.zone.now
     wizard_steps[:submitted] = Time.zone.now
     submitted!
+
+    after_submit!
+
+    true
+  end
+
+  # A hook to extend. Safe for fee payments.
+  def after_submit!
   end
 
   module ClassMethods
