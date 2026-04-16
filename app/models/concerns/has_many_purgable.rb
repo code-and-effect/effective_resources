@@ -5,8 +5,8 @@
 #
 # Pass 'has_many_purgable :files, :avatar' to only allow the files and avatar to be purged.
 #
-# Works with effective_bootstrap file_field to display a Delete file on save checkbox
-# to submit a _purge array of attachments to purge.
+# Works with effective_bootstrap file_field, which renders a Remove button per attachment
+# that submits the attachment's signed_id in the _purge array.
 #
 # You must permit the attribute _purge: []
 
@@ -53,34 +53,33 @@ module HasManyPurgable
   # All the possible names, merging the actual associations and the given options
   def has_many_purgable_names
     names = has_many_purgable_options.fetch(:names)
-
-    associations = self.class.reflect_on_all_associations
-      .select { |ass| ass.class_name == 'ActiveStorage::Attachment' }
-      .map { |ass| ass.name.to_s.chomp('_attachments').chomp('_attachment').to_sym }
-
+    associations = self.class.attachment_reflections.keys.map(&:to_sym)
     names == :all ? associations : (names & associations)
   end
 
   private
 
-  # As submitted by the form and permitted by our associations and options
+  # Returns the ActiveStorage::Attachment records selected for purging, matched by signed_id.
   def has_many_purgable_attachments
-    submitted = (Array(_purge) - [nil, '', '0', ' ', 'false', 'f', 'off']).map(&:to_sym)
-    submitted & has_many_purgable_names
+    submitted = Array(_purge) - [nil, '', '0', ' ', 'false', 'f', 'off']
+    return [] if submitted.blank?
+
+    all_attachments = has_many_purgable_names.flat_map { |name| Array(public_send(name)) }
+    all_attachments.select { |attachment| submitted.include?(attachment.signed_id) }
   end
 
   def has_many_purgable_mark_for_destruction
-    has_many_purgable_attachments.each do |name|
-      Array(public_send(name)).each { |attachment| attachment.mark_for_destruction unless attachment.new_record? }
+    has_many_purgable_attachments.each do |attachment|
+      attachment.mark_for_destruction unless attachment.new_record?
     end
 
     true
   end
 
   def has_many_purgable_purge
-    has_many_purgable_attachments.each do |name|
-      Rails.logger.info "[has_many_purgable] Purging #{name} attachments"
-      Array(public_send(name)).each { |attachment| attachment.purge if attachment.marked_for_destruction? }
+    has_many_purgable_attachments.each do |attachment|
+      Rails.logger.info "[has_many_purgable] Purging attachment #{attachment.id} (#{attachment.name})"
+      attachment.purge if attachment.marked_for_destruction?
     end
 
     true
