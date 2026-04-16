@@ -1,3 +1,3 @@
 module EffectiveResources
-  VERSION = '2.36.6'.freeze
+  VERSION = '2.37.0'.freeze
 end
