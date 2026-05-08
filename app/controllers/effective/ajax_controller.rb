@@ -10,6 +10,7 @@ module Effective
       with_organizations = current_user.class.try(:effective_memberships_organization_user?)
 
       collection = current_user.class.all
+      collection = collection.unarchived if collection.respond_to?(:unarchived)
       collection = collection.includes(:organizations) if with_organizations
 
       # Display only related organization users
@@ -43,6 +44,7 @@ module Effective
       raise('an EffectiveMemberships.Organization is required') unless klass.try(:effective_memberships_organization?)
 
       collection = klass.all
+      collection = collection.unarchived if collection.respond_to?(:unarchived)
 
       respond_with_select2_ajax(collection) do |organization|
         data = { title: organization.title, email: organization.email }
