@@ -302,7 +302,7 @@ module EffectiveDeviseUser
   end
 
   def to_select2
-    "<span>#{email_to_s}</span> <small>&lt;#{try(:public_email) || email}&gt;</small>"
+    "<span>#{email_to_s}</span> <small>&lt;#{try(:public_email).presence || email}&gt;</small>"
   end
 
   # You cannot delete a user if they have any memberships, applicants, orders, or event registrations
