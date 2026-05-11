@@ -23,6 +23,7 @@ module Effective
 
       def assign_resource_current_user
         return unless respond_to?(:current_user)
+        return unless resource.respond_to?(:current_user=)
         resource.current_user ||= current_user
       end
 
