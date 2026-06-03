@@ -87,6 +87,18 @@ module ActsAsWizard
       all_steps.last
     end
 
+    # The first required step. Conventionally :start
+    def first_wizard_step
+      required_steps.first
+    end
+
+    # The required step immediately after the first one (:start)
+    # Useful for sending the user back to the beginning of the wizard content
+    # Used in missing info workflow
+    def second_wizard_step
+      required_steps.second
+    end
+
     def completed_steps
       wizard_steps.keys
     end
