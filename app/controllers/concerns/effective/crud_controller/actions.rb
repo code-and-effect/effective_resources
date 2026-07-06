@@ -198,7 +198,9 @@ module Effective
           run_callbacks(:resource_render)
 
           respond_to do |format|
-            format.html { }
+            # Render the action's own <action>.html template if present, otherwise the shared
+            # member_action page (which renders the resource's _form_<action> partial).
+            format.html { render(template_present?(action, format: :html) ? action : 'member_action', locals: { action: action }) }
             format.js do
               html_template = action if template_present?(action, format: :html)
               template = template_present?(action) ? action : 'member_action'
