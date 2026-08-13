@@ -37,7 +37,7 @@ module EffectiveGem
       namespace ||= Tenant.current if defined?(Tenant)
       namespace ||= :effective
 
-      @config[namespace] ||= ActiveSupport::OrderedOptions.new
+      @config[namespace] ||= ActiveSupport::InheritableOptions.new(@config[:effective])
 
       yield(config(namespace))
 
