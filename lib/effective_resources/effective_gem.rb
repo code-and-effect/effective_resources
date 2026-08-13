@@ -5,6 +5,18 @@
 module EffectiveGem
   extend ActiveSupport::Concern
 
+  class Config < ActiveSupport::OrderedOptions
+    def initialize(defaults = nil)
+      super()
+      @defaults = defaults
+    end
+
+    def [](key)
+      key = key.to_sym
+      key?(key) ? super(key) : @defaults&.[](key)
+    end
+  end
+
   EXCLUDED_GETTERS = [
     :config, :setup, :send_email, :parent_mailer_class,
     :deliver_method, :mailer_layout, :mailer_sender, :mailer_froms, :mailer_admin, :mailer_subject
@@ -37,7 +49,8 @@ module EffectiveGem
       namespace ||= Tenant.current if defined?(Tenant)
       namespace ||= :effective
 
-      @config[namespace] ||= ActiveSupport::OrderedOptions.new
+      defaults = @config[:effective] unless namespace == :effective
+      @config[namespace] ||= Config.new(defaults)
 
       yield(config(namespace))
 
