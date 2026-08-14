@@ -4,7 +4,7 @@ class EffectiveGemTest < ActiveSupport::TestCase
   setup do
     @gem = Module.new do
       def self.config_keys
-        [:inherited, :overridden]
+        [:inherited, :overridden, :widget_class_name]
       end
 
       include EffectiveGem
@@ -55,5 +55,44 @@ class EffectiveGemTest < ActiveSupport::TestCase
     end
 
     assert_match 'unsupported config keys: [:unsupported]', error.message
+  end
+
+  test 'class name uses an explicit configured class' do
+    @gem.setup(:tenant) { |config| config.widget_class_name = 'Configured::Widget' }
+
+    assert_equal 'Configured::Widget', @gem.class_name('Tenant::Owner', :widgets)
+  end
+
+  test 'class name falls back to the effective class without Tenant' do
+    assert_equal 'Effective::Widget', @gem.class_name('Tenant::Owner', :widgets)
+  end
+
+  test 'class name discovers a tenant class when Tenant is defined' do
+    tenant = Class.new
+    tenant.const_set(:Widget, Class.new)
+    Object.const_set(:Tenant, tenant)
+
+    assert_equal 'Tenant::Widget', @gem.class_name('Tenant::Owner', :widgets)
+  ensure
+    Object.send(:remove_const, :Tenant) if defined?(Tenant)
+  end
+
+  test 'klass discovers the current tenant class' do
+    tenant = Class.new do
+      def self.current
+        :example
+      end
+    end
+
+    example = Module.new
+    widget = Class.new
+    example.const_set(:Widget, widget)
+    Object.const_set(:Tenant, tenant)
+    Object.const_set(:Example, example)
+
+    assert_equal widget, @gem.klass(:widget)
+  ensure
+    Object.send(:remove_const, :Example) if defined?(Example)
+    Object.send(:remove_const, :Tenant) if defined?(Tenant)
   end
 end

@@ -57,7 +57,14 @@ module EffectiveGem
       raise('expected key to be a symbol') unless key.kind_of?(Symbol)
 
       namespace = name.split('::').first.underscore.to_sym if name.include?('::')
-      config(namespace)[(key.to_s.singularize + '_class_name').to_sym] || "Effective::#{key.to_s.singularize.classify}"
+      resolve_class_name(key, namespace: namespace)
+    end
+
+    def klass(key, fallback: nil)
+      raise('expected key to be a symbol') unless key.kind_of?(Symbol)
+
+      namespace = Tenant.current if defined?(Tenant)
+      resolve_class_name(key, namespace: namespace, fallback: fallback).constantize
     end
 
     # Mailer Settings
@@ -110,6 +117,22 @@ module EffectiveGem
 
         raise(e) unless Rails.env.production? || Rails.env.staging?
       end
+    end
+
+    private
+
+    def resolve_class_name(key, namespace:, fallback: nil)
+      key = key.to_s.singularize
+      configured = config(namespace)["#{key}_class_name".to_sym]
+
+      return configured if configured.present?
+
+      if defined?(Tenant) && namespace.present? && namespace != :effective
+        tenant_class_name = "#{namespace.to_s.camelize}::#{key.classify}"
+        return tenant_class_name if tenant_class_name.safe_constantize
+      end
+
+      fallback || "Effective::#{key.classify}"
     end
   end
 
