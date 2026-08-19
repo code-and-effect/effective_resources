@@ -60,11 +60,11 @@ module EffectiveGem
       resolve_class_name(key, namespace: namespace)
     end
 
-    def klass(key, fallback: nil)
+    def klass(key, skip_fallback: false)
       raise('expected key to be a symbol') unless key.kind_of?(Symbol)
 
       namespace = Tenant.current if defined?(Tenant)
-      resolve_class_name(key, namespace: namespace, fallback: fallback).constantize
+      resolve_class_name(key, namespace: namespace, skip_fallback: skip_fallback)&.constantize
     end
 
     # Mailer Settings
@@ -121,7 +121,7 @@ module EffectiveGem
 
     private
 
-    def resolve_class_name(key, namespace:, fallback: nil)
+    def resolve_class_name(key, namespace:, skip_fallback: false)
       key = key.to_s.singularize
       configured = config(namespace)["#{key}_class_name".to_sym]
 
@@ -132,7 +132,9 @@ module EffectiveGem
         return tenant_class_name if tenant_class_name.safe_constantize
       end
 
-      fallback || "Effective::#{key.classify}"
+      return if skip_fallback
+
+      "Effective::#{key.classify}"
     end
   end
 

@@ -95,4 +95,9 @@ class EffectiveGemTest < ActiveSupport::TestCase
     Object.send(:remove_const, :Example) if defined?(Example)
     Object.send(:remove_const, :Tenant) if defined?(Tenant)
   end
+
+  test 'klass can skip the effective fallback' do
+    assert_nil @gem.klass(:widget, skip_fallback: true)
+    assert_raises(NameError) { @gem.klass(:widget) }
+  end
 end
