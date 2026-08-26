@@ -87,6 +87,22 @@ module EffectiveResources
 
   # Utilities
 
+  def self.normalize_page(value)
+    return 1 if value.nil? || value == ''
+    return value if value.is_a?(Integer) && value.positive?
+    return value.to_i if value.is_a?(String) && value.match?(/\A[1-9]\d*\z/)
+  end
+
+  def self.validate_page!(value, collection_count:, per_page:)
+    page = normalize_page(value)
+    raise ActiveRecord::RecordNotFound, "Page #{value.inspect} is invalid" unless page
+
+    last = [(collection_count.to_f / per_page).ceil, 1].max
+    raise ActiveRecord::RecordNotFound, "Page #{page} does not exist" if page > last
+
+    page
+  end
+
   # This looks up the best class give the name
   # If the Tenant is present, use those classes first.
   def self.best(name)
