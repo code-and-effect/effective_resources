@@ -87,7 +87,7 @@ module EffectiveResources
 
   # Utilities
 
-  def self.normalize_page(value)
+  def self.normalize_page!(value)
     return 1 if value.nil? || value == ''
 
     valid = (value.is_a?(Integer) && value.positive?) ||
