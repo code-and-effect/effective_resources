@@ -17,10 +17,9 @@ class ActsAsPaginableTest < ActiveSupport::TestCase
     assert_equal Post.paginate(page: 2).count, Post.default_per_page
     assert_equal Post.paginate(page: 3).count, 0
 
-    first_page = Post.paginate(page: 1).pluck(:id)
-    assert_equal first_page, Post.paginate(page: []).pluck(:id)
-    assert_equal first_page, Post.paginate(page: {}).pluck(:id)
-    assert_equal first_page, Post.paginate(page: ActionController::Parameters.new(page: 2)).pluck(:id)
+    [[], {}, '03', '2abc', ActionController::Parameters.new(page: 2)].each do |page|
+      assert_raises(ActiveRecord::RecordNotFound) { Post.paginate(page: page) }
+    end
 
     # Tests [per_page]
     assert_equal Post.paginate(per_page: 1).count, 1

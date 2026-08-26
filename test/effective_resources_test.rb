@@ -6,12 +6,18 @@ class EffectiveResources::Test < ActiveSupport::TestCase
   end
 
   test 'normalize page' do
-    [2, '2', '2abc'].each do |page|
+    [2, '2'].each do |page|
       assert_equal 2, EffectiveResources.normalize_page(page)
     end
 
-    [nil, '', 'invalid', 0, -1, [], {}, ActionController::Parameters.new(page: 2)].each do |page|
+    [nil, ''].each do |page|
       assert_equal 1, EffectiveResources.normalize_page(page)
+    end
+
+    ['03', '2abc', 'invalid', 0, -1, [], {}, ActionController::Parameters.new(page: 2)].each do |page|
+      assert_raises(ActiveRecord::RecordNotFound) do
+        EffectiveResources.normalize_page(page)
+      end
     end
   end
 
