@@ -87,6 +87,18 @@ module EffectiveResources
 
   # Utilities
 
+  def self.normalize_page(value)
+    page = value.try(:to_i)
+    page && page > 0 ? page : 1
+  end
+
+  def self.validate_page!(page, collection_count:, per_page:)
+    last = [(collection_count.to_f / per_page).ceil, 1].max
+    raise ActiveRecord::RecordNotFound, "Page #{page} does not exist" if page > last
+
+    page
+  end
+
   # This looks up the best class give the name
   # If the Tenant is present, use those classes first.
   def self.best(name)
