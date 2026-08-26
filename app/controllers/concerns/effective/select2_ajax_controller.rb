@@ -33,7 +33,7 @@ module Effective
       # Paginate
       if !skip_paginate
         per_page = 50
-        page = EffectiveResources.normalize_page!(params[:page])
+        page = EffectiveResources.normalize_page(params[:page]) || 1
         last = (collection.reselect(:id).count.to_f / per_page).ceil
         more = page < last
   
