@@ -55,10 +55,6 @@ module EffectiveDeviseUser
       errors.add(:alternate_email, 'cannot be the same as email') if email.strip.downcase == alternate_email.strip.downcase
     end
 
-    validate(if: -> { first_name.present? && last_name.present? }) do
-      errors.add(:last_name, "can't match first name") if first_name == last_name
-    end
-
     # Uniqueness validation of emails and alternate emails across all users
     validate(if: -> { respond_to?(:alternate_email) }) do
       records = self.class.where.not(id: id)
