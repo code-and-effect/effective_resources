@@ -42,4 +42,27 @@ class EffectiveDeviseUserTest < ActiveSupport::TestCase
     assert user.valid?
   end
 
+  test 'find_first_by_auth_conditions only falls back to alternate email for email lookups' do
+    primary = User.create!(first_name: 'Primary', last_name: 'User', email: 'primary@example.com')
+    alternate = User.create!(first_name: 'Alternate', last_name: 'User', email: 'alternate@example.com', alternate_email: 'other@example.com')
+
+    parameter_filter = Object.new
+    parameter_filter.define_singleton_method(:filter) { |conditions| conditions }
+    adapter = Object.new
+    adapter.define_singleton_method(:find_first) { |conditions| User.where(conditions).first }
+
+    singleton_class = User.singleton_class
+    singleton_class.define_method(:devise_parameter_filter) { parameter_filter }
+    singleton_class.define_method(:to_adapter) { adapter }
+
+    assert_equal primary, User.find_first_by_auth_conditions(email: primary.email)
+    assert_equal alternate, User.find_first_by_auth_conditions(email: alternate.alternate_email)
+
+    assert_nil User.find_first_by_auth_conditions(first_name: 'Missing')
+    assert_nil User.find_first_by_auth_conditions({ email: alternate.alternate_email }, id: -1)
+  ensure
+    singleton_class&.remove_method(:devise_parameter_filter)
+    singleton_class&.remove_method(:to_adapter)
+  end
+
 end
