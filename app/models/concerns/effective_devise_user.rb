@@ -181,7 +181,10 @@ module EffectiveDeviseUser
       user = to_adapter.find_first(conditions)
       return user if user.present? && user.persisted?
 
-      to_adapter.find_first(alternate_email: conditions[:email]) if has_alternate_email?
+      email = conditions[:email]
+      return unless has_alternate_email? && email.present?
+
+      to_adapter.find_first(conditions.except(:email).merge(alternate_email: email))
     end
 
     # https://github.com/heartcombo/devise/blob/f6e73e5b5c8f519f4be29ac9069c6ed8a2343ce4/lib/devise/models/database_authenticatable.rb#L216
